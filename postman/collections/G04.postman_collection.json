@@ -89,9 +89,26 @@
       "name": "user/me",
       "id": "fec39480-503d-48b5-830e-802f194ab98a",
       "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
         "method": "GET",
         "url": {
-          "raw": ""
+          "raw": "{{base-path}}/user/me",
+          "host": [
+            "{{base-path}}"
+          ],
+          "path": [
+            "user",
+            "me"
+          ]
         },
         "description": "Lấy thông tin user đang đăng nhập"
       }
@@ -100,9 +117,26 @@
       "name": "mail/mailboxes",
       "id": "e8b6e332-afce-4b5e-bb7e-62f7b05ee359",
       "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
         "method": "GET",
         "url": {
-          "raw": ""
+          "raw": "{{base-path}}/mail/mailboxes",
+          "host": [
+            "{{base-path}}"
+          ],
+          "path": [
+            "mail",
+            "mailboxes"
+          ]
         },
         "description": "Lấy danh sách mailboxes của user đang đăng nhập"
       }
@@ -116,7 +150,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImR1Y25oYWF0QGdtYWlsLmNvbSIsInN1YiI6IjY5MjNmMzUzZDc1MWQ4OGY1MmZhNjM4NiIsImlhdCI6MTc2NDQ0NzA4OCwiZXhwIjoxNzY0NDQ3OTg4fQ.Elu6ecvUfy8F895Mio-4ZiBePfIkbWaC23dWVfVFkKI",
+              "value": "{{access_token}}",
               "type": "string"
             }
           ]
@@ -141,9 +175,27 @@
       "name": "mail/emails/{email-id}",
       "id": "4a10c69e-d4ae-4493-b06b-9c9fd118a2c7",
       "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{access_token}}",
+              "type": "string"
+            }
+          ]
+        },
         "method": "GET",
         "url": {
-          "raw": ""
+          "raw": "{{base-path}}/mail/emails/{{email-id}}",
+          "host": [
+            "{{base-path}}"
+          ],
+          "path": [
+            "mail",
+            "emails",
+            "{{email-id}}"
+          ]
         },
         "description": "Lấy chi tiết email có emailId tương ứng"
       }
@@ -157,7 +209,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImR1Y25oYWF0QGdtYWlsLmNvbSIsInN1YiI6IjY5MjNmMzUzZDc1MWQ4OGY1MmZhNjM4NiIsImlhdCI6MTc2NDQ0NzA4OCwiZXhwIjoxNzY0NDQ3OTg4fQ.Elu6ecvUfy8F895Mio-4ZiBePfIkbWaC23dWVfVFkKI",
+              "value": "{{access_token}}",
               "type": "string"
             }
           ]
@@ -187,7 +239,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImR1Y25oYWF0QGdtYWlsLmNvbSIsInN1YiI6IjY5MjNmMzUzZDc1MWQ4OGY1MmZhNjM4NiIsImlhdCI6MTc2NDQ0ODI1MywiZXhwIjoxNzY0NDQ5MTUzfQ.1s0VoA14CrxrSXtF58eoJuUjnoyzNy4ojImnlDyikvc",
+              "value": "{{access_token}}",
               "type": "string"
             }
           ]
@@ -224,7 +276,7 @@
           "bearer": [
             {
               "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImR1Y25oYWF0QGdtYWlsLmNvbSIsInN1YiI6IjY5MjNmMzUzZDc1MWQ4OGY1MmZhNjM4NiIsImlhdCI6MTc2NDQ0ODI1MywiZXhwIjoxNzY0NDQ5MTUzfQ.1s0VoA14CrxrSXtF58eoJuUjnoyzNy4ojImnlDyikvc",
+              "value": "{{access_token}}",
               "type": "string"
             }
           ]
@@ -232,7 +284,7 @@
         "method": "POST",
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"addLabels\": [\r\n        \"TRASH\"\r\n    ],\r\n    \"removeLabels\": [\r\n        \"INBOX\"\r\n    ]\r\n}",
+          "raw": "",
           "options": {
             "raw": {
               "language": "json"
@@ -257,12 +309,12 @@
   ],
   "variable": [
     {
-      "id": "21652f95-8fbc-46e9-9c07-1b303c452f35",
+      "id": "6900c17a-2f5b-4e4e-b863-bac054dbc576",
       "key": "base-path",
       "value": ""
     },
     {
-      "id": "8a9e97b3-e32c-4638-9110-eced5c90e309",
+      "id": "9ee4f01f-65d0-43e1-bc13-5ff25bec0b34",
       "key": "access_token",
       "value": "",
       "type": "default"
