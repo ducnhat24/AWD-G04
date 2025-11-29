@@ -284,7 +284,7 @@
         "method": "POST",
         "body": {
           "mode": "raw",
-          "raw": "",
+          "raw": "{\r\n    \"addLabels\": [\r\n        \"TRASH\"\r\n    ],\r\n    \"removeLabels\": [\r\n        \"INBOX\"\r\n    ]\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -309,12 +309,12 @@
   ],
   "variable": [
     {
-      "id": "20b52d14-4bc6-47d9-94b5-935708a85e9a",
+      "id": "87838d6e-4fdc-4379-b4cd-87a92c1438a7",
       "key": "base-path",
       "value": ""
     },
     {
-      "id": "00c4468b-46a4-4711-98c4-acf4243a34a2",
+      "id": "275e2073-9c99-46db-89e2-1b2ed8d14dde",
       "key": "access_token",
       "value": "",
       "type": "default"
