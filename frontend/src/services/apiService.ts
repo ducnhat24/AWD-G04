@@ -78,23 +78,128 @@ export const fetchUserProfile = async (): Promise<UserProfile> => {
 // 3. Email Data Service (Mock Endpoints)
 // ========================================================
 
+// Helper to parse "Name <email>"
+const parseSender = (fromHeader: string) => {
+  // Example: "Google <no-reply@accounts.google.com>"
+  const match = fromHeader.match(/(.*)<(.*)>/);
+  if (match) {
+    return {
+      sender: match[1].trim().replace(/"/g, ""),
+      senderEmail: match[2].trim(),
+    };
+  }
+  // Example: "no-reply@accounts.google.com"
+  return { sender: fromHeader, senderEmail: fromHeader };
+};
+
+const transformEmail = (
+  backendEmail: any,
+  folderId: string = "inbox"
+): Email => {
+  const { sender, senderEmail } = parseSender(backendEmail.sender || "");
+
+  let isRead = backendEmail.isRead;
+  let isStarred = backendEmail.isStarred;
+
+  if (backendEmail.labelIds) {
+    isRead = !backendEmail.labelIds.includes("UNREAD");
+    isStarred = backendEmail.labelIds.includes("STARRED");
+  }
+
+  return {
+    id: backendEmail.id,
+    sender: sender,
+    senderEmail: senderEmail,
+    subject: backendEmail.subject || "(No Subject)",
+    preview: backendEmail.snippet || "",
+    body: backendEmail.body || "",
+    timestamp: backendEmail.date || "",
+    isRead: isRead ?? true,
+    isStarred: isStarred ?? false,
+    folder: folderId,
+    avatarColor: "bg-blue-500", // Default
+  };
+};
+
+const transformMailbox = (backendMailbox: any) => {
+  let icon = "inbox";
+  const lowerId = backendMailbox.id.toLowerCase();
+  if (lowerId.includes("sent")) icon = "send";
+  else if (lowerId.includes("draft")) icon = "file";
+  else if (lowerId.includes("star")) icon = "star";
+  else if (lowerId.includes("trash")) icon = "trash";
+  else if (lowerId.includes("spam") || lowerId.includes("archive"))
+    icon = "archive";
+
+  return {
+    id: backendMailbox.id,
+    label: backendMailbox.name,
+    icon: icon,
+    unread: backendMailbox.unread,
+  };
+};
+
 // GET /mailboxes
 export const fetchMailboxes = async () => {
   // Gọi axios thật, MSW sẽ chặn URL này và trả về danh sách FOLDERS
-  const { data } = await api.get("/mailboxes");
+  const { data } = await api.get("/mail/mailboxes");
+  if (Array.isArray(data) && data.length > 0 && "name" in data[0]) {
+    return data.map(transformMailbox);
+  }
   return data;
 };
 
 // GET /mailboxes/:id/emails
 export const fetchEmails = async (folderId: string): Promise<Email[]> => {
   // Gọi axios thật
-  const { data } = await api.get(`/mailboxes/${folderId}/emails`);
+  const { data } = await api.get(`/mail/mailboxes/${folderId}/emails`);
+  if (Array.isArray(data) && data.length > 0 && "snippet" in data[0]) {
+    return data.map((e) => transformEmail(e, folderId));
+  }
   return data;
 };
 
 // GET /emails/:id
-export const fetchEmailDetail = async (emailId: string): Promise<Email | undefined> => {
+export const fetchEmailDetail = async (
+  emailId: string
+): Promise<Email | undefined> => {
   // Gọi axios thật
-  const { data } = await api.get(`/emails/${emailId}`);
+  const { data } = await api.get(`/mail/emails/${emailId}`);
+  if (data && "snippet" in data) {
+    return transformEmail(data);
+  }
   return data;
+};
+
+// POST /mail/send
+export const sendEmail = async (to: string, subject: string, body: string) => {
+  const { data } = await api.post("/mail/send", { to, subject, body });
+  return data;
+};
+
+// POST /mail/emails/:id/modify
+export const modifyEmail = async (
+  emailId: string,
+  addLabels: string[],
+  removeLabels: string[]
+) => {
+  const { data } = await api.post(`/mail/emails/${emailId}/modify`, {
+    addLabels,
+    removeLabels,
+  });
+  return data;
+};
+
+// GET /mail/attachments/:emailId/:attachmentId
+export const fetchAttachment = async (
+  emailId: string,
+  attachmentId: string
+) => {
+  const response = await api.get(
+    `/mail/attachments/${emailId}/${attachmentId}`,
+    {
+      responseType: "blob",
+    }
+  );
+  return response.data;
 };

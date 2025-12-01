@@ -153,7 +153,7 @@ export default function SignUpPage() {
         <OtherMethodLogin
           onGoogleSuccess={(payload) => {
             if (payload?.accessToken && payload?.refreshToken) {
-              login(payload.accessToken, payload.refreshToken);
+              login(payload.accessToken, payload.refreshToken, "google");
               toast.success("Signed in with Google!");
               navigate("/");
             } else {
