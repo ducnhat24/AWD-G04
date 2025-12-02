@@ -37,17 +37,6 @@ export default function HomePage() {
     enabled: !!selectedEmailId, // Chỉ gọi API khi có ID được chọn
   });
 
-  const handleTestPing = async () => {
-    try {
-      // Gọi vào endpoint được bảo vệ của Backend thật
-      await api.get("/user/me");
-      alert("API Ping Success");
-    } catch (error) {
-      console.error("Lỗi:", error);
-      alert("Gọi API thất bại (Có thể Refresh Token cũng hết hạn?)");
-    }
-  };
-
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
       {/* COLUMN 1: SIDEBAR */}
@@ -111,9 +100,6 @@ export default function HomePage() {
           <EmailDetail email={selectedEmail} />
         )}
       </main>
-      <button onClick={handleTestPing} className="btn-test">
-        Test API Ping
-      </button>
     </div>
   );
 }
