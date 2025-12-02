@@ -78,6 +78,7 @@ api.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       originalRequest &&
+      !originalRequest._retry && // <-- Prevent infinite loop
       !originalRequest.url?.includes("/auth/refresh") && // <-- THÊM ĐIỀU KIỆN
       !originalRequest.url?.includes("/auth/login")
     ) {

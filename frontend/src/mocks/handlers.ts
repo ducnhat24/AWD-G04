@@ -50,4 +50,25 @@ export const handlers = [
 
     return HttpResponse.json(email);
   }),
+
+  // 4. GET /mail/attachments/:emailId/:attachmentId
+  http.get(
+    `${BASE_URL}/mail/attachments/:emailId/:attachmentId`,
+    ({ params }) => {
+      const authProvider = localStorage.getItem("authProvider");
+      if (authProvider === "google") {
+        return passthrough();
+      }
+      // Return a dummy PDF blob
+      const blob = new Blob(["Dummy attachment content"], {
+        type: "application/pdf",
+      });
+      return new HttpResponse(blob, {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": 'attachment; filename="mock.pdf"',
+        },
+      });
+    }
+  ),
 ];

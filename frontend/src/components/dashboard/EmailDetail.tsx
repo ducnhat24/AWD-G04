@@ -1,17 +1,22 @@
 import type { Email, Attachment } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
-import { Reply, Trash2, MoreVertical, Star, Archive, Inbox, Paperclip, Download } from "lucide-react";
+import { Reply, Trash2, MoreVertical, Star, Mail, MailOpen, Inbox, Paperclip, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchAttachment } from "@/services/apiService";
 import { toast } from "sonner";
 
 interface EmailDetailProps {
   email: Email | null;
+  onAction: (action: "toggleRead" | "delete" | "star" | "reply") => void;
 }
 
-export function EmailDetail({ email }: EmailDetailProps) {
+export function EmailDetail({ email, onAction }: EmailDetailProps) {
   const handleDownloadAttachment = async (attachment: Attachment) => {
     if (!email) return;
+    if (!attachment.id) {
+      toast.error("Cannot download: Attachment ID is missing");
+      return;
+    }
     try {
       const blob = await fetchAttachment(email.id, attachment.id);
       const url = window.URL.createObjectURL(blob);
@@ -46,24 +51,52 @@ export function EmailDetail({ email }: EmailDetailProps) {
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" title="Archive">
-            <Archive className="size-4" />
+          <Button
+            variant="ghost"
+            size="icon"
+            title={email.isRead ? "Mark as unread" : "Mark as read"}
+            onClick={() => onAction("toggleRead")}
+          >
+            {email.isRead ? (
+              <Mail className="size-4" />
+            ) : (
+              <MailOpen className="size-4" />
+            )}
           </Button>
-          <Button variant="ghost" size="icon" title="Delete">
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Delete"
+            onClick={() => onAction("delete")}
+          >
             <Trash2 className="size-4" />
           </Button>
           <div className="w-px h-6 bg-border mx-2" />
-          <Button variant="ghost" size="icon" title="Reply">
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Reply"
+            onClick={() => onAction("reply")}
+          >
             <Reply className="size-4" />
           </Button>
         </div>
         <div className="flex items-center gap-2">
-           <Button variant="ghost" size="icon">
-             <Star className={cn("size-4", email.isStarred ? "fill-yellow-400 text-yellow-400" : "")} />
-           </Button>
-           <Button variant="ghost" size="icon">
-             <MoreVertical className="size-4" />
-           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onAction("star")}
+          >
+            <Star
+              className={cn(
+                "size-4",
+                email.isStarred ? "fill-yellow-400 text-yellow-400" : ""
+              )}
+            />
+          </Button>
+          <Button variant="ghost" size="icon">
+            <MoreVertical className="size-4" />
+          </Button>
         </div>
       </div>
 

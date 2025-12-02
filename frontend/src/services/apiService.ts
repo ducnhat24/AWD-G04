@@ -94,7 +94,7 @@ const parseSender = (fromHeader: string) => {
 
 const transformEmail = (
   backendEmail: any,
-  folderId: string = "inbox"
+  folderId: string = "INBOX"
 ): Email => {
   const { sender, senderEmail } = parseSender(backendEmail.sender || "");
 
@@ -118,7 +118,13 @@ const transformEmail = (
     isStarred: isStarred ?? false,
     folder: folderId,
     avatarColor: "bg-blue-500", // Default
-    attachments: backendEmail.attachments || [],
+    attachments:
+      backendEmail.attachments?.map((att: any) => ({
+        id: att.id || att._id || att.body?.attachmentId || att.attachmentId,
+        filename: att.filename,
+        mimeType: att.mimeType,
+        size: att.size || att.body?.size,
+      })) || [],
   };
 };
 
@@ -129,6 +135,7 @@ const transformMailbox = (backendMailbox: any) => {
   else if (lowerId.includes("draft")) icon = "file";
   else if (lowerId.includes("star")) icon = "star";
   else if (lowerId.includes("trash")) icon = "trash";
+  else if (lowerId.includes("unread")) icon = "unread";
   else if (lowerId.includes("spam") || lowerId.includes("archive"))
     icon = "archive";
 

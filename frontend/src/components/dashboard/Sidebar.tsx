@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Inbox, Send, File, Star, Trash2, Archive, Pencil } from "lucide-react";
+import { Inbox, Send, File, Star, Trash2, Archive, Pencil, Mail } from "lucide-react";
 
 interface SidebarProps {
   folders: { id: string; label: string; icon: string }[];
@@ -16,6 +16,7 @@ const iconMap: Record<string, any> = {
   star: Star,
   trash: Trash2,
   archive: Archive,
+  unread: Mail,
 };
 
 export function Sidebar({ folders, selectedFolder, onSelectFolder, onCompose }: SidebarProps) {
@@ -27,8 +28,20 @@ export function Sidebar({ folders, selectedFolder, onSelectFolder, onCompose }: 
       label: f.label.replace("CATEGORY_", ""),
     }))
     .sort((a, b) => {
-      if (a.id === "INBOX") return -1;
-      if (b.id === "INBOX") return 1;
+      const idA = a.id.toUpperCase();
+      const idB = b.id.toUpperCase();
+
+      const order = ["INBOX", "STARRED", "SENT", "DRAFT", "TRASH", "UNREAD"];
+      const indexA = order.indexOf(idA);
+      const indexB = order.indexOf(idB);
+
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+
       return 0;
     });
 

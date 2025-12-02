@@ -5,19 +5,21 @@ import { EmailList } from "@/components/dashboard/EmailList";
 import { EmailDetail } from "@/components/dashboard/EmailDetail";
 import { ComposeEmail } from "@/components/dashboard/ComposeEmail";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
+import { toast } from "sonner";
 import {
   fetchEmails,
   fetchMailboxes,
   fetchEmailDetail,
+  modifyEmail,
 } from "@/services/apiService";
 
 export default function HomePage() {
   const { logout } = useAuth();
 
   // Dashboard State
-  const [selectedFolder, setSelectedFolder] = useState<string>("inbox");
+  const [selectedFolder, setSelectedFolder] = useState<string>("INBOX");
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
 
@@ -42,6 +44,73 @@ export default function HomePage() {
     enabled: !!selectedEmailId, // Chỉ gọi API khi có ID được chọn
     refetchOnWindowFocus: false,
   });
+
+  const queryClient = useQueryClient();
+
+  const modifyEmailMutation = useMutation({
+    mutationFn: ({
+      id,
+      addLabels,
+      removeLabels,
+    }: {
+      id: string;
+      addLabels: string[];
+      removeLabels: string[];
+    }) => modifyEmail(id, addLabels, removeLabels),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["emails"] });
+      queryClient.invalidateQueries({ queryKey: ["email", selectedEmailId] });
+      queryClient.invalidateQueries({ queryKey: ["mailboxes"] });
+      toast.success("Action completed");
+    },
+    onError: () => {
+      toast.error("Failed to perform action");
+    },
+  });
+
+  const handleEmailAction = (
+    action: "toggleRead" | "delete" | "star" | "reply"
+  ) => {
+    if (!selectedEmailId || !selectedEmail) return;
+
+    if (action === "reply") {
+      setIsComposeOpen(true);
+      return;
+    }
+
+    const addLabels: string[] = [];
+    const removeLabels: string[] = [];
+
+    switch (action) {
+      case "toggleRead":
+        if (selectedEmail.isRead) {
+          addLabels.push("UNREAD");
+        } else {
+          removeLabels.push("UNREAD");
+        }
+        break;
+      case "delete":
+        addLabels.push("TRASH");
+        break;
+      case "star":
+        if (selectedEmail.isStarred) {
+          removeLabels.push("STARRED");
+        } else {
+          addLabels.push("STARRED");
+        }
+        break;
+    }
+
+    modifyEmailMutation.mutate({
+      id: selectedEmailId,
+      addLabels,
+      removeLabels,
+    });
+
+    if (action === "delete") {
+      setSelectedEmailId(null);
+    }
+  };
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
@@ -104,7 +173,7 @@ export default function HomePage() {
         {isLoadingDetail ? (
           <div className="p-8 text-center">Loading detail...</div>
         ) : (
-          <EmailDetail email={selectedEmail} />
+          <EmailDetail email={selectedEmail} onAction={handleEmailAction} />
         )}
       </main>
 
