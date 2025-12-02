@@ -23,11 +23,14 @@ export default function HomePage() {
   const { data: emails = [], isLoading } = useQuery({
     queryKey: ["emails", selectedFolder], // Key thay đổi thì fetch lại
     queryFn: () => fetchEmails(selectedFolder),
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   const { data: folders = [] } = useQuery({
     queryKey: ["mailboxes"],
     queryFn: fetchMailboxes,
+    refetchOnWindowFocus: false,
   });
 
   // 2. Tìm email đang chọn trong danh sách đã fetch
@@ -35,12 +38,13 @@ export default function HomePage() {
     queryKey: ["email", selectedEmailId],
     queryFn: () => fetchEmailDetail(selectedEmailId!),
     enabled: !!selectedEmailId, // Chỉ gọi API khi có ID được chọn
+    refetchOnWindowFocus: false,
   });
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
       {/* COLUMN 1: SIDEBAR */}
-      <aside className="hidden md:flex w-64 flex-col flex-shrink-0 border-r">
+      <aside className="hidden md:flex w-64 flex-col shrink-0 border-r">
         <Sidebar
           folders={folders} // <--- Truyền data API vào đây
           selectedFolder={selectedFolder}
