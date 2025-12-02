@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { EmailList } from "@/components/dashboard/EmailList";
 import { EmailDetail } from "@/components/dashboard/EmailDetail";
+import { ComposeEmail } from "@/components/dashboard/ComposeEmail";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
@@ -18,6 +19,7 @@ export default function HomePage() {
   // Dashboard State
   const [selectedFolder, setSelectedFolder] = useState<string>("inbox");
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
 
   // 1. Fetch Emails bằng React Query (Thay vì filter tĩnh)
   const { data: emails = [], isLoading } = useQuery({
@@ -52,6 +54,7 @@ export default function HomePage() {
             setSelectedFolder(id);
             setSelectedEmailId(null);
           }}
+          onCompose={() => setIsComposeOpen(true)}
         />
         <div className="p-4 border-t bg-muted/20">
           <button
@@ -104,6 +107,9 @@ export default function HomePage() {
           <EmailDetail email={selectedEmail} />
         )}
       </main>
+
+      {/* COMPOSE EMAIL MODAL */}
+      {isComposeOpen && <ComposeEmail onClose={() => setIsComposeOpen(false)} />}
     </div>
   );
 }

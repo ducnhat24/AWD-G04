@@ -5,6 +5,7 @@ interface SidebarProps {
   folders: { id: string; label: string; icon: string }[];
   selectedFolder: string;
   onSelectFolder: (folderId: string) => void;
+  onCompose: () => void;
 }
 
 // Map string icon names to Lucide components
@@ -17,7 +18,7 @@ const iconMap: Record<string, any> = {
   archive: Archive,
 };
 
-export function Sidebar({ folders, selectedFolder, onSelectFolder }: SidebarProps) {
+export function Sidebar({ folders, selectedFolder, onSelectFolder, onCompose }: SidebarProps) {
   // Filter out CHAT, remove CATEGORY_ prefix, and sort INBOX to top
   const processedFolders = folders
     .filter((f) => f.id !== "CHAT")
@@ -35,7 +36,10 @@ export function Sidebar({ folders, selectedFolder, onSelectFolder }: SidebarProp
     <div className="w-full h-full flex flex-col py-4 gap-2 border-r bg-muted/20">
       <div className="px-4 mb-4">
         <h2 className="text-xl font-bold tracking-tight mb-4">Mail App</h2>
-        <button className="flex items-center gap-2 bg-[#c2e7ff] hover:bg-[#b3d7ef] text-[#001d35] px-6 py-4 rounded-2xl font-medium transition-colors shadow-sm">
+        <button 
+          onClick={onCompose}
+          className="flex items-center gap-2 bg-[#c2e7ff] hover:bg-[#b3d7ef] text-[#001d35] px-6 py-4 rounded-2xl font-medium transition-colors shadow-sm"
+        >
           <Pencil className="size-5" />
           Compose email
         </button>
