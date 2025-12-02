@@ -1,13 +1,34 @@
-import type { Email } from "@/data/mockData";
+import type { Email, Attachment } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
-import { Reply, Trash2, MoreVertical, Star, Archive, Inbox } from "lucide-react";
+import { Reply, Trash2, MoreVertical, Star, Archive, Inbox, Paperclip, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { fetchAttachment } from "@/services/apiService";
+import { toast } from "sonner";
 
 interface EmailDetailProps {
   email: Email | null;
 }
 
 export function EmailDetail({ email }: EmailDetailProps) {
+  const handleDownloadAttachment = async (attachment: Attachment) => {
+    if (!email) return;
+    try {
+      const blob = await fetchAttachment(email.id, attachment.id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = attachment.filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success(`Downloaded ${attachment.filename}`);
+    } catch (error) {
+      console.error("Failed to download attachment", error);
+      toast.error("Failed to download attachment");
+    }
+  };
+
   if (!email) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center text-muted-foreground">
@@ -75,6 +96,40 @@ export function EmailDetail({ email }: EmailDetailProps) {
         <div className="prose prose-sm max-w-none text-foreground dark:prose-invert">
             <div dangerouslySetInnerHTML={{ __html: email.body }} />
         </div>
+
+        {/* Attachments */}
+        {email.attachments && email.attachments.length > 0 && (
+          <div className="mt-6 border-t pt-4">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <Paperclip className="size-4" />
+              Attachments ({email.attachments.length})
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {email.attachments.map((att) => (
+                <div key={att.id} className="flex items-center justify-between p-3 border rounded-md bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <div className="bg-background p-2 rounded border">
+                      <Paperclip className="size-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate" title={att.filename}>{att.filename}</p>
+                      <p className="text-xs text-muted-foreground">{(att.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="shrink-0"
+                    onClick={() => handleDownloadAttachment(att)}
+                    title="Download"
+                  >
+                    <Download className="size-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         
         {/* Reply Area Mockup */}
         <div className="mt-8 pt-6 border-t">

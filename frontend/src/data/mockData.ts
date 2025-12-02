@@ -1,5 +1,12 @@
 // src/data/mockData.ts
 
+export interface Attachment {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+}
+
 export interface Email {
   id: string;
   sender: string;
@@ -12,6 +19,7 @@ export interface Email {
   isStarred: boolean;
   folder: string; // e.g., "inbox", "sent", "trash"
   avatarColor?: string;
+  attachments?: Attachment[];
 }
 
 export const FOLDERS = [

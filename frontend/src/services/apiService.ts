@@ -118,6 +118,7 @@ const transformEmail = (
     isStarred: isStarred ?? false,
     folder: folderId,
     avatarColor: "bg-blue-500", // Default
+    attachments: backendEmail.attachments || [],
   };
 };
 
