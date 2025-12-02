@@ -61,7 +61,6 @@ export default function HomePage() {
       queryClient.invalidateQueries({ queryKey: ["emails"] });
       queryClient.invalidateQueries({ queryKey: ["email", selectedEmailId] });
       queryClient.invalidateQueries({ queryKey: ["mailboxes"] });
-      toast.success("Action completed");
     },
     onError: () => {
       toast.error("Failed to perform action");
@@ -80,32 +79,45 @@ export default function HomePage() {
 
     const addLabels: string[] = [];
     const removeLabels: string[] = [];
+    let successMessage = "Action completed";
 
     switch (action) {
       case "toggleRead":
         if (selectedEmail.isRead) {
           addLabels.push("UNREAD");
+          successMessage = "Marked as unread";
         } else {
           removeLabels.push("UNREAD");
+          successMessage = "Marked as read";
         }
         break;
       case "delete":
         addLabels.push("TRASH");
+        successMessage = "Moved to trash";
         break;
       case "star":
         if (selectedEmail.isStarred) {
           removeLabels.push("STARRED");
+          successMessage = "Removed from starred";
         } else {
           addLabels.push("STARRED");
+          successMessage = "Marked as starred";
         }
         break;
     }
 
-    modifyEmailMutation.mutate({
-      id: selectedEmailId,
-      addLabels,
-      removeLabels,
-    });
+    modifyEmailMutation.mutate(
+      {
+        id: selectedEmailId,
+        addLabels,
+        removeLabels,
+      },
+      {
+        onSuccess: () => {
+          toast.success(successMessage);
+        },
+      }
+    );
 
     if (action === "delete") {
       setSelectedEmailId(null);
