@@ -1,125 +1,124 @@
-# Secure Auth & Email Dashboard Mockup
-A full-stack Single Page Application (SPA) demonstrating a secure authentication flow using JWT (JSON Web Tokens), Google OAuth 2.0, and a responsive Email Dashboard UI.
+# G04 - React Email Client Frontend
 
-## Live Demo
+Ứng dụng Single Page Application (SPA) đóng vai trò là giao diện người dùng cho Email Client tích hợp Gmail. Được xây dựng bằng React, Vite và Tailwind CSS, ứng dụng cung cấp trải nghiệm người dùng mượt mà để quản lý email.
 
-Public Hosting URL: https://fe-ia03-awad.vercel.app 
+## Tính năng
 
+### Xác thực:
 
-## Features
-### Authentication:
+- Đăng nhập/Đăng ký bằng Email & Mật khẩu.
 
-Sign up & Sign in with Email/Password.
+- Đăng nhập bằng Google (OAuth 2.0).
 
+- Cơ chế tự động làm mới Token (Silent Refresh) giúp trải nghiệm liền mạch.
 
-Google Sign-In (OAuth 2.0) integration.
+### Dashboard Email:
 
+- Giao diện 3 cột hiện đại (Danh sách thư mục, Danh sách email, Chi tiết email).
 
-Secure Token Handling: Access Token & Refresh Token rotation.
+- Hiển thị danh sách email với phân trang và trạng thái đọc/chưa đọc.
 
+- Xem chi tiết nội dung email (hỗ trợ HTML) an toàn.
 
-Automatic Token Refresh: Intercepts 401 errors and refreshes the token silently without logging the user out.
+- Xem và tải xuống file đính kèm.
 
+### Thao tác:
 
-Logout functionality (clears tokens and redirects).
+- Soạn thảo email mới (Compose).
 
-### Email Dashboard (Mockup):
+- Trả lời (Reply) và Chuyển tiếp (Forward) email.
 
-Responsive 3-column layout (Folders, Email List, Email Detail).
+- Đánh dấu đã đọc/chưa đọc, gắn sao, xóa email.
 
+### Xử lý lỗi & UX:
 
-Protected Routes (requires login to access).
+- Thông báo lỗi user friendly (Toast notifications).
 
-Mock API integration for email data.
+- Loading state và Skeleton loading.
 
-## Tech Stack
-Frontend: React (Vite), TypeScript, Tailwind CSS, Shadcn/UI, Axios, React Router DOM.
+- Xử lý đồng thời (Concurrency Guard) cho các request khi token hết hạn.
 
-Backend: Node.js, NestJS, Mongoose.
+## Công nghệ
 
-Database: MongoDB Atlas.
+- Core: React 19, Vite, TypeScript.
 
-Deployment: Vercel (Frontend & Backend).
+- Styling: Tailwind CSS, Shadcn/UI.
 
-## Setup and Run Locally
-Follow these instructions to reproduce the deployment locally. 
+- State Management & Fetching: React Query (@tanstack/react-query), Axios.
 
-Prerequisites
-Node.js (v18 or higher)
+- Routing: React Router DOM.
 
-MongoDB URI (local or Atlas)
+- Forms: React Hook Form, Zod.
 
-Google Cloud Console Project (for Client ID & Secret)
+- Mocking (Dev): MSW (Mock Service Worker) - Đã tắt khi tích hợp Backend thật.
 
-## Frontend Setup (React + Vite)
-Navigate to the client directory:
+## Cài đặt và Chạy
 
-Install dependencies:
-npm install
+- Yêu cầu tiên quyết
 
-Create a .env file in the client root:
+- Node.js (v18 trở lên)
 
-VITE_API_URL=http://localhost:8080
+- npm hoặc yarn
 
-# OAuth Configuration
-VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
-VITE_GOOGLE_REDIRECT_URI=http://localhost:5173/login/oauth/google/callback
+#### Các bước thực hiện
 
-Run the application:
-npm run dev
+##### Di chuyển vào thư mục frontend:
 
-The app will run at http://localhost:5173.
-
-## Token Storage & Security Considerations
-This application implements a secure authentication strategy based on industry standards for SPAs. 
+    cd frontend
 
 
-### 1. Access Token (Short-lived)
-Storage: Stored in Application Memory (React Context/State).
+##### Cài đặt dependencies:
 
-Reasoning: Storing access tokens in memory prevents XSS (Cross-Site Scripting) attacks from easily stealing the token, as it is not accessible via document.cookie or localStorage. The token is lost when the tab is closed or refreshed, which is handled by the refresh flow.
+    npm install
 
-### 2. Refresh Token (Long-lived)
-Storage: Stored in LocalStorage.
 
-Reasoning: Used to persist the user's session across page reloads.
+##### Cấu hình biến môi trường:
+Tạo file .env tại thư mục frontend/ và điền các thông tin sau (khớp với Backend):
 
-Security Note: While HttpOnly Cookies are generally recommended to prevent XSS, LocalStorage was chosen for this project to simplify the implementation of the Automatic Token Refresh mechanism via Axios Interceptors and to avoid Cross-Site Cookie issues on the Vercel Free Tier (which separates FE and BE domains).
+    VITE_API_URL=http://localhost:3000
 
-Mitigation: To mitigate risks, the Refresh Token is only used to obtain new Access Tokens and cannot be used to directly access protected resources.
+### Cấu hình OAuth (Lấy từ Google Cloud Console)
+    VITE_GOOGLE_CLIENT_ID=your-google-client-id
+    VITE_GOOGLE_REDIRECT_URI=http://localhost:5173/login/oauth/google/callback
 
-### 3. Automatic Token Refresh
-An Axios Interceptor is configured to listen for 401 Unauthorized responses.
 
-When detected, it pauses the failed request, uses the Refresh Token to obtain a new Access Token from the backend, updates the memory state, and retries the original request seamlessly.
+### Chạy ứng dụng:
 
-## Third-Party Services Used
+    npm run dev
 
-Google OAuth 2.0: Used for the "Sign in with Google" functionality, allowing users to authenticate using their Google accounts without creating a new password.
+Ứng dụng sẽ chạy tại http://localhost:5173.
 
-MongoDB Atlas: Cloud-hosted NoSQL database for storing user credentials (hashed) and linked account information.
+## Bảo mật Frontend
 
-Vercel: Cloud platform used for hosting both the Frontend (Static) and Backend (Serverless Functions).
+### Lưu trữ Token:
 
-## How to Test "Simulate Expiry"
-To verify the automatic token refresh mechanism:
+- Access Token: Được lưu trong bộ nhớ ứng dụng (In-memory variable & React Context), không lưu vào LocalStorage để tránh XSS.
 
-Log in to the application.
+- Refresh Token: Được lưu trong LocalStorage để duy trì phiên đăng nhập (có thể nâng cấp lên HttpOnly Cookie).
 
-Open the Browser Developer Tools -> Network tab.
+### Xử lý Token hết hạn:
 
-Wait for the Access Token to expire (configured to 1 minute for demo purposes).
+- Sử dụng Axios Interceptor để bắt lỗi 401.
 
-Click the "Test API Ping" button (or navigate to a protected route).
+- Sử dụng Axios Interceptor để bắt lỗi 401.
+Cơ chế Concurrency Guard đảm bảo chỉ có 1 request refresh token được gửi đi khi có nhiều API gọi cùng lúc bị lỗi.
 
-Observe the Network tab:
+## Demo Kịch bản "Hết hạn Token"
 
-Request 1: 401 Unauthorized (Token expired).
+### Để kiểm chứng cơ chế tự động làm mới token:
 
-Request 2: /auth/refresh (System automatically fetches new token).
+- Đăng nhập vào ứng dụng.
 
-Request 3: 200 OK (Original request retried successfully).
-Beta
-0 / 0
-used queries
-1
+- Chờ khoảng 15 phút (hoặc thời gian ACCESS_TOKEN_EXPIRATION được cấu hình ở file env ở Backend).
+
+- Thực hiện một thao tác gọi API (ví dụ: chuyển đổi thư mục hoặc bấm nút "Test API Ping").
+
+- Quan sát Tab Network trong DevTools:
+
+- Request đầu tiên bị lỗi 401.
+
+- Ngay sau đó là request /auth/refresh thành công 200.
+
+- Cuối cùng là request ban đầu được gọi lại thành công 200.
+
+- Người dùng không bị đăng xuất.

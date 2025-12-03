@@ -21,78 +21,144 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+# G04 - NestJS Email Client Backend
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Backend RESTful API được xây dựng bằng NestJS, phục vụ cho ứng dụng Email Client. Hệ thống này hoạt động như một Proxy Server bảo mật để giao tiếp với Gmail API, quản lý xác thực người dùng và lưu trữ token.
 
-## Project setup
+## Tính năng
 
-```bash
-$ npm install
-```
+### Xác thực & Phân quyền:
 
-## Compile and run the project
+- JWT Authentication (Access Token & Refresh Token).
 
-```bash
-# development
-$ npm run start
+- Tích hợp Google OAuth 2.0 (Authorization Code Flow).
 
-# watch mode
-$ npm run start:dev
+- Bảo vệ các Route bằng Guards.
 
-# production mode
-$ npm run start:prod
-```
+### Gmail Integration (Proxy):
 
-## Run tests
+- Tự động refresh Google Access Token khi hết hạn (Server-side refresh).
 
-```bash
-# unit tests
-$ npm run test
+- API lấy danh sách Hộp thư (Labels) và Email.
 
-# e2e tests
-$ npm run test:e2e
+- API đọc chi tiết nội dung Email (Xử lý giải mã Base64 và cấu trúc Multipart).
 
-# test coverage
-$ npm run test:cov
-```
+- API gửi, trả lời và chuyển tiếp Email (Tạo Raw Message RFC 2822).
 
-## Deployment
+- API tải xuống file đính kèm an toàn.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- API thao tác: Đánh dấu đã đọc, xóa, gắn sao.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Cơ sở dữ liệu:
 
-```bash
-$ npm install -g mau
-$ mau deploy
-```
+- Lưu trữ thông tin người dùng và liên kết tài khoản Google (Linked Accounts) an toàn trong MongoDB.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Công nghệ
 
-## Resources
+- Framework: NestJS.
 
-Check out a few resources that may come in handy when working with NestJS:
+- Database: MongoDB, Mongoose.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+- Google API: googleapis (Official Node.js Client).
 
-## Support
+- Auth: Passport, JWT, Bcrypt.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Cài đặt và Chạy
 
-## Stay in touch
+Yêu cầu tiên quyết
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- Node.js (v18 trở lên)
 
-## License
+- MongoDB (Local hoặc Atlas)
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- Google Cloud Project (đã bật Gmail API)
+
+- Các bước thực hiện
+
+Di chuyển vào thư mục backend:
+
+    cd backend
+
+
+Cài đặt dependencies:
+
+    npm install
+
+
+Cấu hình biến môi trường:
+Tạo file .env tại thư mục backend/ và cấu hình như sau:
+
+    PORT=3000
+    DATABASE_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/db
+
+### JWT Config
+    JWT_SECRET=your_secret_key
+    JWT_REFRESH_SECRET=your_refresh_secret_key
+    ACCESS_TOKEN_EXPIRATION=15m # Thời gian sống ngắn để bảo mật
+    REFRESH_TOKEN_EXPIRATION=7d
+
+### Google OAuth (Lấy từ Google Cloud Console)
+    GOOGLE_CLIENT_ID=your-google-client-id
+    GOOGLE_CLIENT_SECRET=your-google-client-secret
+    GOOGLE_REDIRECT_URI=http://localhost:5173/login/oauth/google/callback
+
+### Frontend URL (Cấu hình CORS)
+    FRONTEND_URL=http://localhost:5173
+
+
+Chạy server:
+
+    npm run start:dev
+
+
+Server sẽ chạy tại http://localhost:3000.
+
+### Cấu hình Google Cloud (Bắt buộc)
+
+Để Backend có thể truy cập Gmail của người dùng, bạn cần cấu hình đúng trên Google Console:
+
+Tạo Project mới và Enable Gmail API.
+
+Trong OAuth Consent Screen, thêm các scopes:
+
+    .../auth/userinfo.email
+
+    .../auth/userinfo.profile
+
+    .../auth/gmail.readonly
+
+    .../auth/gmail.send
+
+    .../auth/gmail.modify
+
+Trong Credentials, tạo OAuth Client ID cho Web Application:
+
+    Authorized JavaScript origins: http://localhost:5173
+
+    Authorized redirect URIs: http://localhost:5173/login/oauth/google/callback
+
+📡 Danh sách API Endpoints chính
+
+| Method | Endpoint                          | Mô tả                              | Auth |
+|--------|------------------------------------|--------------------------------------|------|
+| POST   | /auth/login                        | Đăng nhập tài khoản thường           |      |
+| POST   | /auth/google                       | Trao đổi Code lấy Token Google       |      |
+| POST   | /auth/refresh                      | Làm mới Access Token của App         |      |
+
+### Mail
+| Method | Endpoint                                | Mô tả                               | Auth |
+|--------|------------------------------------------|---------------------------------------|------|
+| GET    | /mail/mailboxes                          | Lấy danh sách thư mục (Labels)        |      |
+| GET    | /mail/mailboxes/:id/emails               | Lấy danh sách email trong thư mục     |      |
+| GET    | /mail/emails/:id                         | Lấy chi tiết nội dung email           |      |
+| POST   | /mail/send                               | Gửi email mới                         |      |
+| POST   | /mail/emails/:id/reply                   | Trả lời email (Gộp thread)            |      |
+| POST   | /mail/emails/:id/forward                 | Chuyển tiếp email                     |      |
+| GET    | /mail/attachments/:msgId/:attId          | Tải file đính kèm                     |      |
+
+
+### Bảo mật
+
+- Google Refresh Token: Được lưu trữ mã hóa trong database. Frontend không bao giờ được tiếp cận token này.
+
+- Backend Proxy: Mọi thao tác với Gmail đều đi qua Backend. Backend sử dụng googleapis client để tự động xử lý việc refresh token của Google, đảm bảo phiên làm việc liên tục mà không cần user đăng nhập lại Google nhiều lần.
