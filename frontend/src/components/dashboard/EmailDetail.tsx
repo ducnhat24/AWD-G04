@@ -4,6 +4,7 @@ import { Reply, Trash2, MoreVertical, Star, Mail, MailOpen, Inbox, Paperclip, Do
 import { cn } from "@/lib/utils";
 import { fetchAttachment } from "@/services/apiService";
 import { toast } from "sonner";
+import { SafeHTML } from "@/components/ui/SafeHTML";
 
 interface EmailDetailProps {
   email: Email | null;
@@ -126,9 +127,10 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
         <h1 className="text-2xl font-bold mb-4">{email.subject}</h1>
         
         {/* Email Body */}
-        <div className="text-sm text-foreground max-w-none overflow-auto [&_a]:text-blue-600 [&_a]:underline [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_img]:inline [&_img]:align-text-bottom [&_img]:m-0 [&_img]:mr-1 [&_table]:border-collapse [&_td]:align-middle [&_td]:py-0.5 [&_td]:px-1">
-            <div dangerouslySetInnerHTML={{ __html: email.body }} />
-        </div>
+        <SafeHTML 
+          html={email.body} 
+          className="text-sm text-foreground max-w-none"
+        />
 
         {/* Attachments */}
         {email.attachments && email.attachments.length > 0 && (
