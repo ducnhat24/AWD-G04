@@ -57,15 +57,81 @@ export default function HomePage() {
       addLabels: string[];
       removeLabels: string[];
     }) => modifyEmail(id, addLabels, removeLabels),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["emails"] });
-      queryClient.invalidateQueries({ queryKey: ["email", selectedEmailId] });
-      queryClient.invalidateQueries({ queryKey: ["mailboxes"] });
+    onMutate: async ({ id, addLabels, removeLabels }) => {
+      await queryClient.cancelQueries({ queryKey: ["emails", selectedFolder] });
+      await queryClient.cancelQueries({ queryKey: ["email", id] });
+
+      const previousEmails = queryClient.getQueryData(["emails", selectedFolder]);
+      const previousEmailDetail = queryClient.getQueryData(["email", id]);
+
+      queryClient.setQueryData(["emails", selectedFolder], (old: any[]) => {
+        if (!old) return [];
+        return old.map((email) => {
+          if (email.id === id) {
+            let isRead = email.isRead;
+            let isStarred = email.isStarred;
+
+            if (addLabels.includes("UNREAD")) isRead = false;
+            if (removeLabels.includes("UNREAD")) isRead = true;
+            if (addLabels.includes("STARRED")) isStarred = true;
+            if (removeLabels.includes("STARRED")) isStarred = false;
+
+            return { ...email, isRead, isStarred };
+          }
+          return email;
+        });
+      });
+
+      if (previousEmailDetail) {
+        queryClient.setQueryData(["email", id], (old: any) => {
+          if (!old) return old;
+          let isRead = old.isRead;
+          let isStarred = old.isStarred;
+
+          if (addLabels.includes("UNREAD")) isRead = false;
+          if (removeLabels.includes("UNREAD")) isRead = true;
+          if (addLabels.includes("STARRED")) isStarred = true;
+          if (removeLabels.includes("STARRED")) isStarred = false;
+
+          return { ...old, isRead, isStarred };
+        });
+      }
+
+      return { previousEmails, previousEmailDetail };
     },
-    onError: () => {
+    onError: (_err, _newTodo, context) => {
+      if (context?.previousEmails) {
+        queryClient.setQueryData(
+          ["emails", selectedFolder],
+          context.previousEmails
+        );
+      }
+      if (context?.previousEmailDetail) {
+        queryClient.setQueryData(
+          ["email", _newTodo.id],
+          context.previousEmailDetail
+        );
+      }
       toast.error("Failed to perform action");
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["emails"] });
+      queryClient.invalidateQueries({ queryKey: ["email"] });
+      queryClient.invalidateQueries({ queryKey: ["mailboxes"] });
+    },
   });
+
+  const handleSelectEmail = (id: string) => {
+    setSelectedEmailId(id);
+    const email = emails.find((e: any) => e.id === id);
+    if (email && !email.isRead) {
+      modifyEmailMutation.mutate({
+        id,
+        addLabels: [],
+        removeLabels: ["UNREAD"],
+      });
+    }
+  };
 
   const handleEmailAction = (
     action: "toggleRead" | "delete" | "star" | "reply"
@@ -161,7 +227,7 @@ export default function HomePage() {
           <EmailList
             emails={emails}
             selectedEmailId={selectedEmailId}
-            onSelectEmail={setSelectedEmailId}
+            onSelectEmail={handleSelectEmail}
           />
         )}
       </div>
