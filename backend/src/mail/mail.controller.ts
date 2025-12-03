@@ -74,4 +74,24 @@ export class MailController {
       dto.removeLabels || []
     );
   }
+
+  // Reply Email
+  @Post('emails/:id/reply')
+  replyEmail(
+    @Req() req,
+    @Param('id') originalMessageId: string,
+    @Body('body') body: string,
+  ) {
+    return this.mailService.replyEmail(req.user._id, originalMessageId, body);
+  }
+
+  // forward Email
+  @Post('emails/:id/forward')
+  forwardEmail(
+    @Req() req,
+    @Param('id') originalMessageId: string,
+    @Body() dto: SendEmailDto,
+  ) {
+    return this.mailService.forwardEmail(req.user._id, originalMessageId, dto.to, dto.body);
+  }
 }

@@ -261,39 +261,125 @@ export class MailService {
     return { success: true };
   }
 
-  // --- Helper ---
+  // Trả lời Email (Reply)
+  async replyEmail(userId: string, originalMessageId: string, body: string) {
+    const auth = await this.getAuthenticatedClient(userId);
+    const gmail = google.gmail({ version: 'v1', auth });
 
-  private createRawMessage(to: string, subject: string, body: string): string {
-    // Cấu trúc email MIME Multipart (để hỗ trợ cả HTML và Text)
-    const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+    try {
+      // Lấy thông tin email gốc để biết Thread ID và Message ID
+      const originalMsg = await gmail.users.messages.get({
+        userId: 'me',
+        id: originalMessageId,
+        format: 'metadata',
+        metadataHeaders: ['Subject', 'Message-ID', 'References', 'From'],
+      });
 
-    const messageParts = [
-      `To: ${to}`,
-      `Subject: ${utf8Subject}`,
-      'MIME-Version: 1.0',
-      'Content-Type: text/html; charset=utf-8',
-      'Content-Transfer-Encoding: base64',
-      '',
-      Buffer.from(body).toString('base64'),
-    ];
+      const headers = originalMsg.data.payload?.headers || [];
+      const subjectObj = headers.find(h => h.name === 'Subject');
+      const msgIdObj = headers.find(h => h.name === 'Message-ID');
+      const fromObj = headers.find(h => h.name === 'From');
 
-    const message = messageParts.join('\n');
+      // Xử lý Subject (Thêm Re: nếu chưa có)
+      let subject = subjectObj?.value || '';
+      if (!subject.toLowerCase().startsWith('re:')) {
+        subject = `Re: ${subject}`;
+      }
 
-    // Mã hóa toàn bộ message sang Base64Url (yêu cầu của Gmail API)
-    return Buffer.from(message)
-      .toString('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
+      // Xử lý Header Threading 
+      const references = headers.find(h => h.name === 'References')?.value || '';
+      const inReplyTo = msgIdObj?.value || '';
+      const newReferences = references ? `${references} ${inReplyTo}` : inReplyTo;
+
+      const fromValue = fromObj?.value || '';
+
+      // Helper nhỏ để lấy email sạch
+      // Logic: Tìm chuỗi nằm trong dấu < >. Nếu không có thì lấy nguyên chuỗi.
+      const extractEmail = (text: string) => {
+        const match = text.match(/<([^>]+)>/);
+        return match ? match[1] : text;
+      };
+
+      // Lúc này 'to' sẽ chỉ là "ducnhat@gmail.com" thay vì cả cụm dài
+      const to = extractEmail(fromValue);
+
+      // Tạo Raw Message 
+      const rawMessage = this.createRawMessage(to, subject, body, {
+        'In-Reply-To': inReplyTo,
+        'References': newReferences
+      });
+
+      // Gửi đi kèm threadId để Gmail gộp nhóm
+      const response = await gmail.users.messages.send({
+        userId: 'me',
+        requestBody: {
+          raw: rawMessage,
+          threadId: originalMsg.data.threadId,
+        },
+      });
+
+      return response.data;
+
+    } catch (error) {
+      console.error('Error replying email:', error);
+      throw new UnauthorizedException('Failed to reply email');
+    }
+  }
+
+  async forwardEmail(userId: string, originalMessageId: string, to: string, body: string) {
+    const auth = await this.getAuthenticatedClient(userId);
+    const gmail = google.gmail({ version: 'v1', auth });
+
+    try {
+      // Lấy thông tin email gốc
+      const originalMsg = await this.getEmailDetail(userId, originalMessageId);
+
+      // Xử lý Subject (Thêm Fwd: nếu chưa có)
+      let subject = originalMsg.subject || '';
+      if (!subject.toLowerCase().startsWith('fwd:')) {
+        subject = `Fwd: ${subject}`;
+      }
+
+      // Tạo nội dung trích dẫn (Quoted content)
+      // Format chuẩn thường thấy trong Gmail
+      const forwardedHeader = `
+        <br><br>
+        ---------- Forwarded message ---------<br>
+        From: <strong>${originalMsg.sender}</strong><br>
+        Date: ${originalMsg.date}<br>
+        Subject: ${originalMsg.subject}<br>
+        To: ${originalMsg.to}<br>
+        <br>
+      `;
+      // Ghép nội dung mới user nhập + header forward + nội dung cũ
+      const fullBody = `${body}${forwardedHeader}${originalMsg.body}`;
+
+      // Tạo Raw Message
+      // Lưu ý: Forward là gửi cho người mới (to), không phải người gửi cũ
+      const rawMessage = this.createRawMessage(to, subject, fullBody);
+
+      // Gửi đi
+      // Forward thường không cần gộp threadId, nhưng nếu muốn gộp thì thêm: threadId: originalMsg.threadId
+      const response = await gmail.users.messages.send({
+        userId: 'me',
+        requestBody: {
+          raw: rawMessage,
+          // threadId: originalMsg.threadId, // Bỏ comment nếu muốn forward nằm chung thread cũ
+        },
+      });
+
+      return response.data;
+
+    } catch (error) {
+      console.error('Error forwarding email:', error);
+      throw new UnauthorizedException('Failed to forward email');
+    }
   }
 
   private getBody(payload: any, mimeType: string): string | null {
-    // Case 1: Body nằm ngay ở root (thường gặp ở mail đơn giản)
     if (payload.mimeType === mimeType && payload.body?.data) {
       return this.decodeBase64(payload.body.data);
     }
-
-    // Case 2: Body nằm lồng trong parts (multipart/alternative, multipart/mixed)
     if (payload.parts) {
       for (const part of payload.parts) {
         const result = this.getBody(part, mimeType);
@@ -330,5 +416,33 @@ export class MailService {
     }
 
     return attachments;
+  }
+
+  private createRawMessage(to: string, subject: string, body: string, extraHeaders: Record<string, string> = {}): string {
+    const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+
+    let messageParts = [
+      `To: ${to}`,
+      `Subject: ${utf8Subject}`,
+      'MIME-Version: 1.0',
+      'Content-Type: text/html; charset=utf-8',
+      'Content-Transfer-Encoding: base64',
+    ];
+
+    // Add extra headers (In-Reply-To, References)
+    Object.keys(extraHeaders).forEach(key => {
+      messageParts.push(`${key}: ${extraHeaders[key]}`);
+    });
+
+    messageParts.push(''); // Dòng trống ngăn cách Header và Body
+    messageParts.push(Buffer.from(body).toString('base64'));
+
+    const message = messageParts.join('\n');
+
+    return Buffer.from(message)
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
   }
 }
