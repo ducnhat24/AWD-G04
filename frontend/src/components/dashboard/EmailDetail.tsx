@@ -114,7 +114,7 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
                 {email.senderEmail}
               </div>
               <div className="line-clamp-1 text-xs text-muted-foreground">
-                 To: <span className="text-foreground">Me</span>
+                 To: <span className="text-foreground">{email.recipient || 'Me'}</span>
               </div>
             </div>
           </div>

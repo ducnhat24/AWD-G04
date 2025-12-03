@@ -97,6 +97,12 @@ const transformEmail = (
   folderId: string = "INBOX"
 ): Email => {
   const { sender, senderEmail } = parseSender(backendEmail.sender || "");
+  
+  // Parse recipient (to)
+  // backendEmail.to might be a string or array, assuming string for now based on parseSender logic
+  // If it's an array, we might need to join them or pick the first one.
+  // Let's assume it's a string similar to sender for now.
+  const { sender: recipient, senderEmail: recipientEmail } = parseSender(backendEmail.to || "");
 
   let isRead = backendEmail.isRead;
   let isStarred = backendEmail.isStarred;
@@ -110,6 +116,8 @@ const transformEmail = (
     id: backendEmail.id,
     sender: sender,
     senderEmail: senderEmail,
+    recipient: recipient,
+    recipientEmail: recipientEmail,
     subject: backendEmail.subject || "(No Subject)",
     preview: backendEmail.snippet || "",
     body: backendEmail.body || "",

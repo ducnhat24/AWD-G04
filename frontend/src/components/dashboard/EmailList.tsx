@@ -40,7 +40,11 @@ export function EmailList({ emails, selectedEmailId, onSelectEmail }: EmailListP
               >
                 <div className="flex w-full items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{email.sender}</span>
+                    <span className="text-sm font-medium">
+                      {email.folder.toLowerCase() === "sent" && email.recipient
+                        ? `To: ${email.recipient}`
+                        : email.sender}
+                    </span>
                     {!email.isRead && (
                       <span className="flex size-2 rounded-full bg-blue-600" />
                     )}
