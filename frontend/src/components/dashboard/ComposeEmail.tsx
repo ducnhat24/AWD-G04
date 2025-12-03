@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { X, Minus, Maximize2, Minimize2 } from "lucide-react";
+import { useState, useRef } from "react";
+import { X, Minus, Maximize2, Minimize2, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { sendEmail } from "@/services/apiService";
@@ -17,6 +17,41 @@ export function ComposeEmail({ onClose }: ComposeEmailProps) {
   const [isSending, setIsSending] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [showFormatting, setShowFormatting] = useState(false);
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  const [formats, setFormats] = useState({
+    bold: false,
+    italic: false,
+    underline: false,
+    justifyLeft: false,
+    justifyCenter: false,
+    justifyRight: false,
+    insertUnorderedList: false,
+    insertOrderedList: false,
+  });
+
+  const checkFormats = () => {
+    setFormats({
+      bold: document.queryCommandState('bold'),
+      italic: document.queryCommandState('italic'),
+      underline: document.queryCommandState('underline'),
+      justifyLeft: document.queryCommandState('justifyLeft'),
+      justifyCenter: document.queryCommandState('justifyCenter'),
+      justifyRight: document.queryCommandState('justifyRight'),
+      insertUnorderedList: document.queryCommandState('insertUnorderedList'),
+      insertOrderedList: document.queryCommandState('insertOrderedList'),
+    });
+  };
+
+  const execFormat = (command: string, value: string | undefined = undefined) => {
+    document.execCommand(command, false, value);
+    if (editorRef.current) {
+        setBody(editorRef.current.innerHTML);
+        editorRef.current.focus();
+    }
+    checkFormats();
+  };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +62,9 @@ export function ComposeEmail({ onClose }: ComposeEmailProps) {
     
     setIsSending(true);
     try {
-      await sendEmail(to, subject, body);
+      // Use the current HTML content from the editor
+      const content = editorRef.current?.innerHTML || body;
+      await sendEmail(to, subject, content);
       toast.success("Email sent successfully!");
       onClose();
     } catch (error) {
@@ -112,12 +149,28 @@ export function ComposeEmail({ onClose }: ComposeEmailProps) {
                   className="border-none shadow-none focus-visible:ring-0 px-4 py-3 text-sm rounded-none"
               />
           </div>
-          <textarea
-            className="flex-1 w-full resize-none border-none p-4 text-sm focus:outline-none"
-            placeholder=""
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
+          <div 
+            ref={editorRef}
+            contentEditable
+            className="flex-1 w-full overflow-auto p-4 text-sm focus:outline-none"
+            onInput={(e) => setBody(e.currentTarget.innerHTML)}
+            onKeyUp={checkFormats}
+            onMouseUp={checkFormats}
+            style={{ minHeight: "200px" }}
           />
+
+          {/* Formatting Toolbar */}
+          {showFormatting && (
+            <div className="flex items-center gap-1 px-4 py-2 border-t border-gray-100 bg-gray-50">
+               <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('bold'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.bold && "bg-gray-300 text-black")} title="Bold"><Bold size={16} /></button>
+               <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('italic'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.italic && "bg-gray-300 text-black")} title="Italic"><Italic size={16} /></button>
+               <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('underline'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.underline && "bg-gray-300 text-black")} title="Underline"><Underline size={16} /></button>
+               <div className="w-px h-4 bg-gray-300 mx-1" />
+               <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('justifyLeft'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.justifyLeft && "bg-gray-300 text-black")} title="Align Left"><AlignLeft size={16} /></button>
+               <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('justifyCenter'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.justifyCenter && "bg-gray-300 text-black")} title="Align Center"><AlignCenter size={16} /></button>
+               <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('justifyRight'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.justifyRight && "bg-gray-300 text-black")} title="Align Right"><AlignRight size={16} /></button>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="flex justify-between items-center p-3 border-t border-gray-100 mt-auto shrink-0">
@@ -131,8 +184,13 @@ export function ComposeEmail({ onClose }: ComposeEmailProps) {
               </Button>
               {/* Formatting options placeholders */}
               <div className="flex items-center gap-1 text-gray-500 ml-2">
-                  <span className="p-2 hover:bg-gray-100 rounded cursor-pointer font-bold text-gray-600">A</span>
-                  <span className="p-2 hover:bg-gray-100 rounded cursor-pointer">📎</span>
+                  <span 
+                    className={cn("p-2 hover:bg-gray-100 rounded cursor-pointer font-bold text-gray-600", showFormatting && "bg-gray-200")}
+                    onClick={() => setShowFormatting(!showFormatting)}
+                    title="Formatting options"
+                  >
+                    A
+                  </span>
               </div>
             </div>
             <div className="text-gray-500">
