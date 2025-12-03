@@ -7,11 +7,12 @@ import {
   type ReactNode,
 } from "react";
 import { setAccessToken } from "@/lib/api"; // Import từ file api
-import { refreshAccessToken } from "@/services/apiService"; // Import từ service
+import { refreshAccessToken, fetchUserProfile, type UserProfile } from "@/services/apiService"; // Import từ service
 
 // Định nghĩa kiểu dữ liệu cho context
 interface AuthContextType {
   accessToken: string | null;
+  user: UserProfile | null;
   authProvider: "local" | "google" | null;
   login: (
     accessToken: string,
@@ -28,6 +29,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // 1. Access token lưu trong MEMORY (React state) (Req 21)
   const [accessToken, setTokenInState] = useState<string | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [authProvider, setAuthProvider] = useState<
     "local" | "google" | null
   >(null);
@@ -61,6 +63,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initializeAuth();
   }, []); // Chỉ chạy 1 lần khi app mount
 
+  // Fetch user profile when accessToken changes
+  useEffect(() => {
+    const getUser = async () => {
+      if (accessToken) {
+        try {
+          const profile = await fetchUserProfile();
+          setUser(profile);
+        } catch (error) {
+          console.error("Failed to fetch user profile", error);
+        }
+      } else {
+        setUser(null);
+      }
+    };
+    getUser();
+  }, [accessToken]);
+
   // 3. Hàm Login: Nhận cả 2 token
   const login = (
     newAccessToken: string,
@@ -77,6 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // 4. Hàm Logout: Xóa tất cả token (Req 22)
   const logout = () => {
     setTokenInState(null);
+    setUser(null);
     setAccessToken(null); // Xóa khỏi Axios interceptor
     setAuthProvider(null);
     localStorage.removeItem("refreshToken");
@@ -89,6 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider
       value={{
         accessToken,
+        user,
         authProvider,
         login,
         logout,

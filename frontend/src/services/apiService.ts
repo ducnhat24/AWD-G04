@@ -29,7 +29,7 @@ type RefreshResponse = {
 };
 
 // Backend trả về kiểu này từ /user/me
-type UserProfile = {
+export type UserProfile = {
   _id: string;
   email: string;
   // ... các trường khác

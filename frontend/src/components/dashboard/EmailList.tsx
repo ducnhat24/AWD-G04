@@ -2,6 +2,7 @@ import type { Email } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface EmailListProps {
   emails: Email[];
@@ -10,6 +11,8 @@ interface EmailListProps {
 }
 
 export function EmailList({ emails, selectedEmailId, onSelectEmail }: EmailListProps) {
+  const { user } = useAuth();
+
   return (
     <div className="flex flex-col h-full border-r">
       {/* Search Header */}
@@ -42,8 +45,8 @@ export function EmailList({ emails, selectedEmailId, onSelectEmail }: EmailListP
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">
                       {email.folder.toLowerCase() === "sent" && email.recipient
-                        ? `To: ${email.recipient}`
-                        : email.sender}
+                        ? `To: ${user && (email.recipientEmail === user.email || email.recipient === user.email) ? "Me" : email.recipient}`
+                        : (user && (email.senderEmail === user.email || email.sender === user.email) ? "Me" : email.sender)}
                     </span>
                     {!email.isRead && (
                       <span className="flex size-2 rounded-full bg-blue-600" />
