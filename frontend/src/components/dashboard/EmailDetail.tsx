@@ -1,16 +1,20 @@
 import type { Email, Attachment } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
-import { Reply, Trash2, MoreVertical, Star, Mail, MailOpen, Inbox, Paperclip, Download } from "lucide-react";
+import { Reply, Trash2, Star, Mail, MailOpen, Inbox, Paperclip, Download, Forward } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchAttachment } from "@/services/apiService";
 import { toast } from "sonner";
+import { SafeHTML } from "@/components/ui/SafeHTML";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface EmailDetailProps {
   email: Email | null;
-  onAction: (action: "toggleRead" | "delete" | "star" | "reply") => void;
+  onAction: (action: "toggleRead" | "delete" | "star" | "reply" | "forward") => void;
 }
 
 export function EmailDetail({ email, onAction }: EmailDetailProps) {
+  const { user } = useAuth();
+
   const handleDownloadAttachment = async (attachment: Attachment) => {
     if (!email) return;
     if (!attachment.id) {
@@ -80,6 +84,14 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
           >
             <Reply className="size-4" />
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Forward"
+            onClick={() => onAction("forward")}
+          >
+            <Forward className="size-4" />
+          </Button>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -93,9 +105,6 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
                 email.isStarred ? "fill-yellow-400 text-yellow-400" : ""
               )}
             />
-          </Button>
-          <Button variant="ghost" size="icon">
-            <MoreVertical className="size-4" />
           </Button>
         </div>
       </div>
@@ -114,7 +123,11 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
                 {email.senderEmail}
               </div>
               <div className="line-clamp-1 text-xs text-muted-foreground">
-                 To: <span className="text-foreground">Me</span>
+                 To: <span className="text-foreground">
+                  {user && (email.recipientEmail === user.email || email.recipient === user.email) 
+                    ? "Me" 
+                    : (email.recipient || email.recipientEmail || 'Me')}
+                 </span>
               </div>
             </div>
           </div>
@@ -126,9 +139,10 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
         <h1 className="text-2xl font-bold mb-4">{email.subject}</h1>
         
         {/* Email Body */}
-        <div className="prose prose-sm max-w-none text-foreground dark:prose-invert">
-            <div dangerouslySetInnerHTML={{ __html: email.body }} />
-        </div>
+        <SafeHTML 
+          html={email.body} 
+          className="text-sm text-foreground max-w-none"
+        />
 
         {/* Attachments */}
         {email.attachments && email.attachments.length > 0 && (
@@ -163,13 +177,13 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
             </div>
           </div>
         )}
-        
-        {/* Reply Area Mockup */}
-        <div className="mt-8 pt-6 border-t">
-           <div className="text-sm text-muted-foreground mb-2">
-             Click here to <span className="text-blue-500 cursor-pointer font-medium hover:underline">Reply</span> or <span className="text-blue-500 cursor-pointer font-medium hover:underline">Forward</span>
-           </div>
-        </div>
+      </div>
+
+      {/* Reply Area Mockup */}
+      <div className="p-4 border-t bg-background">
+          <div className="text-sm text-muted-foreground">
+            Click here to <span className="text-blue-500 cursor-pointer font-medium hover:underline" onClick={() => onAction("reply")}>Reply</span> or <span className="text-blue-500 cursor-pointer font-medium hover:underline" onClick={() => onAction("forward")}>Forward</span>
+          </div>
       </div>
     </div>
   );
