@@ -46,7 +46,7 @@ export default function SignInPage() {
   const mutation = useMutation({
     mutationFn: loginUser,
     onSuccess: (data) => {
-      login(data.accessToken, data.refreshToken);
+      login(data.accessToken, data.refreshToken, "local");
 
       toast.success("Sign in successfully!");
       navigate("/"); // Chuyển hướng về trang chủ
@@ -134,7 +134,7 @@ export default function SignInPage() {
         <OtherMethodLogin
           onGoogleSuccess={(payload) => {
             if (payload?.accessToken && payload?.refreshToken) {
-              login(payload.accessToken, payload.refreshToken);
+              login(payload.accessToken, payload.refreshToken, "google");
               toast.success("Sign in successfully!");
               navigate("/");
             } else {

@@ -12,7 +12,12 @@ import { refreshAccessToken } from "@/services/apiService"; // Import từ servi
 // Định nghĩa kiểu dữ liệu cho context
 interface AuthContextType {
   accessToken: string | null;
-  login: (accessToken: string, refreshToken: string) => void;
+  authProvider: "local" | "google" | null;
+  login: (
+    accessToken: string,
+    refreshToken: string,
+    provider: "local" | "google"
+  ) => void;
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -23,6 +28,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // 1. Access token lưu trong MEMORY (React state) (Req 21)
   const [accessToken, setTokenInState] = useState<string | null>(null);
+  const [authProvider, setAuthProvider] = useState<
+    "local" | "google" | null
+  >(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // 2. Kiểm tra Refresh Token khi app tải
@@ -30,12 +38,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const initializeAuth = async () => {
       // Chỉ thực hiện khi có refreshToken trong localStorage (Req 22)
       const refreshToken = localStorage.getItem("refreshToken");
+      const storedProvider = localStorage.getItem("authProvider") as
+        | "local"
+        | "google"
+        | null;
+
       if (refreshToken) {
         try {
           // Thử gọi API refresh
           const { accessToken: newAccessToken } = await refreshAccessToken();
           // Thành công: Đăng nhập
-          login(newAccessToken, refreshToken);
+          login(newAccessToken, refreshToken, storedProvider || "local");
         } catch (error) {
           // Thất bại: (token hết hạn), coi như logout
           console.error("Failed to refresh on init", error);
@@ -49,17 +62,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []); // Chỉ chạy 1 lần khi app mount
 
   // 3. Hàm Login: Nhận cả 2 token
-  const login = (newAccessToken: string, newRefreshToken: string) => {
+  const login = (
+    newAccessToken: string,
+    newRefreshToken: string,
+    provider: "local" | "google"
+  ) => {
     setTokenInState(newAccessToken); // Lưu access vào state (memory)
     setAccessToken(newAccessToken); // Cập nhật cho Axios interceptor
+    setAuthProvider(provider);
     localStorage.setItem("refreshToken", newRefreshToken); // Lưu refresh vào localStorage (Req 22)
+    localStorage.setItem("authProvider", provider);
   };
 
   // 4. Hàm Logout: Xóa tất cả token (Req 22)
   const logout = () => {
     setTokenInState(null);
     setAccessToken(null); // Xóa khỏi Axios interceptor
+    setAuthProvider(null);
     localStorage.removeItem("refreshToken");
+    localStorage.removeItem("authProvider");
   };
 
   const isAuthenticated = !!accessToken;
@@ -68,6 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider
       value={{
         accessToken,
+        authProvider,
         login,
         logout,
         isAuthenticated,

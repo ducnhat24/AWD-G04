@@ -17,7 +17,7 @@ const GoogleCallback = () => {
             const handleLogin = async () => {
                 try {
                     const res = await axios.post(import.meta.env.VITE_API_URL + "/auth/google", { code });
-                    login(res.data.accessToken, res.data.refreshToken);
+                    login(res.data.accessToken, res.data.refreshToken, "google");
                 } catch (error) {
                     navigate("/signin");
                 }
