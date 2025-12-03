@@ -126,7 +126,7 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
         <h1 className="text-2xl font-bold mb-4">{email.subject}</h1>
         
         {/* Email Body */}
-        <div className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+        <div className="text-sm text-foreground max-w-none overflow-auto [&_a]:text-blue-600 [&_a]:underline [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_img]:inline [&_img]:align-text-bottom [&_img]:m-0 [&_img]:mr-1 [&_table]:border-collapse [&_td]:align-middle [&_td]:py-0.5 [&_td]:px-1">
             <div dangerouslySetInnerHTML={{ __html: email.body }} />
         </div>
 
