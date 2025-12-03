@@ -6,7 +6,6 @@ import { EmailDetail } from "@/components/dashboard/EmailDetail";
 import { ComposeEmail } from "@/components/dashboard/ComposeEmail";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
 import { toast } from "sonner";
 import {
   fetchEmails,
@@ -14,6 +13,7 @@ import {
   fetchEmailDetail,
   modifyEmail,
 } from "@/services/apiService";
+import { type Email } from "@/data/mockData";
 
 export default function HomePage() {
   const { logout } = useAuth();
@@ -22,6 +22,8 @@ export default function HomePage() {
   const [selectedFolder, setSelectedFolder] = useState<string>("INBOX");
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [composeMode, setComposeMode] = useState<"compose" | "reply" | "forward">("compose");
+  const [composeOriginalEmail, setComposeOriginalEmail] = useState<Email | null>(null);
 
   // 1. Fetch Emails bằng React Query (Thay vì filter tĩnh)
   const { data: emails = [], isLoading } = useQuery({
@@ -134,11 +136,20 @@ export default function HomePage() {
   };
 
   const handleEmailAction = (
-    action: "toggleRead" | "delete" | "star" | "reply"
+    action: "toggleRead" | "delete" | "star" | "reply" | "forward"
   ) => {
     if (!selectedEmailId || !selectedEmail) return;
 
     if (action === "reply") {
+      setComposeMode("reply");
+      setComposeOriginalEmail(selectedEmail);
+      setIsComposeOpen(true);
+      return;
+    }
+
+    if (action === "forward") {
+      setComposeMode("forward");
+      setComposeOriginalEmail(selectedEmail);
       setIsComposeOpen(true);
       return;
     }
@@ -201,7 +212,11 @@ export default function HomePage() {
             setSelectedFolder(id);
             setSelectedEmailId(null);
           }}
-          onCompose={() => setIsComposeOpen(true)}
+          onCompose={() => {
+            setComposeMode("compose");
+            setComposeOriginalEmail(null);
+            setIsComposeOpen(true);
+          }}
         />
         <div className="p-4 border-t bg-muted/20">
           <button
@@ -256,7 +271,13 @@ export default function HomePage() {
       </main>
 
       {/* COMPOSE EMAIL MODAL */}
-      {isComposeOpen && <ComposeEmail onClose={() => setIsComposeOpen(false)} />}
+      {isComposeOpen && (
+        <ComposeEmail 
+          onClose={() => setIsComposeOpen(false)} 
+          mode={composeMode}
+          originalEmail={composeOriginalEmail}
+        />
+      )}
     </div>
   );
 }

@@ -219,3 +219,24 @@ export const fetchAttachment = async (
   );
   return response.data;
 };
+
+// POST /mail/emails/:id/reply
+export const replyEmail = async (emailId: string, body: string) => {
+  const { data } = await api.post(`/mail/emails/${emailId}/reply`, { body });
+  return data;
+};
+
+// POST /mail/emails/:id/forward
+export const forwardEmail = async (
+  emailId: string,
+  to: string,
+  subject: string,
+  body: string
+) => {
+  const { data } = await api.post(`/mail/emails/${emailId}/forward`, {
+    to,
+    subject,
+    body,
+  });
+  return data;
+};

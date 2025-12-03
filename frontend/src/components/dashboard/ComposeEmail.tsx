@@ -1,19 +1,40 @@
-import { useState, useRef } from "react";
-import { X, Minus, Maximize2, Minimize2, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, List, ListOrdered } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { X, Minus, Maximize2, Minimize2, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { sendEmail } from "@/services/apiService";
+import { sendEmail, replyEmail, forwardEmail } from "@/services/apiService";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { type Email } from "@/data/mockData";
 
 interface ComposeEmailProps {
   onClose: () => void;
+  mode?: "compose" | "reply" | "forward";
+  originalEmail?: Email | null;
 }
 
-export function ComposeEmail({ onClose }: ComposeEmailProps) {
-  const [to, setTo] = useState("");
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
+export function ComposeEmail({ onClose, mode = "compose", originalEmail }: ComposeEmailProps) {
+  const [to, setTo] = useState(() => {
+    if (mode === "reply" && originalEmail) {
+      return originalEmail.senderEmail;
+    }
+    return "";
+  });
+  const [subject, setSubject] = useState(() => {
+    if (mode === "reply" && originalEmail) {
+      return originalEmail.subject.startsWith("Re:") ? originalEmail.subject : `Re: ${originalEmail.subject}`;
+    }
+    if (mode === "forward" && originalEmail) {
+      return originalEmail.subject.startsWith("Fwd:") ? originalEmail.subject : `Fwd: ${originalEmail.subject}`;
+    }
+    return "";
+  });
+  const [body, setBody] = useState(() => {
+    if (mode === "forward" && originalEmail) {
+       return `<br><br><div class="gmail_quote"><div dir="ltr" class="gmail_attr">---------- Forwarded message ---------<br>From: <strong>${originalEmail.sender}</strong> &lt;${originalEmail.senderEmail}&gt;<br>Date: ${originalEmail.timestamp}<br>Subject: ${originalEmail.subject}<br>To: ${originalEmail.recipient || "Me"}<br></div><br>${originalEmail.body}</div>`;
+    }
+    return "";
+ });
   const [isSending, setIsSending] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
@@ -44,6 +65,14 @@ export function ComposeEmail({ onClose }: ComposeEmailProps) {
     });
   };
 
+  useEffect(() => {
+    if (editorRef.current && body) {
+        if (editorRef.current.innerHTML === "") {
+            editorRef.current.innerHTML = body;
+        }
+    }
+  }, []);
+
   const execFormat = (command: string, value: string | undefined = undefined) => {
     document.execCommand(command, false, value);
     if (editorRef.current) {
@@ -55,7 +84,7 @@ export function ComposeEmail({ onClose }: ComposeEmailProps) {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!to) {
+    if (!to && mode !== "reply") {
       toast.error("Please specify a recipient.");
       return;
     }
@@ -64,7 +93,15 @@ export function ComposeEmail({ onClose }: ComposeEmailProps) {
     try {
       // Use the current HTML content from the editor
       const content = editorRef.current?.innerHTML || body;
-      await sendEmail(to, subject, content);
+
+      if (mode === "reply" && originalEmail) {
+        await replyEmail(originalEmail.id, content);
+      } else if (mode === "forward" && originalEmail) {
+        await forwardEmail(originalEmail.id, to, subject, content);
+      } else {
+        await sendEmail(to, subject, content);
+      }
+
       toast.success("Email sent successfully!");
       onClose();
     } catch (error) {
@@ -138,7 +175,8 @@ export function ComposeEmail({ onClose }: ComposeEmailProps) {
                   placeholder="To" 
                   value={to} 
                   onChange={(e) => setTo(e.target.value)} 
-                  className="border-none shadow-none focus-visible:ring-0 px-4 py-3 text-sm rounded-none"
+                  disabled={mode === "reply"}
+                  className="border-none shadow-none focus-visible:ring-0 px-4 py-3 text-sm rounded-none disabled:opacity-50"
               />
           </div>
           <div className="border-b border-gray-200 shrink-0">
@@ -146,7 +184,8 @@ export function ComposeEmail({ onClose }: ComposeEmailProps) {
                   placeholder="Subject" 
                   value={subject} 
                   onChange={(e) => setSubject(e.target.value)} 
-                  className="border-none shadow-none focus-visible:ring-0 px-4 py-3 text-sm rounded-none"
+                  disabled={mode === "reply"}
+                  className="border-none shadow-none focus-visible:ring-0 px-4 py-3 text-sm rounded-none disabled:opacity-50"
               />
           </div>
           <div 

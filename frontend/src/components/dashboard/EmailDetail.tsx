@@ -1,6 +1,6 @@
 import type { Email, Attachment } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
-import { Reply, Trash2, Star, Mail, MailOpen, Inbox, Paperclip, Download } from "lucide-react";
+import { Reply, Trash2, Star, Mail, MailOpen, Inbox, Paperclip, Download, Forward } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchAttachment } from "@/services/apiService";
 import { toast } from "sonner";
@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface EmailDetailProps {
   email: Email | null;
-  onAction: (action: "toggleRead" | "delete" | "star" | "reply") => void;
+  onAction: (action: "toggleRead" | "delete" | "star" | "reply" | "forward") => void;
 }
 
 export function EmailDetail({ email, onAction }: EmailDetailProps) {
@@ -83,6 +83,14 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
             onClick={() => onAction("reply")}
           >
             <Reply className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Forward"
+            onClick={() => onAction("forward")}
+          >
+            <Forward className="size-4" />
           </Button>
         </div>
         <div className="flex items-center gap-2">
@@ -174,7 +182,7 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
       {/* Reply Area Mockup */}
       <div className="p-4 border-t bg-background">
           <div className="text-sm text-muted-foreground">
-            Click here to <span className="text-blue-500 cursor-pointer font-medium hover:underline" onClick={() => onAction("reply")}>Reply</span> or <span className="text-blue-500 cursor-pointer font-medium hover:underline">Forward</span>
+            Click here to <span className="text-blue-500 cursor-pointer font-medium hover:underline" onClick={() => onAction("reply")}>Reply</span> or <span className="text-blue-500 cursor-pointer font-medium hover:underline" onClick={() => onAction("forward")}>Forward</span>
           </div>
       </div>
     </div>
