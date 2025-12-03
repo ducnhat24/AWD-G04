@@ -54,7 +54,7 @@ export const handlers = [
   // 4. GET /mail/attachments/:emailId/:attachmentId
   http.get(
     `${BASE_URL}/mail/attachments/:emailId/:attachmentId`,
-    ({ params }) => {
+    ({ }) => {
       const authProvider = localStorage.getItem("authProvider");
       if (authProvider === "google") {
         return passthrough();
