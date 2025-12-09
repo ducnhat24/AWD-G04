@@ -54,17 +54,26 @@ export default function HomePage() {
   const { data: kanbanEmails = [], isLoading: isLoadingKanban } = useQuery({
     queryKey: ["kanban-emails"],
     queryFn: async () => {
-      const [inbox, todo, done] = await Promise.all([
-        fetchEmails("inbox").catch(() => []),
-        fetchEmails("todo").catch(() => []),
-        fetchEmails("done").catch(() => []),
+      const [inbox, starred, archive] = await Promise.all([
+        fetchEmails("INBOX").catch(() => []),
+        fetchEmails("STARRED").catch(() => []),
+        fetchEmails("ARCHIVE").catch(() => []),
       ]);
-      
-      const safeInbox = Array.isArray(inbox) ? inbox : [];
-      const safeTodo = Array.isArray(todo) ? todo : [];
-      const safeDone = Array.isArray(done) ? done : [];
-      
-      return [...safeInbox, ...safeTodo, ...safeDone];
+
+      const safeInbox = Array.isArray(inbox) ? inbox.map(e => ({ ...e, folder: 'inbox' })) : [];
+      const safeStarred = Array.isArray(starred) ? starred.map(e => ({ ...e, folder: 'todo' })) : [];
+      const safeArchive = Array.isArray(archive) ? archive.map(e => ({ ...e, folder: 'done' })) : [];
+
+      // Merge and deduplicate. Priority: Todo (Starred) > Inbox > Done (Archive)
+      // We use a Map to store emails by ID.
+      // We insert in reverse priority order so higher priority overwrites.
+      const emailMap = new Map<string, Email>();
+
+      [...safeArchive, ...safeInbox, ...safeStarred].forEach((email) => {
+        emailMap.set(email.id, email);
+      });
+
+      return Array.from(emailMap.values());
     },
     enabled: viewMode === "kanban",
   });
@@ -128,10 +137,11 @@ export default function HomePage() {
           if (!old) return [];
           return old.map((email) => {
             if (email.id === id) {
+              // Optimistic update for Kanban
               let newFolder = email.folder;
-              if (addLabels.some(l => l.toUpperCase() === "DONE")) newFolder = "done";
-              else if (addLabels.some(l => l.toUpperCase() === "TODO")) newFolder = "todo";
-              else if (addLabels.some(l => l.toUpperCase() === "INBOX")) newFolder = "inbox";
+              if (addLabels.includes("STARRED")) newFolder = "todo";
+              else if (addLabels.includes("INBOX") && removeLabels.includes("STARRED")) newFolder = "inbox";
+              else if (removeLabels.includes("INBOX") && removeLabels.includes("STARRED")) newFolder = "done";
               
               return { ...email, folder: newFolder };
             }
@@ -171,11 +181,28 @@ export default function HomePage() {
     },
   });
 
-  const handleMoveEmail = (emailId: string, sourceFolder: string, destinationFolder: string) => {
+  const handleMoveEmail = (emailId: string, _sourceFolder: string, destinationFolder: string) => {
+    const addLabels: string[] = [];
+    const removeLabels: string[] = [];
+
+    // Logic based on Destination Column
+    if (destinationFolder === "todo") {
+      // To Do -> Starred
+      addLabels.push("STARRED");
+    } else if (destinationFolder === "inbox") {
+      // Inbox -> Add INBOX, Remove STARRED (if it was starred)
+      addLabels.push("INBOX");
+      removeLabels.push("STARRED");
+    } else if (destinationFolder === "done") {
+      // Done -> Archive (Remove INBOX), Remove STARRED
+      removeLabels.push("INBOX");
+      removeLabels.push("STARRED");
+    }
+
     modifyEmailMutation.mutate({
       id: emailId,
-      addLabels: [destinationFolder.toUpperCase()],
-      removeLabels: [sourceFolder.toUpperCase()],
+      addLabels,
+      removeLabels,
     });
   };
 
