@@ -6,9 +6,10 @@ interface KanbanBoardProps {
   emails: Email[];
   onMoveEmail: (emailId: string, sourceFolder: string, destinationFolder: string) => void;
   onSnooze: (emailId: string, date: Date) => void;
+  onOpenMail: (emailId: string) => void;
 }
 
-export function KanbanBoard({ emails, onMoveEmail, onSnooze }: KanbanBoardProps) {
+export function KanbanBoard({ emails, onMoveEmail, onSnooze, onOpenMail }: KanbanBoardProps) {
   // Filter emails into columns
   // We normalize folder names to lowercase to match IDs
   const inboxEmails = emails.filter(e => e.folder.toLowerCase() === 'inbox');
@@ -40,6 +41,7 @@ export function KanbanBoard({ emails, onMoveEmail, onSnooze }: KanbanBoardProps)
           count={inboxEmails.length}
           color="bg-red-500"
           onSnooze={onSnooze}
+          onOpenMail={onOpenMail}
         />
         <KanbanColumn
           id="todo"
@@ -48,6 +50,7 @@ export function KanbanBoard({ emails, onMoveEmail, onSnooze }: KanbanBoardProps)
           count={todoEmails.length}
           color="bg-yellow-500"
           onSnooze={onSnooze}
+          onOpenMail={onOpenMail}
         />
         <KanbanColumn
           id="done"
@@ -56,6 +59,7 @@ export function KanbanBoard({ emails, onMoveEmail, onSnooze }: KanbanBoardProps)
           count={doneEmails.length}
           color="bg-green-500"
           onSnooze={onSnooze}
+          onOpenMail={onOpenMail}
         />
       </div>
     </DragDropContext>

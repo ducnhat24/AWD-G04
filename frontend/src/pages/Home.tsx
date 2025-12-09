@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { EmailList } from "@/components/dashboard/EmailList";
 import { EmailDetail } from "@/components/dashboard/EmailDetail";
+import { EmailDetailDialog } from "@/components/dashboard/EmailDetailDialog";
 import { ComposeEmail } from "@/components/dashboard/ComposeEmail";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -29,6 +30,7 @@ export default function HomePage() {
   const [composeMode, setComposeMode] = useState<"compose" | "reply" | "forward">("compose");
   const [composeOriginalEmail, setComposeOriginalEmail] = useState<Email | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [isKanbanDetailOpen, setIsKanbanDetailOpen] = useState(false);
 
   // 1. Fetch Emails bằng React Query (Thay vì filter tĩnh)
   const { data: emails = [], isLoading } = useQuery({
@@ -212,7 +214,10 @@ export default function HomePage() {
     snoozeEmailMutation.mutate({ id: emailId, date });
   };
 
-
+  const handleOpenMail = (emailId: string) => {
+    setSelectedEmailId(emailId);
+    setIsKanbanDetailOpen(true);
+  };
 
   const handleMoveEmail = (emailId: string, _sourceFolder: string, destinationFolder: string) => {
     const addLabels: string[] = [];
@@ -409,6 +414,7 @@ export default function HomePage() {
                   emails={kanbanEmails}
                   onMoveEmail={handleMoveEmail}
                   onSnooze={handleSnooze}
+                  onOpenMail={handleOpenMail}
                 />
               )}
             </div>
@@ -471,6 +477,17 @@ export default function HomePage() {
           originalEmail={composeOriginalEmail}
         />
       )}
+
+      {/* KANBAN EMAIL DETAIL MODAL */}
+      <EmailDetailDialog
+        isOpen={isKanbanDetailOpen}
+        onClose={() => {
+          setIsKanbanDetailOpen(false);
+          setSelectedEmailId(null);
+        }}
+        email={selectedEmail}
+        onAction={handleEmailAction}
+      />
     </div>
   );
 }

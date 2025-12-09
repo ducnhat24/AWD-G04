@@ -11,9 +11,10 @@ interface KanbanColumnProps {
   count: number;
   color?: string;
   onSnooze: (emailId: string, date: Date) => void;
+  onOpenMail: (emailId: string) => void;
 }
 
-export function KanbanColumn({ id, title, emails, count, color = "bg-gray-500", onSnooze }: KanbanColumnProps) {
+export function KanbanColumn({ id, title, emails, count, color = "bg-gray-500", onSnooze, onOpenMail }: KanbanColumnProps) {
   return (
     <div className="flex flex-col h-full min-w-[300px] w-full bg-muted/10 rounded-xl border border-border/50">
       {/* Column Header */}
@@ -42,7 +43,13 @@ export function KanbanColumn({ id, title, emails, count, color = "bg-gray-500", 
             )}
           >
             {emails.map((email, index) => (
-              <KanbanCard key={email.id} email={email} index={index} onSnooze={onSnooze} />
+              <KanbanCard 
+                key={email.id} 
+                email={email} 
+                index={index} 
+                onSnooze={onSnooze}
+                onOpenMail={onOpenMail}
+              />
             ))}
             {provided.placeholder}
           </div>

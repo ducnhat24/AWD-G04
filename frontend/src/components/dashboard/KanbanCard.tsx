@@ -9,9 +9,10 @@ interface KanbanCardProps {
   email: Email;
   index: number;
   onSnooze: (emailId: string, date: Date) => void;
+  onOpenMail: (emailId: string) => void;
 }
 
-export function KanbanCard({ email, index, onSnooze }: KanbanCardProps) {
+export function KanbanCard({ email, index, onSnooze, onOpenMail }: KanbanCardProps) {
   const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
 
   return (
@@ -72,7 +73,10 @@ export function KanbanCard({ email, index, onSnooze }: KanbanCardProps) {
                 <Clock className="w-3 h-3" />
                 <span>Snooze</span>
               </button>
-              <button className="text-xs font-medium text-primary hover:underline">
+              <button 
+                onClick={() => onOpenMail(email.id)}
+                className="text-xs font-medium text-primary hover:underline"
+              >
                 Open Mail
               </button>
             </div>
