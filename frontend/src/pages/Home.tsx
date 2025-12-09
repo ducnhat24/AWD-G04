@@ -12,6 +12,7 @@ import {
   fetchMailboxes,
   fetchEmailDetail,
   modifyEmail,
+  snoozeEmail,
 } from "@/services/apiService";
 import { type Email } from "@/data/mockData";
 import { KanbanBoard } from "@/components/dashboard/KanbanBoard";
@@ -70,6 +71,20 @@ export default function HomePage() {
       const emailMap = new Map<string, Email>();
 
       [...safeArchive, ...safeInbox, ...safeStarred].forEach((email) => {
+        // Check snooze status
+        if (email.snoozeUntil) {
+          const snoozeDate = new Date(email.snoozeUntil);
+          if (snoozeDate > new Date()) {
+            // Future snooze: Hide it
+            return;
+          } else {
+            // Expired snooze: Restore to Inbox (or keep current folder if it's already fetched)
+            // For simplicity, if it was snoozed and expired, we treat it as Inbox unless it's starred
+            if (email.folder !== 'todo') {
+               email.folder = 'inbox';
+            }
+          }
+        }
         emailMap.set(email.id, email);
       });
 
@@ -152,34 +167,52 @@ export default function HomePage() {
 
       return { previousEmails, previousEmailDetail, previousKanbanEmails };
     },
-    onError: (_err, _newTodo, context) => {
+    onError: (err, newTodo, context) => {
       if (context?.previousEmails) {
-        queryClient.setQueryData(
-          ["emails", selectedFolder],
-          context.previousEmails
-        );
+        queryClient.setQueryData(["emails", selectedFolder], context.previousEmails);
       }
       if (context?.previousEmailDetail) {
-        queryClient.setQueryData(
-          ["email", _newTodo.id],
-          context.previousEmailDetail
-        );
+        queryClient.setQueryData(["email", newTodo.id], context.previousEmailDetail);
       }
       if (context?.previousKanbanEmails) {
-        queryClient.setQueryData(
-          ["kanban-emails"],
-          context.previousKanbanEmails
-        );
+        queryClient.setQueryData(["kanban-emails"], context.previousKanbanEmails);
       }
-      toast.error("Failed to perform action");
+      toast.error("Failed to update email");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["emails"] });
-      queryClient.invalidateQueries({ queryKey: ["email"] });
-      queryClient.invalidateQueries({ queryKey: ["mailboxes"] });
-      queryClient.invalidateQueries({ queryKey: ["kanban-emails"] });
+      // queryClient.invalidateQueries({ queryKey: ["emails"] });
     },
   });
+
+  const snoozeEmailMutation = useMutation({
+    mutationFn: ({ id, date }: { id: string; date: Date }) =>
+      snoozeEmail(id, date.toISOString()),
+    onMutate: async ({ id, date }) => {
+      await queryClient.cancelQueries({ queryKey: ["kanban-emails"] });
+      const previousKanbanEmails = queryClient.getQueryData(["kanban-emails"]);
+
+      queryClient.setQueryData(["kanban-emails"], (old: Email[] | undefined) => {
+        if (!old) return [];
+        // Optimistic update: Remove the email from the list
+        return old.filter((email) => email.id !== id);
+      });
+
+      return { previousKanbanEmails };
+    },
+    onError: (err, newTodo, context) => {
+      queryClient.setQueryData(["kanban-emails"], context?.previousKanbanEmails);
+      toast.error("Failed to snooze email");
+    },
+    onSuccess: () => {
+      toast.success("Email snoozed");
+    },
+  });
+
+  const handleSnooze = (emailId: string, date: Date) => {
+    snoozeEmailMutation.mutate({ id: emailId, date });
+  };
+
+
 
   const handleMoveEmail = (emailId: string, _sourceFolder: string, destinationFolder: string) => {
     const addLabels: string[] = [];
@@ -375,6 +408,7 @@ export default function HomePage() {
                 <KanbanBoard
                   emails={kanbanEmails}
                   onMoveEmail={handleMoveEmail}
+                  onSnooze={handleSnooze}
                 />
               )}
             </div>

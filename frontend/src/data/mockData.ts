@@ -22,6 +22,7 @@ export interface Email {
   folder: string; // e.g., "inbox", "sent", "trash"
   avatarColor?: string;
   attachments?: Attachment[];
+  snoozeUntil?: string; // ISO Date string
 }
 
 export const FOLDERS = [
