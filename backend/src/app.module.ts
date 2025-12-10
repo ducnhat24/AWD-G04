@@ -6,11 +6,13 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { SnoozeLogModule } from './snooze-log/snooze-log.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // Giúp ConfigModule khả dụng ở mọi nơi
+      isGlobal: true,
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -19,9 +21,11 @@ import { MailModule } from './mail/mail.module';
       }),
       inject: [ConfigService],
     }),
+    ScheduleModule.forRoot(),
     UserModule,
     AuthModule,
     MailModule,
+    SnoozeLogModule,
   ],
   controllers: [AppController],
   providers: [AppService],
