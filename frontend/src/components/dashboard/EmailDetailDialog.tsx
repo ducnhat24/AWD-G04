@@ -1,4 +1,3 @@
-import React from "react";
 import { X, Loader2 } from "lucide-react";
 import { EmailDetail } from "./EmailDetail";
 import type { Email } from "@/data/mockData";
@@ -17,7 +16,7 @@ export function EmailDetailDialog({ isOpen, onClose, email, isLoading, onAction 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div 
+      <div
         className="relative w-full max-w-4xl h-[80vh] bg-background rounded-lg shadow-xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >

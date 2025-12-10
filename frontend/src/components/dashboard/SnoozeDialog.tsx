@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
 import { Clock, X, Sun, Moon, Calendar, CalendarClock, ArrowLeft } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface SnoozeDialogProps {
@@ -52,7 +51,7 @@ export function SnoozeDialog({ isOpen, onClose, onSnooze }: SnoozeDialogProps) {
   const handleCustomSnooze = () => {
     if (!customDate) return;
     const date = new Date(customDate);
-    
+
     // Basic validation
     if (isNaN(date.getTime())) return;
     if (date < new Date()) {
@@ -164,7 +163,7 @@ export function SnoozeDialog({ isOpen, onClose, onSnooze }: SnoozeDialogProps) {
                 className="w-full p-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
-            
+
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setIsCustomMode(false)}

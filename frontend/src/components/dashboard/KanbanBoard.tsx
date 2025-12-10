@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import type { Email } from "@/data/mockData";
 import { KanbanColumn } from "./KanbanColumn";
