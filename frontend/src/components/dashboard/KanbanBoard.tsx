@@ -25,7 +25,7 @@ interface KanbanBoardProps {
     snoozed: KanbanData;
   };
   onMoveEmail: (emailId: string, sourceFolder: string, destinationFolder: string) => void;
-  onSnooze: (emailId: string, date: Date) => void;
+  onSnooze: (emailId: string, date: Date, sourceFolder?: string) => void;
   onOpenMail: (emailId: string) => void;
 }
 

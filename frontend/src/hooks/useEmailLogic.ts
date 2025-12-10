@@ -325,8 +325,24 @@ export const useEmailLogic = ({
     });
   };
 
-  const snoozeEmail = (emailId: string, date: Date) => {
+  const snoozeEmail = (emailId: string, date: Date, sourceFolder?: string) => {
     snoozeEmailMutation.mutate({ id: emailId, date });
+
+    if (sourceFolder) {
+      const removeLabels: string[] = [];
+      if (sourceFolder === 'inbox') removeLabels.push('INBOX');
+      if (sourceFolder === 'todo' && todoLabelId) removeLabels.push(todoLabelId);
+      if (sourceFolder === 'done' && doneLabelId) removeLabels.push(doneLabelId);
+
+      if (removeLabels.length > 0) {
+        modifyEmailMutation.mutate({
+          id: emailId,
+          addLabels: [],
+          removeLabels,
+          meta: { destinationFolder: 'snoozed', sourceFolder }
+        });
+      }
+    }
   };
 
   // Redefining executeEmailAction to be more robust

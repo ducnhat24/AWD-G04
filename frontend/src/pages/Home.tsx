@@ -26,6 +26,7 @@ export default function HomePage() {
   const [isKanbanDetailOpen, setIsKanbanDetailOpen] = useState(false);
   const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
   const [snoozeTargetId, setSnoozeTargetId] = useState<string | null>(null);
+  const [snoozeSourceFolder, setSnoozeSourceFolder] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     localStorage.setItem("viewMode", viewMode);
@@ -53,10 +54,12 @@ export default function HomePage() {
   });
 
   // UI Handlers
-  const handleSnooze = (emailId: string, date: Date) => {
-    snoozeEmail(emailId, date);
+  const handleSnooze = (emailId: string, date: Date, sourceFolder?: string) => {
+    const folder = sourceFolder || snoozeSourceFolder;
+    snoozeEmail(emailId, date, folder);
     setIsSnoozeOpen(false);
     setSnoozeTargetId(null);
+    setSnoozeSourceFolder(undefined);
   };
 
   const handleOpenMail = (emailId: string) => {
@@ -78,6 +81,7 @@ export default function HomePage() {
   const handleMoveEmail = (emailId: string, sourceFolder: string, destinationFolder: string) => {
     if (destinationFolder === "snoozed") {
       setSnoozeTargetId(emailId);
+      setSnoozeSourceFolder(sourceFolder);
       setIsSnoozeOpen(true);
       return;
     }

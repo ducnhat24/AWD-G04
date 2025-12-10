@@ -11,7 +11,7 @@ interface KanbanColumnProps {
   emails: Email[];
   count: number;
   color?: string;
-  onSnooze: (emailId: string, date: Date) => void;
+  onSnooze: (emailId: string, date: Date, sourceFolder?: string) => void;
   onOpenMail: (emailId: string) => void;
   onLoadMore: () => void;
   hasMore: boolean;

@@ -31,7 +31,7 @@ interface KanbanCardProps {
   email: Email;
   index: number;
   columnId?: string;
-  onSnooze: (emailId: string, date: Date) => void;
+  onSnooze: (emailId: string, date: Date, sourceFolder?: string) => void;
   onOpenMail: (emailId: string) => void;
 }
 
@@ -48,7 +48,7 @@ export const KanbanCard = memo(function KanbanCard({ email, index, columnId, onS
       <SnoozeDialog
         isOpen={isSnoozeOpen}
         onClose={() => setIsSnoozeOpen(false)}
-        onSnooze={(date) => onSnooze(email.id, date)}
+        onSnooze={(date) => onSnooze(email.id, date, columnId)}
       />
       <Draggable draggableId={email.id} index={index}>
         {(provided, snapshot) => (
