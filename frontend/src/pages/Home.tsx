@@ -34,8 +34,11 @@ export default function HomePage() {
   // Custom Hook for Business Logic
   const {
     emails,
+    fetchNextList,
+    hasNextList,
+    isFetchingNextList,
     folders,
-    kanbanEmails,
+    kanbanData,
     selectedEmail,
     isLoadingList,
     isLoadingKanban,
@@ -60,19 +63,25 @@ export default function HomePage() {
     setSelectedEmailId(emailId);
     setIsKanbanDetailOpen(true);
 
-    const email = kanbanEmails.find((e: any) => e.id === emailId);
+    const allKanbanEmails = [
+      ...kanbanData.inbox.emails,
+      ...kanbanData.todo.emails,
+      ...kanbanData.done.emails,
+      ...kanbanData.snoozed.emails,
+    ];
+    const email = allKanbanEmails.find((e: any) => e.id === emailId);
     if (email && !email.isRead) {
       executeEmailAction("markAsRead", { id: emailId, email });
     }
   };
 
-  const handleMoveEmail = (emailId: string, _sourceFolder: string, destinationFolder: string) => {
+  const handleMoveEmail = (emailId: string, sourceFolder: string, destinationFolder: string) => {
     if (destinationFolder === "snoozed") {
       setSnoozeTargetId(emailId);
       setIsSnoozeOpen(true);
       return;
     }
-    moveEmail(emailId, destinationFolder);
+    moveEmail(emailId, destinationFolder, sourceFolder);
   };
 
   const handleSelectEmail = (id: string) => {
@@ -199,7 +208,7 @@ export default function HomePage() {
                 </div>
               ) : (
                 <KanbanBoard
-                  emails={kanbanEmails}
+                  kanbanData={kanbanData}
                   onMoveEmail={handleMoveEmail}
                   onSnooze={(id) => {
                     setSnoozeTargetId(id);
@@ -226,6 +235,9 @@ export default function HomePage() {
                     emails={emails}
                     selectedEmailId={selectedEmailId}
                     onSelectEmail={handleSelectEmail}
+                    onLoadMore={fetchNextList}
+                    hasMore={hasNextList}
+                    isLoadingMore={isFetchingNextList}
                   />
                 )}
               </div>

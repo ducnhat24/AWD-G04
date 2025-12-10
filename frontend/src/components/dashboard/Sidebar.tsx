@@ -46,7 +46,7 @@ export function Sidebar({ folders, selectedFolder, onSelectFolder, onCompose }: 
     });
 
   return (
-    <div className="w-full h-full flex flex-col py-4 gap-2 border-r bg-muted/20">
+    <div className="w-full flex-1 min-h-0 flex flex-col py-4 gap-2 border-r bg-muted/20">
       <div className="px-4 mb-4">
         <h2 className="text-xl font-bold tracking-tight mb-4">Mail App</h2>
         <button 
@@ -57,7 +57,7 @@ export function Sidebar({ folders, selectedFolder, onSelectFolder, onCompose }: 
           Compose email
         </button>
       </div>
-      <nav className="flex-1 px-2 space-y-1">
+      <nav className="flex-1 px-2 space-y-1 overflow-y-auto">
         {processedFolders.map((folder) => {
           const Icon = iconMap[folder.icon] || Inbox;
           const isSelected = selectedFolder === folder.id;

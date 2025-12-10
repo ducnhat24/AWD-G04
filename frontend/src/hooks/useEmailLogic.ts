@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, type InfiniteData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   fetchEmails,
@@ -6,6 +6,8 @@ import {
   fetchEmailDetail,
   modifyEmail,
   snoozeEmail as apiSnoozeEmail,
+  fetchSnoozedEmails,
+  findLabelId,
 } from "@/services/apiService";
 import { type Email } from "@/data/mockData";
 
@@ -21,20 +23,34 @@ export const useEmailLogic = ({
   viewMode,
 }: UseEmailLogicProps) => {
   const queryClient = useQueryClient();
+  const limit = 10;
 
   // 1. Fetch Emails
-  const { data: emails = [], isLoading: isLoadingList } = useQuery({
+  const {
+    data: emailsInfiniteData,
+    isLoading: isLoadingList,
+    fetchNextPage: fetchNextList,
+    hasNextPage: hasNextList,
+    isFetchingNextPage: isFetchingNextList,
+  } = useInfiniteQuery({
     queryKey: ["emails", selectedFolder],
-    queryFn: () => fetchEmails(selectedFolder),
+    queryFn: ({ pageParam = 1 }) => fetchEmails(selectedFolder, pageParam as string | number, limit),
+    getNextPageParam: (lastPage) => lastPage.nextPageToken,
+    initialPageParam: 1 as string | number,
     refetchOnWindowFocus: false,
     retry: 1,
   });
+
+  const emails = emailsInfiniteData?.pages.flatMap((page) => page.emails) || [];
 
   const { data: folders = [] } = useQuery<{ id: string; label: string; icon: string }[]>({
     queryKey: ["mailboxes"],
     queryFn: fetchMailboxes,
     refetchOnWindowFocus: false,
   });
+
+  const todoLabelId = findLabelId(folders, "TODO");
+  const doneLabelId = findLabelId(folders, "DONE");
 
   // 2. Fetch Selected Email Detail
   const { data: selectedEmail = null, isLoading: isLoadingDetail } = useQuery({
@@ -44,41 +60,66 @@ export const useEmailLogic = ({
     refetchOnWindowFocus: false,
   });
 
-  // 3. Fetch Kanban Emails
-  const { data: kanbanEmails = [], isLoading: isLoadingKanban } = useQuery({
-    queryKey: ["kanban-emails"],
-    queryFn: async () => {
-      const [inbox, starred, archive] = await Promise.all([
-        fetchEmails("INBOX").catch(() => []),
-        fetchEmails("STARRED").catch(() => []),
-        fetchEmails("YELLOW_STAR").catch(() => []),
-      ]);
+  // 3. Fetch Kanban Emails (Infinite Queries)
+  // const limit = 10; // Moved up
 
-      const safeInbox = Array.isArray(inbox) ? inbox.map((e: any) => ({ ...e, folder: 'inbox' })) : [];
-      const safeStarred = Array.isArray(starred) ? starred.map((e: any) => ({ ...e, folder: 'todo' })) : [];
-      const safeArchive = Array.isArray(archive) ? archive.map((e: any) => ({ ...e, folder: 'done' })) : [];
-
-      const emailMap = new Map<string, Email>();
-
-      [...safeArchive, ...safeInbox, ...safeStarred].forEach((email) => {
-        if (email.snoozeUntil) {
-          const snoozeDate = new Date(email.snoozeUntil);
-          if (snoozeDate > new Date()) {
-            email.folder = 'snoozed';
-          } else {
-            if (email.folder !== 'todo') {
-               email.folder = 'inbox';
-            }
-          }
-        }
-        emailMap.set(email.id, email);
-      });
-
-      return Array.from(emailMap.values());
-    },
+  const {
+    data: inboxData,
+    fetchNextPage: fetchNextInbox,
+    hasNextPage: hasNextInbox,
+    isFetchingNextPage: isFetchingNextInbox,
+  } = useInfiniteQuery({
+    queryKey: ["kanban", "inbox"],
+    queryFn: ({ pageParam = 1 }) => fetchEmails("INBOX", pageParam as string | number, limit),
+    getNextPageParam: (lastPage) => lastPage.nextPageToken,
     enabled: viewMode === "kanban",
-    refetchOnWindowFocus: false,
+    initialPageParam: 1 as string | number,
   });
+
+  const {
+    data: todoData,
+    fetchNextPage: fetchNextTodo,
+    hasNextPage: hasNextTodo,
+    isFetchingNextPage: isFetchingNextTodo,
+  } = useInfiniteQuery({
+    queryKey: ["kanban", "todo", todoLabelId],
+    queryFn: ({ pageParam = 1 }) => fetchEmails(todoLabelId!, pageParam as string | number, limit),
+    getNextPageParam: (lastPage) => lastPage.nextPageToken,
+    enabled: viewMode === "kanban" && !!todoLabelId,
+    initialPageParam: 1 as string | number,
+  });
+
+  const {
+    data: doneData,
+    fetchNextPage: fetchNextDone,
+    hasNextPage: hasNextDone,
+    isFetchingNextPage: isFetchingNextDone,
+  } = useInfiniteQuery({
+    queryKey: ["kanban", "done", doneLabelId],
+    queryFn: ({ pageParam = 1 }) => fetchEmails(doneLabelId!, pageParam as string | number, limit),
+    getNextPageParam: (lastPage) => lastPage.nextPageToken,
+    enabled: viewMode === "kanban" && !!doneLabelId,
+    initialPageParam: 1 as string | number,
+  });
+
+  const {
+    data: snoozeData,
+    fetchNextPage: fetchNextSnooze,
+    hasNextPage: hasNextSnooze,
+    isFetchingNextPage: isFetchingNextSnooze,
+  } = useInfiniteQuery({
+    queryKey: ["kanban", "snoozed"],
+    queryFn: ({ pageParam = 1 }) => fetchSnoozedEmails(pageParam as number, limit),
+    getNextPageParam: (lastPage) => lastPage.nextPageToken,
+    enabled: viewMode === "kanban",
+    initialPageParam: 1 as number,
+  });
+
+  // Flatten data
+  const inboxEmails = inboxData?.pages.flatMap(page => page.emails).map(e => ({ ...e, folder: 'inbox' })) || [];
+  const todoEmails = todoData?.pages.flatMap(page => page.emails).map(e => ({ ...e, folder: 'todo' })) || [];
+  const doneEmails = doneData?.pages.flatMap(page => page.emails).map(e => ({ ...e, folder: 'done' })) || [];
+  const snoozedEmails = snoozeData?.pages.flatMap(page => page.emails).map(e => ({ ...e, folder: 'snoozed' })) || [];
 
   // 4. Mutations
   const modifyEmailMutation = useMutation({
@@ -90,22 +131,81 @@ export const useEmailLogic = ({
       id: string;
       addLabels: string[];
       removeLabels: string[];
+      meta?: { destinationFolder: string; sourceFolder?: string };
     }) => modifyEmail(id, addLabels, removeLabels),
-    onMutate: async ({ id, addLabels, removeLabels }) => {
+    onMutate: async ({ id, addLabels, removeLabels, meta }) => {
       await queryClient.cancelQueries({ queryKey: ["emails", selectedFolder] });
-      await queryClient.cancelQueries({ queryKey: ["kanban-emails"] });
-
+      
       const previousEmails = queryClient.getQueryData(["emails", selectedFolder]);
       const previousEmailDetail = queryClient.getQueryData(["email", id]);
-      const previousKanbanEmails = queryClient.getQueryData(["kanban-emails"]);
+
+      // Kanban Optimistic Update Context
+      let previousSource: InfiniteData<any> | undefined;
+      let previousDest: InfiniteData<any> | undefined;
+      let sourceQueryKey: any[] | undefined;
+      let destQueryKey: any[] | undefined;
+
+      if (meta?.destinationFolder && meta?.sourceFolder) {
+        const getQueryKey = (folder: string) => {
+          if (folder === 'inbox') return ["kanban", "inbox"];
+          if (folder === 'todo') return ["kanban", "todo", todoLabelId];
+          if (folder === 'done') return ["kanban", "done", doneLabelId];
+          if (folder === 'snoozed') return ["kanban", "snoozed"];
+          return undefined;
+        };
+
+        sourceQueryKey = getQueryKey(meta.sourceFolder);
+        destQueryKey = getQueryKey(meta.destinationFolder);
+
+        if (sourceQueryKey && destQueryKey) {
+          await queryClient.cancelQueries({ queryKey: sourceQueryKey });
+          await queryClient.cancelQueries({ queryKey: destQueryKey });
+
+          previousSource = queryClient.getQueryData(sourceQueryKey);
+          previousDest = queryClient.getQueryData(destQueryKey);
+
+          let movedEmail: Email | undefined;
+
+          // Remove from source
+          queryClient.setQueryData(sourceQueryKey, (old: any) => {
+            if (!old) return old;
+            const newPages = old.pages.map((page: any) => {
+              const found = page.emails.find((e: Email) => e.id === id);
+              if (found) movedEmail = found;
+              return {
+                ...page,
+                emails: page.emails.filter((e: Email) => e.id !== id),
+              };
+            });
+            return { ...old, pages: newPages };
+          });
+
+          // Add to destination
+          if (movedEmail) {
+            queryClient.setQueryData(destQueryKey, (old: any) => {
+              if (!old) return old;
+              const newPages = [...old.pages];
+              if (newPages.length > 0) {
+                newPages[0] = {
+                  ...newPages[0],
+                  emails: [movedEmail, ...newPages[0].emails],
+                };
+              }
+              return { ...old, pages: newPages };
+            });
+          }
+        }
+      }
 
       if (previousEmailDetail) {
         await queryClient.cancelQueries({ queryKey: ["email", id] });
       }
 
-      queryClient.setQueryData(["emails", selectedFolder], (old: any[]) => {
-        if (!old) return [];
-        return old.map((email) => {
+      queryClient.setQueryData(["emails", selectedFolder], (old: any) => {
+        if (!old) return old;
+        
+        // Helper to update a single email
+        const updateEmail = (email: any) => {
           if (email.id === id) {
             let isRead = email.isRead;
             let isStarred = email.isStarred;
@@ -118,7 +218,22 @@ export const useEmailLogic = ({
             return { ...email, isRead, isStarred };
           }
           return email;
-        });
+        };
+
+        // Handle { emails: [...] } structure
+        if (old.emails && Array.isArray(old.emails)) {
+          return {
+            ...old,
+            emails: old.emails.map(updateEmail),
+          };
+        }
+        
+        // Handle array structure (fallback)
+        if (Array.isArray(old)) {
+          return old.map(updateEmail);
+        }
+
+        return old;
       });
 
       if (previousEmailDetail) {
@@ -136,108 +251,83 @@ export const useEmailLogic = ({
         });
       }
 
-      if (previousKanbanEmails) {
-        queryClient.setQueryData(["kanban-emails"], (old: any[]) => {
-          if (!old) return [];
-          return old.map((email) => {
-            if (email.id === id) {
-              let newFolder = email.folder;
-              if (addLabels.includes("STARRED")) newFolder = "todo";
-              else if (addLabels.includes("INBOX") && removeLabels.includes("STARRED")) newFolder = "inbox";
-              else if (removeLabels.includes("INBOX") && removeLabels.includes("STARRED")) newFolder = "done";
-              
-              let isRead = email.isRead;
-              let isStarred = email.isStarred;
-
-              if (addLabels.includes("UNREAD")) isRead = false;
-              if (removeLabels.includes("UNREAD")) isRead = true;
-
-              if (addLabels.includes("STARRED")) isStarred = true;
-              if (removeLabels.includes("STARRED")) isStarred = false;
-
-              return { ...email, folder: newFolder, isRead, isStarred };
-            }
-            return email;
-          });
-        });
-      }
-
-      return { previousEmails, previousEmailDetail, previousKanbanEmails };
+      return { previousEmails, previousEmailDetail, previousSource, previousDest, sourceQueryKey, destQueryKey };
     },
     onError: (_err, newTodo, context) => {
+      console.error("Mutation failed:", _err);
       if (context?.previousEmails) {
         queryClient.setQueryData(["emails", selectedFolder], context.previousEmails);
       }
       if (context?.previousEmailDetail) {
         queryClient.setQueryData(["email", newTodo.id], context.previousEmailDetail);
       }
-      if (context?.previousKanbanEmails) {
-        queryClient.setQueryData(["kanban-emails"], context.previousKanbanEmails);
+      if (context?.sourceQueryKey && context?.previousSource) {
+        queryClient.setQueryData(context.sourceQueryKey, context.previousSource);
+      }
+      if (context?.destQueryKey && context?.previousDest) {
+        queryClient.setQueryData(context.destQueryKey, context.previousDest);
       }
       toast.error("Failed to update email");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["emails", selectedFolder] });
+      queryClient.invalidateQueries({ queryKey: ["kanban"] });
     },
   });
 
   const snoozeEmailMutation = useMutation({
     mutationFn: ({ id, date }: { id: string; date: Date }) =>
       apiSnoozeEmail(id, date.toISOString()),
-    onMutate: async ({ id, date }) => {
-      await queryClient.cancelQueries({ queryKey: ["kanban-emails"] });
-      const previousKanbanEmails = queryClient.getQueryData(["kanban-emails"]);
-
-      queryClient.setQueryData(["kanban-emails"], (old: Email[] | undefined) => {
-        if (!old) return [];
-        return old.map((email) => {
-          if (email.id === id) {
-            return { ...email, folder: "snoozed", snoozeUntil: date.toISOString() };
-          }
-          return email;
-        });
-      });
-
-      return { previousKanbanEmails };
-    },
-    onError: (_err, _newTodo, context) => {
-      queryClient.setQueryData(["kanban-emails"], context?.previousKanbanEmails);
-      toast.error("Failed to snooze email");
-    },
     onSuccess: (data) => {
       console.log("Snooze success:", data.status, data.wakeUpTime);
       toast.success("Email snoozed");
+      queryClient.invalidateQueries({ queryKey: ["kanban"] });
+    },
+    onError: () => {
+      toast.error("Failed to snooze email");
     },
   });
 
   // 5. Helper Functions
 
-  const moveEmail = (emailId: string, destinationFolder: string) => {
+  const moveEmail = (emailId: string, destinationFolder: string, sourceFolder?: string) => {
     const addLabels: string[] = [];
     const removeLabels: string[] = [];
 
+    // Dynamic IDs
+    const todoId = todoLabelId || "STARRED"; // Fallback
+    // For DONE, if we don't have an ID, we might fail or just not add anything. 
+    // But let's assume if it's missing, we can't move to it properly.
+    const doneId = doneLabelId; 
+
     if (destinationFolder === "todo") {
-      addLabels.push("STARRED");
+      addLabels.push(todoId);
+      removeLabels.push("INBOX");
+      if (doneId) removeLabels.push(doneId);
     } else if (destinationFolder === "inbox") {
       addLabels.push("INBOX");
-      removeLabels.push("STARRED");
+      if (todoLabelId) removeLabels.push(todoLabelId);
+      // Also remove STARRED if it was the fallback
+      if (!todoLabelId) removeLabels.push("STARRED");
+      if (doneId) removeLabels.push(doneId);
     } else if (destinationFolder === "done") {
+      if (doneId) addLabels.push(doneId);
       removeLabels.push("INBOX");
-      removeLabels.push("STARRED");
+      if (todoLabelId) removeLabels.push(todoLabelId);
+      if (!todoLabelId) removeLabels.push("STARRED");
     }
 
     modifyEmailMutation.mutate({
       id: emailId,
       addLabels,
       removeLabels,
+      meta: { destinationFolder, sourceFolder }
     });
   };
 
   const snoozeEmail = (emailId: string, date: Date) => {
     snoozeEmailMutation.mutate({ id: emailId, date });
   };
-
-
 
   // Redefining executeEmailAction to be more robust
   const handleEmailAction = (
@@ -264,6 +354,7 @@ export const useEmailLogic = ({
         break;
       case "delete":
         addLabels.push("TRASH");
+        removeLabels.push("INBOX");
         successMessage = "Moved to trash";
         break;
       case "star":
@@ -293,11 +384,19 @@ export const useEmailLogic = ({
 
   return {
     emails,
+    fetchNextList,
+    hasNextList,
+    isFetchingNextList,
     folders,
-    kanbanEmails,
+    kanbanData: {
+      inbox: { emails: inboxEmails, fetchNextPage: fetchNextInbox, hasNextPage: hasNextInbox, isFetchingNextPage: isFetchingNextInbox },
+      todo: { emails: todoEmails, fetchNextPage: fetchNextTodo, hasNextPage: hasNextTodo, isFetchingNextPage: isFetchingNextTodo },
+      done: { emails: doneEmails, fetchNextPage: fetchNextDone, hasNextPage: hasNextDone, isFetchingNextPage: isFetchingNextDone },
+      snoozed: { emails: snoozedEmails, fetchNextPage: fetchNextSnooze, hasNextPage: hasNextSnooze, isFetchingNextPage: isFetchingNextSnooze },
+    },
     selectedEmail,
     isLoadingList,
-    isLoadingKanban,
+    isLoadingKanban: false,
     isLoadingDetail,
     moveEmail,
     snoozeEmail,

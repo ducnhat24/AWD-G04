@@ -30,12 +30,18 @@ const cardVariants = cva(
 interface KanbanCardProps {
   email: Email;
   index: number;
+  columnId?: string;
   onSnooze: (emailId: string, date: Date) => void;
   onOpenMail: (emailId: string) => void;
 }
 
-export const KanbanCard = memo(function KanbanCard({ email, index, onSnooze, onOpenMail }: KanbanCardProps) {
+export const KanbanCard = memo(function KanbanCard({ email, index, columnId, onSnooze, onOpenMail }: KanbanCardProps) {
   const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
+  };
 
   return (
     <>
@@ -86,16 +92,23 @@ export const KanbanCard = memo(function KanbanCard({ email, index, onSnooze, onO
 
             {/* Footer Actions */}
             <div className="flex items-center justify-between mt-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsSnoozeOpen(true);
-                }}
-                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Clock className="w-3 h-3" />
-                <span>Snooze</span>
-              </button>
+              {columnId === 'snoozed' && email.snoozeUntil ? (
+                <div className="flex items-center gap-2 text-xs text-orange-500 font-medium">
+                  <Clock className="w-3 h-3" />
+                  <span>{formatDate(email.snoozeUntil)}</span>
+                </div>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsSnoozeOpen(true);
+                  }}
+                  className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Clock className="w-3 h-3" />
+                  <span>Snooze</span>
+                </button>
+              )}
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
