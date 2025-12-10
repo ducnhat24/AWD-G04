@@ -206,6 +206,12 @@ export const modifyEmail = async (
   return data;
 };
 
+export const snoozeEmail = async (id: string, date: string) => {
+  // Mock implementation
+  console.log(`Snoozing email ${id} until ${date}`);
+  return { id, snoozeUntil: date };
+};
+
 // GET /mail/attachments/:emailId/:attachmentId
 export const fetchAttachment = async (
   emailId: string,
