@@ -21,7 +21,7 @@ export class MailService {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
-      this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     }
   }
 
@@ -66,23 +66,41 @@ export class MailService {
     return oauth2Client;
   }
 
-  // Hàm lấy danh sách Labels (Mailboxes)
   async getMailboxes(userId: string) {
     const auth = await this.getAuthenticatedClient(userId);
-
     const gmail = google.gmail({ version: 'v1', auth });
 
     try {
       const response = await gmail.users.labels.list({
-        userId: 'me', // 'me' nghĩa là user của cái token đó
+        userId: 'me',
       });
 
-      return response.data.labels?.map(label => ({
+      let labels = response.data.labels || [];
+      const labelNames = labels.map(l => l.name);
+
+      const requiredLabels = ['TODO', 'DONE'];
+
+      let hasNewLabels = false;
+
+      for (const reqLabel of requiredLabels) {
+        if (!labelNames.includes(reqLabel)) {
+          // Nếu chưa có -> Gọi tạo ngay lập tức
+          await this.createLabel(gmail, reqLabel);
+          hasNewLabels = true;
+        }
+      }
+
+      if (hasNewLabels) {
+        const retryResponse = await gmail.users.labels.list({ userId: 'me' });
+        labels = retryResponse.data.labels || [];
+      }
+
+      return labels.map(label => ({
         id: label.id,
         name: label.name,
         type: label.type,
         unread: label.messagesUnread
-      })) || [];
+      }));
 
     } catch (error) {
       console.error('Gmail API Error:', error);
@@ -90,27 +108,32 @@ export class MailService {
     }
   }
 
-  // Lấy danh sách Email trong 1 Label
-  async getEmails(userId: string, labelId: string = 'INBOX', maxResults: number = 20) {
+  async getEmails(userId: string, labelId: string = 'INBOX', limit: number = 20, pageToken?: string) {
     const auth = await this.getAuthenticatedClient(userId);
     const gmail = google.gmail({ version: 'v1', auth });
 
     try {
-      // Lấy danh sách ID các email
       const listResponse = await gmail.users.messages.list({
         userId: 'me',
         labelIds: [labelId],
-        maxResults: maxResults,
+        maxResults: limit,     // Số lượng mail mỗi lần tải
+        pageToken: pageToken,  // Mã trang tiếp theo (nếu null là trang đầu)
       });
 
       const messages = listResponse.data.messages || [];
-      if (messages.length === 0) return [];
+      const nextToken = listResponse.data.nextPageToken; // Lưu lại cái này để trả về
 
-      // Lấy chi tiết từng mail
+      if (messages.length === 0) {
+        return {
+          emails: [],
+          nextPageToken: null
+        };
+      }
+
       const detailsPromise = messages.map(async (msg) => {
         if (!msg.id) return null;
-
         try {
+          // Chỉ lấy metadata cần thiết để hiện Card cho nhẹ
           const detail = await gmail.users.messages.get({
             userId: 'me',
             id: msg.id,
@@ -118,13 +141,10 @@ export class MailService {
             metadataHeaders: ['Subject', 'From', 'Date'],
           });
 
-          const payload = detail.data.payload;
-          const headers = payload?.headers || [];
-
+          const headers = detail.data.payload?.headers || [];
           const subject = headers.find((h) => h.name === 'Subject')?.value || '(No Subject)';
           const from = headers.find((h) => h.name === 'From')?.value || 'Unknown';
           const date = headers.find((h) => h.name === 'Date')?.value || '';
-
           const labelIds = detail.data.labelIds || [];
 
           return {
@@ -138,14 +158,16 @@ export class MailService {
             isStarred: labelIds.includes('STARRED'),
           };
         } catch (err) {
-          console.warn(`Cannot fetch email ${msg.id}:`, err.message);
           return null;
         }
       });
 
-      // Chờ tất cả chạy xong và lọc bỏ những cái bị null
-      const details = await Promise.all(detailsPromise);
-      return details.filter((item) => item !== null);
+      const emails = (await Promise.all(detailsPromise)).filter((item) => item !== null);
+
+      return {
+        emails,
+        nextPageToken: nextToken || null
+      };
 
     } catch (error) {
       console.error('Error fetching emails:', error);
@@ -440,6 +462,66 @@ export class MailService {
     });
 
     return summaryText;
+  }
+
+  async getBasicEmailsDetails(userId: string, messageIds: string[]) {
+    if (!messageIds.length) return [];
+
+    const auth = await this.getAuthenticatedClient(userId);
+    const gmail = google.gmail({ version: 'v1', auth });
+
+    // Dùng Promise.all để gọi song song, tối ưu tốc độ
+    const detailsPromise = messageIds.map(async (id) => {
+      try {
+        const detail = await gmail.users.messages.get({
+          userId: 'me',
+          id: id,
+          format: 'metadata', // Chỉ lấy header, không lấy body -> Nhẹ & Nhanh
+          metadataHeaders: ['Subject', 'From', 'Date'],
+        });
+
+        const headers = detail.data.payload?.headers || [];
+        const subject = headers.find((h) => h.name === 'Subject')?.value || '(No Subject)';
+        const from = headers.find((h) => h.name === 'From')?.value || 'Unknown';
+        const date = headers.find((h) => h.name === 'Date')?.value || '';
+
+        return {
+          id: detail.data.id,
+          threadId: detail.data.threadId,
+          snippet: detail.data.snippet,
+          subject,
+          sender: from,
+          date,
+        };
+      } catch (error) {
+        // Trường hợp email đã bị xóa vĩnh viễn trên Gmail
+        console.warn(`Email ${id} not found on Gmail (might be deleted)`);
+        return null;
+      }
+    });
+
+    const results = await Promise.all(detailsPromise);
+    // Lọc bỏ các email null (đã bị xóa)
+    return results.filter(item => item !== null);
+  }
+
+  private async createLabel(gmail: any, name: string) {
+    try {
+      const res = await gmail.users.labels.create({
+        userId: 'me',
+        requestBody: {
+          name: name,
+          labelListVisibility: 'labelShow',
+          messageListVisibility: 'show',
+        },
+      });
+      return res.data;
+    } catch (error) {
+      if (error.code !== 409) {
+        console.error(`Failed to create label ${name}`, error);
+      }
+      return null;
+    }
   }
 
   private getBody(payload: any, mimeType: string): string | null {

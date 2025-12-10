@@ -26,6 +26,50 @@ export class SnoozeLogService {
     return newLog.save();
   }
 
+  async getSnoozedEmails(userId: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+
+    const logs = await this.snoozeLogModel.find({ userId, status: 'ACTIVE' })
+      .sort({ wakeUpTime: 1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    const total = await this.snoozeLogModel.countDocuments({ userId, status: 'ACTIVE' });
+
+    if (!logs.length) {
+      return {
+        data: [],
+        meta: { total, page, limit, totalPages: 0 },
+      };
+    }
+
+    const messageIds = logs.map(log => log.messageId);
+
+    const emailDetails = await this.mailService.getBasicEmailsDetails(userId, messageIds);
+
+    const result = emailDetails.map(email => {
+      const log = logs.find(l => l.messageId === email.id);
+      return {
+        ...email,
+        snoozeInfo: {
+          wakeUpTime: log ? log.wakeUpTime : null,
+          snoozeId: log ? log._id : null
+        }
+      };
+    });
+
+    return {
+      data: result,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   @Cron(CronExpression.EVERY_MINUTE)
   async handleCron() {
     const now = new Date();
