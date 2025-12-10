@@ -69,20 +69,40 @@ export class MailService {
   // Hàm lấy danh sách Labels (Mailboxes)
   async getMailboxes(userId: string) {
     const auth = await this.getAuthenticatedClient(userId);
-
     const gmail = google.gmail({ version: 'v1', auth });
 
     try {
       const response = await gmail.users.labels.list({
-        userId: 'me', // 'me' nghĩa là user của cái token đó
+        userId: 'me',
       });
 
-      return response.data.labels?.map(label => ({
+      let labels = response.data.labels || [];
+      const labelNames = labels.map(l => l.name);
+
+      const requiredLabels = ['TODO', 'DONE'];
+      // Lưu ý: Gmail phân biệt hoa thường, bạn nên thống nhất convention
+
+      let hasNewLabels = false;
+
+      for (const reqLabel of requiredLabels) {
+        if (!labelNames.includes(reqLabel)) {
+          // Nếu chưa có -> Gọi tạo ngay lập tức
+          await this.createLabel(gmail, reqLabel);
+          hasNewLabels = true;
+        }
+      }
+
+      if (hasNewLabels) {
+        const retryResponse = await gmail.users.labels.list({ userId: 'me' });
+        labels = retryResponse.data.labels || [];
+      }
+
+      return labels.map(label => ({
         id: label.id,
         name: label.name,
         type: label.type,
         unread: label.messagesUnread
-      })) || [];
+      }));
 
     } catch (error) {
       console.error('Gmail API Error:', error);
@@ -481,6 +501,25 @@ export class MailService {
     const results = await Promise.all(detailsPromise);
     // Lọc bỏ các email null (đã bị xóa)
     return results.filter(item => item !== null);
+  }
+
+  private async createLabel(gmail: any, name: string) {
+    try {
+      const res = await gmail.users.labels.create({
+        userId: 'me',
+        requestBody: {
+          name: name,
+          labelListVisibility: 'labelShow',
+          messageListVisibility: 'show',
+        },
+      });
+      return res.data;
+    } catch (error) {
+      if (error.code !== 409) {
+        console.error(`Failed to create label ${name}`, error);
+      }
+      return null;
+    }
   }
 
   private getBody(payload: any, mimeType: string): string | null {
