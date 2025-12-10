@@ -258,7 +258,9 @@ export const fetchSnoozedEmails = async (
     }));
 
     // If meta.page exists, use it to calculate next page, otherwise rely on array length
-    const nextPageToken = meta.page ? meta.page + 1 : (rawEmails.length === limit ? pageParam + 1 : undefined);
+    const nextPageToken = rawEmails.length === limit 
+      ? (meta.page ? meta.page + 1 : pageParam + 1)
+      : undefined;
 
     return { 
       emails, 

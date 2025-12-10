@@ -34,6 +34,9 @@ export default function HomePage() {
   // Custom Hook for Business Logic
   const {
     emails,
+    fetchNextList,
+    hasNextList,
+    isFetchingNextList,
     folders,
     kanbanData,
     selectedEmail,
@@ -232,6 +235,9 @@ export default function HomePage() {
                     emails={emails}
                     selectedEmailId={selectedEmailId}
                     onSelectEmail={handleSelectEmail}
+                    onLoadMore={fetchNextList}
+                    hasMore={hasNextList}
+                    isLoadingMore={isFetchingNextList}
                   />
                 )}
               </div>

@@ -23,15 +23,25 @@ export const useEmailLogic = ({
   viewMode,
 }: UseEmailLogicProps) => {
   const queryClient = useQueryClient();
+  const limit = 10;
 
   // 1. Fetch Emails
-  const { data: emailsData, isLoading: isLoadingList } = useQuery({
+  const {
+    data: emailsInfiniteData,
+    isLoading: isLoadingList,
+    fetchNextPage: fetchNextList,
+    hasNextPage: hasNextList,
+    isFetchingNextPage: isFetchingNextList,
+  } = useInfiniteQuery({
     queryKey: ["emails", selectedFolder],
-    queryFn: () => fetchEmails(selectedFolder),
+    queryFn: ({ pageParam = 1 }) => fetchEmails(selectedFolder, pageParam as string | number, limit),
+    getNextPageParam: (lastPage) => lastPage.nextPageToken,
+    initialPageParam: 1 as string | number,
     refetchOnWindowFocus: false,
     retry: 1,
   });
-  const emails = emailsData?.emails || [];
+
+  const emails = emailsInfiniteData?.pages.flatMap((page) => page.emails) || [];
 
   const { data: folders = [] } = useQuery<{ id: string; label: string; icon: string }[]>({
     queryKey: ["mailboxes"],
@@ -51,7 +61,7 @@ export const useEmailLogic = ({
   });
 
   // 3. Fetch Kanban Emails (Infinite Queries)
-  const limit = 10;
+  // const limit = 10; // Moved up
 
   const {
     data: inboxData,
@@ -374,6 +384,9 @@ export const useEmailLogic = ({
 
   return {
     emails,
+    fetchNextList,
+    hasNextList,
+    isFetchingNextList,
     folders,
     kanbanData: {
       inbox: { emails: inboxEmails, fetchNextPage: fetchNextInbox, hasNextPage: hasNextInbox, isFetchingNextPage: isFetchingNextInbox },

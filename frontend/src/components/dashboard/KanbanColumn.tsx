@@ -54,7 +54,7 @@ export function KanbanColumn({
   }, [hasMore, isLoadingMore, onLoadMore]);
 
   return (
-    <div className="flex flex-col h-full min-w-[300px] w-full bg-muted/10 rounded-xl border border-border/50">
+    <div className="flex flex-col h-full flex-1 min-w-[250px] bg-muted/10 rounded-xl border border-border/50">
       {/* Column Header */}
       <div className="p-4 flex items-center justify-between border-b border-border/50 bg-background/50 rounded-t-xl backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center gap-2">
@@ -82,6 +82,7 @@ export function KanbanColumn({
                 key={email.id}
                 email={email}
                 index={index}
+                columnId={id}
                 onSnooze={onSnooze}
                 onOpenMail={onOpenMail}
               />
