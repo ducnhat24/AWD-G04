@@ -114,7 +114,7 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
 
   if (isMinimized) {
     return (
-      <div className="fixed bottom-0 right-20 w-64 bg-white border border-gray-300 rounded-t-lg shadow-lg z-50 flex justify-between items-center p-3 cursor-pointer" onClick={() => setIsMinimized(false)}>
+      <div className="fixed bottom-0 right-20 w-64 bg-white border border-gray-300 rounded-t-lg shadow-lg z-[100] flex justify-between items-center p-3 cursor-pointer" onClick={() => setIsMinimized(false)}>
         <span className="font-medium truncate text-sm">New Message</span>
         <div className="flex gap-2">
             <button onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }} className="hover:bg-gray-100 p-1 rounded"><Minus size={14} /></button>
@@ -128,13 +128,13 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
     <>
       {isMaximized && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40" 
+          className="fixed inset-0 bg-black/50 z-[90]" 
           onClick={() => setIsMaximized(false)}
         />
       )}
       <div 
         className={cn(
-          "bg-white flex flex-col font-sans transition-all duration-200 ease-in-out z-50 shadow-xl overflow-hidden",
+          "bg-white flex flex-col font-sans transition-all duration-200 ease-in-out z-[100] shadow-xl overflow-hidden",
           isMaximized 
             ? "fixed inset-10 rounded-lg border border-gray-200" 
             : "fixed bottom-0 right-20 w-[500px] h-[500px] border border-gray-300 rounded-t-lg"

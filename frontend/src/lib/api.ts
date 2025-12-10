@@ -133,7 +133,7 @@ api.interceptors.response.use(
 
         // Chuyển hướng về login
         // (Không dùng navigate vì đây là ngoài React component)
-        window.location.href = "/signin";
+        window.location.href = "/sign-in";
 
         return Promise.reject(refreshError);
       } finally {

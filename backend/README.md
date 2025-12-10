@@ -21,37 +21,33 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-# G04 - NestJS Email Client Backend
+# G05 - 
 
-Backend RESTful API được xây dựng bằng NestJS, phục vụ cho ứng dụng Email Client. Hệ thống này hoạt động như một Proxy Server bảo mật để giao tiếp với Gmail API, quản lý xác thực người dùng và lưu trữ token.
+## Enpoint được thêm mới:
 
-## Tính năng
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/mail/mailboxes/:labelId/emails` | Get emails with pagination. Query: `?limit=20&pageToken=xyz` |
+| `POST` | `/mail/emails/:id/modify` | Drag & Drop (Change labels). Body: `{ addLabels: [], removeLabels: [] }` |
+| `GET` | `/mail/emails/:id/summary` | **[New]** Get AI summary of an email (Cached). |
+| `POST` | `/snooze` | Snooze an email. Body: `{ messageId: "...", wakeUpTime: "ISO_DATE" }` |
+| `GET` | `/snooze` | Get list of snoozed emails. Query: `?page=1&limit=10` |
 
-### Xác thực & Phân quyền:
+## Cron job
 
-- JWT Authentication (Access Token & Refresh Token).
+Wake Up Snoozed Emails: Runs every minute (* * * * *). Checks snooze_logs for expired items and moves them back to INBOX.
 
-- Tích hợp Google OAuth 2.0 (Authorization Code Flow).
+## Database Collections
 
-- Bảo vệ các Route bằng Guards.
+users: User information.
 
-### Gmail Integration (Proxy):
+linked_accounts: Google OAuth tokens (Access/Refresh tokens).
 
-- Tự động refresh Google Access Token khi hết hạn (Server-side refresh).
+snooze_logs: Tracks active snoozed emails and their wake-up times.
 
-- API lấy danh sách Hộp thư (Labels) và Email.
+email_summaries: Caches AI-generated summaries by messageId
 
-- API đọc chi tiết nội dung Email (Xử lý giải mã Base64 và cấu trúc Multipart).
 
-- API gửi, trả lời và chuyển tiếp Email (Tạo Raw Message RFC 2822).
-
-- API tải xuống file đính kèm an toàn.
-
-- API thao tác: Đánh dấu đã đọc, xóa, gắn sao.
-
-### Cơ sở dữ liệu:
-
-- Lưu trữ thông tin người dùng và liên kết tài khoản Google (Linked Accounts) an toàn trong MongoDB.
 
 ## Công nghệ
 

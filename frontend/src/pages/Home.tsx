@@ -1,24 +1,17 @@
 // src/pages/Home.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { EmailList } from "@/components/dashboard/EmailList";
 import { EmailDetail } from "@/components/dashboard/EmailDetail";
 import { EmailDetailDialog } from "@/components/dashboard/EmailDetailDialog";
 import { ComposeEmail } from "@/components/dashboard/ComposeEmail";
+import { SnoozeDialog } from "@/components/dashboard/SnoozeDialog";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import {
-  fetchEmails,
-  fetchMailboxes,
-  fetchEmailDetail,
-  modifyEmail,
-  snoozeEmail,
-} from "@/services/apiService";
 import { type Email } from "@/data/mockData";
 import { KanbanBoard } from "@/components/dashboard/KanbanBoard";
 import { cn } from "@/lib/utils";
 import { LogOut } from "lucide-react";
+import { useEmailLogic } from "@/hooks/useEmailLogic";
 
 export default function HomePage() {
   const { logout } = useAuth();
@@ -29,230 +22,77 @@ export default function HomePage() {
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [composeMode, setComposeMode] = useState<"compose" | "reply" | "forward">("compose");
   const [composeOriginalEmail, setComposeOriginalEmail] = useState<Email | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [viewMode, setViewMode] = useState<"list" | "kanban">(() => (localStorage.getItem("viewMode") as "list" | "kanban") || "list");
   const [isKanbanDetailOpen, setIsKanbanDetailOpen] = useState(false);
+  const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
+  const [snoozeTargetId, setSnoozeTargetId] = useState<string | null>(null);
+  const [snoozeSourceFolder, setSnoozeSourceFolder] = useState<string | undefined>(undefined);
 
-  // 1. Fetch Emails bằng React Query (Thay vì filter tĩnh)
-  const { data: emails = [], isLoading } = useQuery({
-    queryKey: ["emails", selectedFolder], // Key thay đổi thì fetch lại
-    queryFn: () => fetchEmails(selectedFolder),
-    refetchOnWindowFocus: false,
-    retry: 1,
+  useEffect(() => {
+    localStorage.setItem("viewMode", viewMode);
+  }, [viewMode]);
+
+  // Custom Hook for Business Logic
+  const {
+    emails,
+    fetchNextList,
+    hasNextList,
+    isFetchingNextList,
+    folders,
+    kanbanData,
+    selectedEmail,
+    isLoadingList,
+    isLoadingKanban,
+    isLoadingDetail,
+    moveEmail,
+    snoozeEmail,
+    executeEmailAction,
+  } = useEmailLogic({
+    selectedFolder,
+    selectedEmailId,
+    viewMode,
   });
 
-  const { data: folders = [] } = useQuery<{ id: string; label: string; icon: string }[]>({
-    queryKey: ["mailboxes"],
-    queryFn: fetchMailboxes,
-    refetchOnWindowFocus: false,
-  });
-
-  // 2. Tìm email đang chọn trong danh sách đã fetch
-  const { data: selectedEmail = null, isLoading: isLoadingDetail } = useQuery({
-    queryKey: ["email", selectedEmailId],
-    queryFn: () => fetchEmailDetail(selectedEmailId!),
-    enabled: !!selectedEmailId, // Chỉ gọi API khi có ID được chọn
-    refetchOnWindowFocus: false,
-  });
-
-  const { data: kanbanEmails = [], isLoading: isLoadingKanban } = useQuery({
-    queryKey: ["kanban-emails"],
-    queryFn: async () => {
-      const [inbox, starred, archive] = await Promise.all([
-        fetchEmails("INBOX").catch(() => []),
-        fetchEmails("STARRED").catch(() => []),
-        fetchEmails("ARCHIVE").catch(() => []),
-      ]);
-
-      const safeInbox = Array.isArray(inbox) ? inbox.map(e => ({ ...e, folder: 'inbox' })) : [];
-      const safeStarred = Array.isArray(starred) ? starred.map(e => ({ ...e, folder: 'todo' })) : [];
-      const safeArchive = Array.isArray(archive) ? archive.map(e => ({ ...e, folder: 'done' })) : [];
-
-      // Merge and deduplicate. Priority: Todo (Starred) > Inbox > Done (Archive)
-      // We use a Map to store emails by ID.
-      // We insert in reverse priority order so higher priority overwrites.
-      const emailMap = new Map<string, Email>();
-
-      [...safeArchive, ...safeInbox, ...safeStarred].forEach((email) => {
-        // Check snooze status
-        if (email.snoozeUntil) {
-          const snoozeDate = new Date(email.snoozeUntil);
-          if (snoozeDate > new Date()) {
-            // Future snooze: Hide it
-            return;
-          } else {
-            // Expired snooze: Restore to Inbox (or keep current folder if it's already fetched)
-            // For simplicity, if it was snoozed and expired, we treat it as Inbox unless it's starred
-            if (email.folder !== 'todo') {
-               email.folder = 'inbox';
-            }
-          }
-        }
-        emailMap.set(email.id, email);
-      });
-
-      return Array.from(emailMap.values());
-    },
-    enabled: viewMode === "kanban",
-  });
-
-  const queryClient = useQueryClient();
-
-  const modifyEmailMutation = useMutation({
-    mutationFn: ({
-      id,
-      addLabels,
-      removeLabels,
-    }: {
-      id: string;
-      addLabels: string[];
-      removeLabels: string[];
-    }) => modifyEmail(id, addLabels, removeLabels),
-    onMutate: async ({ id, addLabels, removeLabels }) => {
-      await queryClient.cancelQueries({ queryKey: ["emails", selectedFolder] });
-      await queryClient.cancelQueries({ queryKey: ["email", id] });
-      await queryClient.cancelQueries({ queryKey: ["kanban-emails"] });
-
-      const previousEmails = queryClient.getQueryData(["emails", selectedFolder]);
-      const previousEmailDetail = queryClient.getQueryData(["email", id]);
-      const previousKanbanEmails = queryClient.getQueryData(["kanban-emails"]);
-
-      queryClient.setQueryData(["emails", selectedFolder], (old: any[]) => {
-        if (!old) return [];
-        return old.map((email) => {
-          if (email.id === id) {
-            let isRead = email.isRead;
-            let isStarred = email.isStarred;
-
-            if (addLabels.includes("UNREAD")) isRead = false;
-            if (removeLabels.includes("UNREAD")) isRead = true;
-            if (addLabels.includes("STARRED")) isStarred = true;
-            if (removeLabels.includes("STARRED")) isStarred = false;
-
-            return { ...email, isRead, isStarred };
-          }
-          return email;
-        });
-      });
-
-      if (previousEmailDetail) {
-        queryClient.setQueryData(["email", id], (old: any) => {
-          if (!old) return old;
-          let isRead = old.isRead;
-          let isStarred = old.isStarred;
-
-          if (addLabels.includes("UNREAD")) isRead = false;
-          if (removeLabels.includes("UNREAD")) isRead = true;
-          if (addLabels.includes("STARRED")) isStarred = true;
-          if (removeLabels.includes("STARRED")) isStarred = false;
-
-          return { ...old, isRead, isStarred };
-        });
-      }
-
-      if (previousKanbanEmails) {
-        queryClient.setQueryData(["kanban-emails"], (old: any[]) => {
-          if (!old) return [];
-          return old.map((email) => {
-            if (email.id === id) {
-              // Optimistic update for Kanban
-              let newFolder = email.folder;
-              if (addLabels.includes("STARRED")) newFolder = "todo";
-              else if (addLabels.includes("INBOX") && removeLabels.includes("STARRED")) newFolder = "inbox";
-              else if (removeLabels.includes("INBOX") && removeLabels.includes("STARRED")) newFolder = "done";
-              
-              return { ...email, folder: newFolder };
-            }
-            return email;
-          });
-        });
-      }
-
-      return { previousEmails, previousEmailDetail, previousKanbanEmails };
-    },
-    onError: (err, newTodo, context) => {
-      if (context?.previousEmails) {
-        queryClient.setQueryData(["emails", selectedFolder], context.previousEmails);
-      }
-      if (context?.previousEmailDetail) {
-        queryClient.setQueryData(["email", newTodo.id], context.previousEmailDetail);
-      }
-      if (context?.previousKanbanEmails) {
-        queryClient.setQueryData(["kanban-emails"], context.previousKanbanEmails);
-      }
-      toast.error("Failed to update email");
-    },
-    onSettled: () => {
-      // queryClient.invalidateQueries({ queryKey: ["emails"] });
-    },
-  });
-
-  const snoozeEmailMutation = useMutation({
-    mutationFn: ({ id, date }: { id: string; date: Date }) =>
-      snoozeEmail(id, date.toISOString()),
-    onMutate: async ({ id, date }) => {
-      await queryClient.cancelQueries({ queryKey: ["kanban-emails"] });
-      const previousKanbanEmails = queryClient.getQueryData(["kanban-emails"]);
-
-      queryClient.setQueryData(["kanban-emails"], (old: Email[] | undefined) => {
-        if (!old) return [];
-        // Optimistic update: Remove the email from the list
-        return old.filter((email) => email.id !== id);
-      });
-
-      return { previousKanbanEmails };
-    },
-    onError: (err, newTodo, context) => {
-      queryClient.setQueryData(["kanban-emails"], context?.previousKanbanEmails);
-      toast.error("Failed to snooze email");
-    },
-    onSuccess: () => {
-      toast.success("Email snoozed");
-    },
-  });
-
-  const handleSnooze = (emailId: string, date: Date) => {
-    snoozeEmailMutation.mutate({ id: emailId, date });
+  // UI Handlers
+  const handleSnooze = (emailId: string, date: Date, sourceFolder?: string) => {
+    const folder = sourceFolder || snoozeSourceFolder;
+    snoozeEmail(emailId, date, folder);
+    setIsSnoozeOpen(false);
+    setSnoozeTargetId(null);
+    setSnoozeSourceFolder(undefined);
   };
 
   const handleOpenMail = (emailId: string) => {
     setSelectedEmailId(emailId);
     setIsKanbanDetailOpen(true);
+
+    const allKanbanEmails = [
+      ...kanbanData.inbox.emails,
+      ...kanbanData.todo.emails,
+      ...kanbanData.done.emails,
+      ...kanbanData.snoozed.emails,
+    ];
+    const email = allKanbanEmails.find((e: any) => e.id === emailId);
+    if (email && !email.isRead) {
+      executeEmailAction("markAsRead", { id: emailId, email });
+    }
   };
 
-  const handleMoveEmail = (emailId: string, _sourceFolder: string, destinationFolder: string) => {
-    const addLabels: string[] = [];
-    const removeLabels: string[] = [];
-
-    // Logic based on Destination Column
-    if (destinationFolder === "todo") {
-      // To Do -> Starred
-      addLabels.push("STARRED");
-    } else if (destinationFolder === "inbox") {
-      // Inbox -> Add INBOX, Remove STARRED (if it was starred)
-      addLabels.push("INBOX");
-      removeLabels.push("STARRED");
-    } else if (destinationFolder === "done") {
-      // Done -> Archive (Remove INBOX), Remove STARRED
-      removeLabels.push("INBOX");
-      removeLabels.push("STARRED");
+  const handleMoveEmail = (emailId: string, sourceFolder: string, destinationFolder: string) => {
+    if (destinationFolder === "snoozed") {
+      setSnoozeTargetId(emailId);
+      setSnoozeSourceFolder(sourceFolder);
+      setIsSnoozeOpen(true);
+      return;
     }
-
-    modifyEmailMutation.mutate({
-      id: emailId,
-      addLabels,
-      removeLabels,
-    });
+    moveEmail(emailId, destinationFolder, sourceFolder);
   };
 
   const handleSelectEmail = (id: string) => {
     setSelectedEmailId(id);
     const email = emails.find((e: any) => e.id === id);
     if (email && !email.isRead) {
-      modifyEmailMutation.mutate({
-        id,
-        addLabels: [],
-        removeLabels: ["UNREAD"],
-      });
+      executeEmailAction("markAsRead", { id, email });
     }
   };
 
@@ -275,49 +115,10 @@ export default function HomePage() {
       return;
     }
 
-    const addLabels: string[] = [];
-    const removeLabels: string[] = [];
-    let successMessage = "Action completed";
-
-    switch (action) {
-      case "toggleRead":
-        if (selectedEmail.isRead) {
-          addLabels.push("UNREAD");
-          successMessage = "Marked as unread";
-        } else {
-          removeLabels.push("UNREAD");
-          successMessage = "Marked as read";
-        }
-        break;
-      case "delete":
-        addLabels.push("TRASH");
-        successMessage = "Moved to trash";
-        break;
-      case "star":
-        if (selectedEmail.isStarred) {
-          removeLabels.push("STARRED");
-          successMessage = "Removed from starred";
-        } else {
-          addLabels.push("STARRED");
-          successMessage = "Marked as starred";
-        }
-        break;
-    }
-
-    modifyEmailMutation.mutate(
-      {
-        id: selectedEmailId,
-        addLabels,
-        removeLabels,
-      },
-      {
-        onSuccess: () => {
-          toast.success(successMessage);
-        },
-      }
-    );
+    executeEmailAction(action, { id: selectedEmailId, email: selectedEmail });
 
     if (action === "delete") {
+      setIsKanbanDetailOpen(false);
       setSelectedEmailId(null);
     }
   };
@@ -332,7 +133,7 @@ export default function HomePage() {
         )}
       >
         <Sidebar
-          folders={folders} // <--- Truyền data API vào đây
+          folders={folders}
           selectedFolder={selectedFolder}
           onSelectFolder={(id) => {
             setSelectedFolder(id);
@@ -411,9 +212,16 @@ export default function HomePage() {
                 </div>
               ) : (
                 <KanbanBoard
-                  emails={kanbanEmails}
+                  kanbanData={kanbanData}
                   onMoveEmail={handleMoveEmail}
-                  onSnooze={handleSnooze}
+                  onSnooze={(id, date) => {
+                    if (date) {
+                      handleSnooze(id, date);
+                    } else {
+                      setSnoozeTargetId(id);
+                      setIsSnoozeOpen(true);
+                    }
+                  }}
                   onOpenMail={handleOpenMail}
                 />
               )}
@@ -426,7 +234,7 @@ export default function HomePage() {
                  ${selectedEmailId ? "hidden md:flex" : "flex"} 
               `}
               >
-                {isLoading ? (
+                {isLoadingList ? (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
                     Loading emails...
                   </div>
@@ -435,6 +243,9 @@ export default function HomePage() {
                     emails={emails}
                     selectedEmailId={selectedEmailId}
                     onSelectEmail={handleSelectEmail}
+                    onLoadMore={fetchNextList}
+                    hasMore={hasNextList}
+                    isLoadingMore={isFetchingNextList}
                   />
                 )}
               </div>
@@ -478,6 +289,20 @@ export default function HomePage() {
         />
       )}
 
+      {/* Dialogs */}
+      <SnoozeDialog
+        isOpen={isSnoozeOpen}
+        onClose={() => {
+          setIsSnoozeOpen(false);
+          setSnoozeTargetId(null);
+        }}
+        onSnooze={(date) => {
+          if (snoozeTargetId) {
+            handleSnooze(snoozeTargetId, date);
+          }
+        }}
+      />
+
       {/* KANBAN EMAIL DETAIL MODAL */}
       <EmailDetailDialog
         isOpen={isKanbanDetailOpen}
@@ -486,6 +311,7 @@ export default function HomePage() {
           setSelectedEmailId(null);
         }}
         email={selectedEmail}
+        isLoading={isLoadingDetail}
         onAction={handleEmailAction}
       />
     </div>

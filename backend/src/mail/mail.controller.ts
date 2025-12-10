@@ -22,10 +22,12 @@ export class MailController {
   getEmails(
     @Req() req,
     @Param('labelId') labelId: string,
-    @Query('maxResults') maxResults: string,
+    @Query('limit') limit: string,
+    @Query('pageToken') pageToken: string,
   ) {
-    const limit = maxResults ? parseInt(maxResults) : 20;
-    return this.mailService.getEmails(req.user._id, labelId, limit);
+    const limitNum = limit ? parseInt(limit) : 20;
+
+    return this.mailService.getEmails(req.user._id, labelId, limitNum, pageToken);
   }
 
   // Lấy chi tiết 1 Email

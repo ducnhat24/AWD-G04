@@ -1,6 +1,7 @@
+import { useEffect, useRef } from "react";
 import type { Email } from "@/data/mockData";
 import { cn } from "@/lib/utils";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -8,10 +9,42 @@ interface EmailListProps {
   emails: Email[];
   selectedEmailId: string | null;
   onSelectEmail: (id: string) => void;
+  onLoadMore: () => void;
+  hasMore: boolean;
+  isLoadingMore: boolean;
 }
 
-export function EmailList({ emails, selectedEmailId, onSelectEmail }: EmailListProps) {
+export function EmailList({
+  emails,
+  selectedEmailId,
+  onSelectEmail,
+  onLoadMore,
+  hasMore,
+  isLoadingMore,
+}: EmailListProps) {
   const { user } = useAuth();
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+          onLoadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [hasMore, isLoadingMore, onLoadMore]);
 
   return (
     <div className="flex flex-col h-full border-r">
@@ -70,6 +103,15 @@ export function EmailList({ emails, selectedEmailId, onSelectEmail }: EmailListP
                 </div>
               </button>
             ))}
+
+            {/* Infinite Scroll Trigger */}
+            <div ref={observerTarget} className="h-4 w-full" />
+
+            {isLoadingMore && (
+              <div className="flex justify-center p-4">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            )}
           </div>
         )}
       </div>
