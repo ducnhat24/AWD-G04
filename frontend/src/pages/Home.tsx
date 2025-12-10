@@ -105,6 +105,7 @@ export default function HomePage() {
     executeEmailAction(action, { id: selectedEmailId, email: selectedEmail });
 
     if (action === "delete") {
+      setIsKanbanDetailOpen(false);
       setSelectedEmailId(null);
     }
   };
