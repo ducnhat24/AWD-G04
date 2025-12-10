@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { google } from 'googleapis'; // Import thư viện google
 import { LinkedAccount, LinkedAccountDocument } from '../auth/linked-account.schema';
 
@@ -15,8 +15,10 @@ export class MailService {
   // return OAuth2Client
   private async getAuthenticatedClient(userId: string) {
     // Lấy LinkedAccount từ DB theo userId và provider 'google' để lấy google access_token và refresh_token 
+    const userObjectId = new Types.ObjectId(userId);
+
     const linkedAccount = await this.linkedAccountModel.findOne({
-      user: userId,
+      user: userObjectId,
       provider: 'google',
     });
 
