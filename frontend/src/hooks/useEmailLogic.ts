@@ -39,6 +39,7 @@ export const useEmailLogic = ({
     initialPageParam: 1 as string | number,
     refetchOnWindowFocus: false,
     retry: 1,
+    refetchInterval: 60000,
   });
 
   const emails = emailsInfiniteData?.pages.flatMap((page) => page.emails) || [];
@@ -74,6 +75,7 @@ export const useEmailLogic = ({
     getNextPageParam: (lastPage) => lastPage.nextPageToken,
     enabled: viewMode === "kanban",
     initialPageParam: 1 as string | number,
+    refetchInterval: 60000,
   });
 
   const {
@@ -87,6 +89,7 @@ export const useEmailLogic = ({
     getNextPageParam: (lastPage) => lastPage.nextPageToken,
     enabled: viewMode === "kanban" && !!todoLabelId,
     initialPageParam: 1 as string | number,
+    refetchInterval: 60000,
   });
 
   const {
@@ -100,6 +103,7 @@ export const useEmailLogic = ({
     getNextPageParam: (lastPage) => lastPage.nextPageToken,
     enabled: viewMode === "kanban" && !!doneLabelId,
     initialPageParam: 1 as string | number,
+    refetchInterval: 60000,
   });
 
   const {
@@ -113,6 +117,7 @@ export const useEmailLogic = ({
     getNextPageParam: (lastPage) => lastPage.nextPageToken,
     enabled: viewMode === "kanban",
     initialPageParam: 1 as number,
+    refetchInterval: 60000,
   });
 
   // Flatten data
