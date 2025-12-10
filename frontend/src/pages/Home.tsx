@@ -1,10 +1,11 @@
 // src/pages/Home.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { EmailList } from "@/components/dashboard/EmailList";
 import { EmailDetail } from "@/components/dashboard/EmailDetail";
 import { EmailDetailDialog } from "@/components/dashboard/EmailDetailDialog";
 import { ComposeEmail } from "@/components/dashboard/ComposeEmail";
+import { SnoozeDialog } from "@/components/dashboard/SnoozeDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -29,8 +30,14 @@ export default function HomePage() {
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [composeMode, setComposeMode] = useState<"compose" | "reply" | "forward">("compose");
   const [composeOriginalEmail, setComposeOriginalEmail] = useState<Email | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [viewMode, setViewMode] = useState<"list" | "kanban">(() => (localStorage.getItem("viewMode") as "list" | "kanban") || "list");
   const [isKanbanDetailOpen, setIsKanbanDetailOpen] = useState(false);
+  const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("viewMode", viewMode);
+  }, [viewMode]);
+  const [snoozeTargetId, setSnoozeTargetId] = useState<string | null>(null);
 
   // 1. Fetch Emails bằng React Query (Thay vì filter tĩnh)
   const { data: emails = [], isLoading } = useQuery({
@@ -77,8 +84,8 @@ export default function HomePage() {
         if (email.snoozeUntil) {
           const snoozeDate = new Date(email.snoozeUntil);
           if (snoozeDate > new Date()) {
-            // Future snooze: Hide it
-            return;
+            // Future snooze: Move to 'snoozed' folder
+            email.folder = 'snoozed';
           } else {
             // Expired snooze: Restore to Inbox (or keep current folder if it's already fetched)
             // For simplicity, if it was snoozed and expired, we treat it as Inbox unless it's starred
@@ -195,8 +202,13 @@ export default function HomePage() {
 
       queryClient.setQueryData(["kanban-emails"], (old: Email[] | undefined) => {
         if (!old) return [];
-        // Optimistic update: Remove the email from the list
-        return old.filter((email) => email.id !== id);
+        // Optimistic update: Move to snoozed
+        return old.map((email) => {
+          if (email.id === id) {
+            return { ...email, folder: "snoozed", snoozeUntil: date.toISOString() };
+          }
+          return email;
+        });
       });
 
       return { previousKanbanEmails };
@@ -205,13 +217,16 @@ export default function HomePage() {
       queryClient.setQueryData(["kanban-emails"], context?.previousKanbanEmails);
       toast.error("Failed to snooze email");
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Snooze success:", data.status, data.wakeUpTime);
       toast.success("Email snoozed");
     },
   });
 
   const handleSnooze = (emailId: string, date: Date) => {
     snoozeEmailMutation.mutate({ id: emailId, date });
+    setIsSnoozeOpen(false);
+    setSnoozeTargetId(null);
   };
 
   const handleOpenMail = (emailId: string) => {
@@ -220,6 +235,12 @@ export default function HomePage() {
   };
 
   const handleMoveEmail = (emailId: string, _sourceFolder: string, destinationFolder: string) => {
+    if (destinationFolder === "snoozed") {
+      setSnoozeTargetId(emailId);
+      setIsSnoozeOpen(true);
+      return;
+    }
+
     const addLabels: string[] = [];
     const removeLabels: string[] = [];
 
@@ -477,6 +498,20 @@ export default function HomePage() {
           originalEmail={composeOriginalEmail}
         />
       )}
+
+      {/* Dialogs */}
+      <SnoozeDialog
+        isOpen={isSnoozeOpen}
+        onClose={() => {
+          setIsSnoozeOpen(false);
+          setSnoozeTargetId(null);
+        }}
+        onSnooze={(date) => {
+          if (snoozeTargetId) {
+            handleSnooze(snoozeTargetId, date);
+          }
+        }}
+      />
 
       {/* KANBAN EMAIL DETAIL MODAL */}
       <EmailDetailDialog

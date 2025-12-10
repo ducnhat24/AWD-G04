@@ -206,10 +206,28 @@ export const modifyEmail = async (
   return data;
 };
 
-export const snoozeEmail = async (id: string, date: string) => {
-  // Mock implementation
-  console.log(`Snoozing email ${id} until ${date}`);
-  return { id, snoozeUntil: date };
+export interface SnoozeResponse {
+  userId: string;
+  messageId: string;
+  wakeUpTime: string;
+  status: string;
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+export const snoozeEmail = async (id: string, date: string): Promise<SnoozeResponse> => {
+  const { data } = await api.post("/snooze", {
+    messageId: id,
+    wakeUpTime: date,
+  });
+  return data;
+};
+
+export const fetchEmailSummary = async (id: string): Promise<string> => {
+  const { data } = await api.get<{ id: string; summary: string }>(`/mail/emails/${id}/summary`);
+  return data.summary;
 };
 
 // GET /mail/attachments/:emailId/:attachmentId

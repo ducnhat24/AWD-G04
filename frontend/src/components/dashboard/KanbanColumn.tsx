@@ -2,7 +2,6 @@ import { Droppable } from "@hello-pangea/dnd";
 import type { Email } from "@/data/mockData";
 import { KanbanCard } from "./KanbanCard";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal } from "lucide-react";
 
 interface KanbanColumnProps {
   id: string;
@@ -26,9 +25,6 @@ export function KanbanColumn({ id, title, emails, count, color = "bg-gray-500", 
             {count}
           </span>
         </div>
-        <button className="text-muted-foreground hover:text-foreground">
-          <MoreHorizontal className="w-4 h-4" />
-        </button>
       </div>
 
       {/* Droppable Area */}

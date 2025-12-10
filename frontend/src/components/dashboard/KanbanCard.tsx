@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Draggable } from "@hello-pangea/dnd";
 import type { Email } from "@/data/mockData";
 import { cn } from "@/lib/utils";
-import { Clock, MoreVertical, Sparkles } from "lucide-react";
+import { Clock, GripVertical, Sparkles } from "lucide-react";
 import { SnoozeDialog } from "./SnoozeDialog";
+import { useQuery } from "@tanstack/react-query";
+import { fetchEmailSummary } from "@/services/apiService";
 
 interface KanbanCardProps {
   email: Email;
@@ -14,6 +16,34 @@ interface KanbanCardProps {
 
 export function KanbanCard({ email, index, onSnooze, onOpenMail }: KanbanCardProps) {
   const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const summaryRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (summaryRef.current) {
+      observer.observe(summaryRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  const { data: summary, isLoading: isSummaryLoading } = useQuery({
+    queryKey: ["summary", email.id],
+    queryFn: () => fetchEmailSummary(email.id),
+    enabled: isVisible,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
 
   return (
     <>
@@ -45,23 +75,37 @@ export function KanbanCard({ email, index, onSnooze, onOpenMail }: KanbanCardPro
                   <span className="text-xs text-muted-foreground">{email.timestamp}</span>
                 </div>
               </div>
-              <button className="text-muted-foreground hover:text-foreground">
-                <MoreVertical className="w-4 h-4" />
-              </button>
+              <div className="cursor-grab text-muted-foreground/50 hover:text-foreground">
+                <GripVertical className="w-4 h-4" />
+              </div>
             </div>
 
             {/* Subject */}
             <h4 className="font-medium text-sm mb-2 line-clamp-1">{email.subject}</h4>
 
             {/* AI Summary Section */}
-            <div className="bg-muted/50 rounded-md p-3 mb-3 border border-border/50">
+            <div 
+              ref={summaryRef}
+              className="bg-muted/50 rounded-md p-3 mb-3 border border-border/50"
+            >
               <div className="flex items-center gap-1.5 mb-1 text-xs font-medium text-primary">
                 <Sparkles className="w-3 h-3" />
                 <span>AI Summary</span>
               </div>
-              <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
-                {email.preview}
-              </p>
+              {isSummaryLoading ? (
+                <div className="space-y-1.5 animate-pulse">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Sparkles className="w-3 h-3 animate-spin" />
+                    <span>Generating summary...</span>
+                  </div>
+                  <div className="h-3 bg-muted-foreground/20 rounded w-full" />
+                  <div className="h-3 bg-muted-foreground/20 rounded w-3/4" />
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                  {summary || email.preview}
+                </p>
+              )}
             </div>
 
             {/* Footer Actions */}
