@@ -1,6 +1,14 @@
+import { useMemo } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import type { Email } from "@/data/mockData";
 import { KanbanColumn } from "./KanbanColumn";
+
+const COLUMNS = [
+  { id: 'inbox', title: 'Inbox', color: 'bg-red-500' },
+  { id: 'todo', title: 'To Do', color: 'bg-yellow-500' },
+  { id: 'snoozed', title: 'Snoozed', color: 'bg-purple-500' },
+  { id: 'done', title: 'Done', color: 'bg-green-500' },
+] as const;
 
 interface KanbanBoardProps {
   emails: Email[];
@@ -10,12 +18,13 @@ interface KanbanBoardProps {
 }
 
 export function KanbanBoard({ emails, onMoveEmail, onSnooze, onOpenMail }: KanbanBoardProps) {
-  // Filter emails into columns
-  // We normalize folder names to lowercase to match IDs
-  const inboxEmails = emails.filter(e => e.folder.toLowerCase() === 'inbox');
-  const todoEmails = emails.filter(e => e.folder.toLowerCase() === 'todo');
-  const snoozedEmails = emails.filter(e => e.folder.toLowerCase() === 'snoozed');
-  const doneEmails = emails.filter(e => e.folder.toLowerCase() === 'done');
+  // Filter emails into columns using useMemo for performance
+  const columnsData = useMemo(() => ({
+    inbox: emails.filter(e => e.folder === 'inbox'),
+    todo: emails.filter(e => e.folder === 'todo'),
+    snoozed: emails.filter(e => e.folder === 'snoozed'),
+    done: emails.filter(e => e.folder === 'done'),
+  }), [emails]);
 
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
@@ -35,42 +44,18 @@ export function KanbanBoard({ emails, onMoveEmail, onSnooze, onOpenMail }: Kanba
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="flex h-full gap-6 p-6 overflow-x-auto bg-background/50">
-        <KanbanColumn
-          id="inbox"
-          title="Inbox"
-          emails={inboxEmails}
-          count={inboxEmails.length}
-          color="bg-red-500"
-          onSnooze={onSnooze}
-          onOpenMail={onOpenMail}
-        />
-        <KanbanColumn
-          id="todo"
-          title="To Do"
-          emails={todoEmails}
-          count={todoEmails.length}
-          color="bg-yellow-500"
-          onSnooze={onSnooze}
-          onOpenMail={onOpenMail}
-        />
-        <KanbanColumn
-          id="snoozed"
-          title="Snoozed"
-          emails={snoozedEmails}
-          count={snoozedEmails.length}
-          color="bg-purple-500"
-          onSnooze={onSnooze}
-          onOpenMail={onOpenMail}
-        />
-        <KanbanColumn
-          id="done"
-          title="Done"
-          emails={doneEmails}
-          count={doneEmails.length}
-          color="bg-green-500"
-          onSnooze={onSnooze}
-          onOpenMail={onOpenMail}
-        />
+        {COLUMNS.map((col) => (
+          <KanbanColumn
+            key={col.id}
+            id={col.id}
+            title={col.title}
+            emails={columnsData[col.id as keyof typeof columnsData]}
+            count={columnsData[col.id as keyof typeof columnsData].length}
+            color={col.color}
+            onSnooze={onSnooze}
+            onOpenMail={onOpenMail}
+          />
+        ))}
       </div>
     </DragDropContext>
   );

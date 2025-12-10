@@ -1,11 +1,31 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, memo } from "react";
 import { Draggable } from "@hello-pangea/dnd";
+import { cva } from "class-variance-authority";
 import type { Email } from "@/data/mockData";
 import { cn } from "@/lib/utils";
-import { Clock, GripVertical, Sparkles } from "lucide-react";
+import { Clock, GripVertical, Maximize2 } from "lucide-react";
 import { SnoozeDialog } from "./SnoozeDialog";
-import { useQuery } from "@tanstack/react-query";
-import { fetchEmailSummary } from "@/services/apiService";
+import { AISummaryWidget } from "./AISummaryWidget";
+
+const cardVariants = cva(
+  "rounded-lg border shadow-sm p-4 mb-3 select-none transition-all cursor-pointer bg-card text-card-foreground",
+  {
+    variants: {
+      isDragging: {
+        true: "shadow-lg ring-2 ring-primary/20 scale-[1.02] z-50",
+        false: "hover:shadow-md hover:border-primary/50",
+      },
+      isRead: {
+        true: "opacity-80",
+        false: "opacity-100",
+      }
+    },
+    defaultVariants: {
+      isDragging: false,
+      isRead: false,
+    },
+  }
+);
 
 interface KanbanCardProps {
   email: Email;
@@ -14,36 +34,8 @@ interface KanbanCardProps {
   onOpenMail: (emailId: string) => void;
 }
 
-export function KanbanCard({ email, index, onSnooze, onOpenMail }: KanbanCardProps) {
+export const KanbanCard = memo(function KanbanCard({ email, index, onSnooze, onOpenMail }: KanbanCardProps) {
   const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const summaryRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (summaryRef.current) {
-      observer.observe(summaryRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  const { data: summary, isLoading: isSummaryLoading } = useQuery({
-    queryKey: ["summary", email.id],
-    queryFn: () => fetchEmailSummary(email.id),
-    enabled: isVisible,
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
-  });
 
   return (
     <>
@@ -58,10 +50,8 @@ export function KanbanCard({ email, index, onSnooze, onOpenMail }: KanbanCardPro
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
-            className={cn(
-              "bg-card text-card-foreground rounded-lg border shadow-sm p-4 mb-3 select-none transition-shadow",
-              snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "hover:shadow-md"
-            )}
+            onClick={() => onOpenMail(email.id)}
+            className={cn(cardVariants({ isDragging: snapshot.isDragging, isRead: email.isRead }))}
             style={provided.draggableProps.style}
           >
             {/* Header: Sender & Actions */}
@@ -71,57 +61,50 @@ export function KanbanCard({ email, index, onSnooze, onOpenMail }: KanbanCardPro
                   {email.sender.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-semibold leading-none">{email.sender}</span>
-                  <span className="text-xs text-muted-foreground">{email.timestamp}</span>
+                  <span className={cn("text-sm leading-none", !email.isRead ? "font-bold" : "font-normal")}>{email.sender}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground">{email.timestamp}</span>
+                    {!email.isRead && (
+                      <span className="w-2 h-2 bg-blue-500 rounded-full" title="Unread" />
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="cursor-grab text-muted-foreground/50 hover:text-foreground">
+              <div 
+                className="cursor-grab text-muted-foreground/50 hover:text-foreground"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <GripVertical className="w-4 h-4" />
               </div>
             </div>
 
             {/* Subject */}
-            <h4 className="font-medium text-sm mb-2 line-clamp-1">{email.subject}</h4>
+            <h4 className={cn("text-sm mb-2 line-clamp-1", !email.isRead ? "font-bold" : "font-normal")}>{email.subject}</h4>
 
             {/* AI Summary Section */}
-            <div 
-              ref={summaryRef}
-              className="bg-muted/50 rounded-md p-3 mb-3 border border-border/50"
-            >
-              <div className="flex items-center gap-1.5 mb-1 text-xs font-medium text-primary">
-                <Sparkles className="w-3 h-3" />
-                <span>AI Summary</span>
-              </div>
-              {isSummaryLoading ? (
-                <div className="space-y-1.5 animate-pulse">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Sparkles className="w-3 h-3 animate-spin" />
-                    <span>Generating summary...</span>
-                  </div>
-                  <div className="h-3 bg-muted-foreground/20 rounded w-full" />
-                  <div className="h-3 bg-muted-foreground/20 rounded w-3/4" />
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
-                  {summary || email.preview}
-                </p>
-              )}
-            </div>
+            <AISummaryWidget emailId={email.id} preview={email.preview} />
 
             {/* Footer Actions */}
             <div className="flex items-center justify-between mt-2">
               <button
-                onClick={() => setIsSnoozeOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsSnoozeOpen(true);
+                }}
                 className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Clock className="w-3 h-3" />
                 <span>Snooze</span>
               </button>
               <button 
-                onClick={() => onOpenMail(email.id)}
-                className="text-xs font-medium text-primary hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenMail(email.id);
+                }}
+                className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
               >
-                Open Mail
+                <span>Open Mail</span>
+                <Maximize2 className="w-3 h-3" />
               </button>
             </div>
           </div>
@@ -129,4 +112,4 @@ export function KanbanCard({ email, index, onSnooze, onOpenMail }: KanbanCardPro
       </Draggable>
     </>
   );
-}
+});

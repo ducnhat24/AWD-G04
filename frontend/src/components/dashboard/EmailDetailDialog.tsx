@@ -1,5 +1,5 @@
 import React from "react";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { EmailDetail } from "./EmailDetail";
 import type { Email } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,11 @@ interface EmailDetailDialogProps {
   isOpen: boolean;
   onClose: () => void;
   email: Email | null;
+  isLoading?: boolean;
   onAction: (action: "toggleRead" | "delete" | "star" | "reply" | "forward") => void;
 }
 
-export function EmailDetailDialog({ isOpen, onClose, email, onAction }: EmailDetailDialogProps) {
+export function EmailDetailDialog({ isOpen, onClose, email, isLoading, onAction }: EmailDetailDialogProps) {
   if (!isOpen) return null;
 
   return (
@@ -27,7 +28,17 @@ export function EmailDetailDialog({ isOpen, onClose, email, onAction }: EmailDet
           </Button>
         </div>
         <div className="flex-1 overflow-hidden">
-          <EmailDetail email={email} onAction={onAction} />
+          {isLoading ? (
+            <div className="flex h-full items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : email ? (
+            <EmailDetail email={email} onAction={onAction} />
+          ) : (
+            <div className="flex h-full items-center justify-center text-muted-foreground">
+              Select an email to view details
+            </div>
+          )}
         </div>
       </div>
       <div className="absolute inset-0 -z-10" onClick={onClose} />
