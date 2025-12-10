@@ -21,7 +21,7 @@ export class MailService {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
-      this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     }
   }
 
@@ -440,6 +440,47 @@ export class MailService {
     });
 
     return summaryText;
+  }
+
+  async getBasicEmailsDetails(userId: string, messageIds: string[]) {
+    if (!messageIds.length) return [];
+
+    const auth = await this.getAuthenticatedClient(userId);
+    const gmail = google.gmail({ version: 'v1', auth });
+
+    // Dùng Promise.all để gọi song song, tối ưu tốc độ
+    const detailsPromise = messageIds.map(async (id) => {
+      try {
+        const detail = await gmail.users.messages.get({
+          userId: 'me',
+          id: id,
+          format: 'metadata', // Chỉ lấy header, không lấy body -> Nhẹ & Nhanh
+          metadataHeaders: ['Subject', 'From', 'Date'],
+        });
+
+        const headers = detail.data.payload?.headers || [];
+        const subject = headers.find((h) => h.name === 'Subject')?.value || '(No Subject)';
+        const from = headers.find((h) => h.name === 'From')?.value || 'Unknown';
+        const date = headers.find((h) => h.name === 'Date')?.value || '';
+
+        return {
+          id: detail.data.id,
+          threadId: detail.data.threadId,
+          snippet: detail.data.snippet,
+          subject,
+          sender: from,
+          date,
+        };
+      } catch (error) {
+        // Trường hợp email đã bị xóa vĩnh viễn trên Gmail
+        console.warn(`Email ${id} not found on Gmail (might be deleted)`);
+        return null;
+      }
+    });
+
+    const results = await Promise.all(detailsPromise);
+    // Lọc bỏ các email null (đã bị xóa)
+    return results.filter(item => item !== null);
   }
 
   private getBody(payload: any, mimeType: string): string | null {
