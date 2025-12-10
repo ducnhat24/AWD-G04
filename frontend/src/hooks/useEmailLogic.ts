@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, type InfiniteData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   fetchEmails,
@@ -121,12 +121,71 @@ export const useEmailLogic = ({
       id: string;
       addLabels: string[];
       removeLabels: string[];
+      meta?: { destinationFolder: string; sourceFolder?: string };
     }) => modifyEmail(id, addLabels, removeLabels),
-    onMutate: async ({ id, addLabels, removeLabels }) => {
+    onMutate: async ({ id, addLabels, removeLabels, meta }) => {
       await queryClient.cancelQueries({ queryKey: ["emails", selectedFolder] });
       
       const previousEmails = queryClient.getQueryData(["emails", selectedFolder]);
       const previousEmailDetail = queryClient.getQueryData(["email", id]);
+
+      // Kanban Optimistic Update Context
+      let previousSource: InfiniteData<any> | undefined;
+      let previousDest: InfiniteData<any> | undefined;
+      let sourceQueryKey: any[] | undefined;
+      let destQueryKey: any[] | undefined;
+
+      if (meta?.destinationFolder && meta?.sourceFolder) {
+        const getQueryKey = (folder: string) => {
+          if (folder === 'inbox') return ["kanban", "inbox"];
+          if (folder === 'todo') return ["kanban", "todo", todoLabelId];
+          if (folder === 'done') return ["kanban", "done", doneLabelId];
+          if (folder === 'snoozed') return ["kanban", "snoozed"];
+          return undefined;
+        };
+
+        sourceQueryKey = getQueryKey(meta.sourceFolder);
+        destQueryKey = getQueryKey(meta.destinationFolder);
+
+        if (sourceQueryKey && destQueryKey) {
+          await queryClient.cancelQueries({ queryKey: sourceQueryKey });
+          await queryClient.cancelQueries({ queryKey: destQueryKey });
+
+          previousSource = queryClient.getQueryData(sourceQueryKey);
+          previousDest = queryClient.getQueryData(destQueryKey);
+
+          let movedEmail: Email | undefined;
+
+          // Remove from source
+          queryClient.setQueryData(sourceQueryKey, (old: any) => {
+            if (!old) return old;
+            const newPages = old.pages.map((page: any) => {
+              const found = page.emails.find((e: Email) => e.id === id);
+              if (found) movedEmail = found;
+              return {
+                ...page,
+                emails: page.emails.filter((e: Email) => e.id !== id),
+              };
+            });
+            return { ...old, pages: newPages };
+          });
+
+          // Add to destination
+          if (movedEmail) {
+            queryClient.setQueryData(destQueryKey, (old: any) => {
+              if (!old) return old;
+              const newPages = [...old.pages];
+              if (newPages.length > 0) {
+                newPages[0] = {
+                  ...newPages[0],
+                  emails: [movedEmail, ...newPages[0].emails],
+                };
+              }
+              return { ...old, pages: newPages };
+            });
+          }
+        }
+      }
 
       if (previousEmailDetail) {
         await queryClient.cancelQueries({ queryKey: ["email", id] });
@@ -182,7 +241,7 @@ export const useEmailLogic = ({
         });
       }
 
-      return { previousEmails, previousEmailDetail };
+      return { previousEmails, previousEmailDetail, previousSource, previousDest, sourceQueryKey, destQueryKey };
     },
     onError: (_err, newTodo, context) => {
       console.error("Mutation failed:", _err);
@@ -191,6 +250,12 @@ export const useEmailLogic = ({
       }
       if (context?.previousEmailDetail) {
         queryClient.setQueryData(["email", newTodo.id], context.previousEmailDetail);
+      }
+      if (context?.sourceQueryKey && context?.previousSource) {
+        queryClient.setQueryData(context.sourceQueryKey, context.previousSource);
+      }
+      if (context?.destQueryKey && context?.previousDest) {
+        queryClient.setQueryData(context.destQueryKey, context.previousDest);
       }
       toast.error("Failed to update email");
     },
@@ -215,7 +280,7 @@ export const useEmailLogic = ({
 
   // 5. Helper Functions
 
-  const moveEmail = (emailId: string, destinationFolder: string) => {
+  const moveEmail = (emailId: string, destinationFolder: string, sourceFolder?: string) => {
     const addLabels: string[] = [];
     const removeLabels: string[] = [];
 
@@ -246,6 +311,7 @@ export const useEmailLogic = ({
       id: emailId,
       addLabels,
       removeLabels,
+      meta: { destinationFolder, sourceFolder }
     });
   };
 

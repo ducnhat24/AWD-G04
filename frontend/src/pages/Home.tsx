@@ -72,13 +72,13 @@ export default function HomePage() {
     }
   };
 
-  const handleMoveEmail = (emailId: string, _sourceFolder: string, destinationFolder: string) => {
+  const handleMoveEmail = (emailId: string, sourceFolder: string, destinationFolder: string) => {
     if (destinationFolder === "snoozed") {
       setSnoozeTargetId(emailId);
       setIsSnoozeOpen(true);
       return;
     }
-    moveEmail(emailId, destinationFolder);
+    moveEmail(emailId, destinationFolder, sourceFolder);
   };
 
   const handleSelectEmail = (id: string) => {
