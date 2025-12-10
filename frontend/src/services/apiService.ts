@@ -78,6 +78,21 @@ export const fetchUserProfile = async (): Promise<UserProfile> => {
 // 3. Email Data Service (Mock Endpoints)
 // ========================================================
 
+const LABEL_MAP: Record<string, string> = {
+  'INBOX': 'INBOX',
+  'SENT': 'SENT',
+  'DRAFT': 'DRAFT',
+  'TRASH': 'TRASH',
+  'SPAM': 'SPAM',
+  'STARRED': 'STARRED',
+  'IMPORTANT': 'IMPORTANT'
+};
+
+export const findLabelId = (mailboxes: { id: string; label: string }[], name: string): string | undefined => {
+  const mailbox = mailboxes.find((m) => m.label === name);
+  return mailbox?.id;
+};
+
 // Helper to parse "Name <email>"
 const parseSender = (fromHeader: string) => {
   // Example: "Google <no-reply@accounts.google.com>"
@@ -166,13 +181,94 @@ export const fetchMailboxes = async () => {
 };
 
 // GET /mailboxes/:id/emails
-export const fetchEmails = async (folderId: string): Promise<Email[]> => {
-  // Gọi axios thật
-  const { data } = await api.get(`/mail/mailboxes/${folderId}/emails`);
-  if (Array.isArray(data) && data.length > 0 && "snippet" in data[0]) {
-    return data.map((e) => transformEmail(e, folderId));
+export const fetchEmails = async (
+  folderId: string,
+  pageParam: string | number = 1,
+  limit: number = 10
+): Promise<{ emails: Email[]; nextPageToken?: string }> => {
+  const mappedLabel = LABEL_MAP[folderId] || folderId;
+  const params: any = { limit };
+
+  if (typeof pageParam === "string") {
+    params.pageToken = pageParam;
+  } else if (typeof pageParam === "number" && pageParam > 1) {
+    // If backend supports page number for standard folders, use it.
+    // But Gmail API usually uses pageToken.
+    // We'll send it as page if it's a number, just in case.
+    params.page = pageParam;
   }
-  return data;
+
+  try {
+    const { data } = await api.get(`/mail/mailboxes/${mappedLabel}/emails`, {
+      params,
+    });
+
+    let emails: Email[] = [];
+    let nextPageToken: string | undefined = undefined;
+
+    if (Array.isArray(data)) {
+      emails = data.map((e) => transformEmail(e, folderId));
+    } else if (data && typeof data === 'object') {
+      // Handle case where backend returns { messages: [], nextPageToken: '...' }
+      // or { emails: [], nextPageToken: '...' }
+      const rawEmails = data.messages || data.emails || [];
+      if (Array.isArray(rawEmails)) {
+        emails = rawEmails.map((e: any) => transformEmail(e, folderId));
+      }
+      nextPageToken = data.nextPageToken;
+    }
+
+    return { emails, nextPageToken };
+  } catch (error) {
+    console.error("Error fetching emails:", error);
+    return { emails: [] };
+  }
+};
+
+// GET /snooze
+export const fetchSnoozedEmails = async (
+  pageParam: number = 1,
+  limit: number = 10
+): Promise<{ emails: Email[]; nextPageToken?: number; total?: number }> => {
+  try {
+    const { data: response } = await api.get("/snooze", {
+      params: { page: pageParam, limit },
+    });
+
+    // Handle { data: [...], meta: ... } structure
+    const rawEmails = response.data || [];
+    const meta = response.meta || {};
+
+    const emails: Email[] = rawEmails.map((item: any) => ({
+      id: item.id || item.messageId,
+      sender: item.sender || "Unknown",
+      senderEmail: item.sender || "", 
+      recipient: "Me",
+      recipientEmail: "me@example.com",
+      subject: item.subject || "(No Subject)",
+      preview: item.snippet || "",
+      body: item.snippet || "",
+      timestamp: item.date || new Date().toISOString(),
+      isRead: true,
+      isStarred: false,
+      folder: "snoozed",
+      avatarColor: "bg-yellow-500",
+      attachments: [],
+      snoozeUntil: item.snoozeInfo?.wakeUpTime,
+    }));
+
+    // If meta.page exists, use it to calculate next page, otherwise rely on array length
+    const nextPageToken = meta.page ? meta.page + 1 : (rawEmails.length === limit ? pageParam + 1 : undefined);
+
+    return { 
+      emails, 
+      nextPageToken,
+      total: meta.total 
+    };
+  } catch (error) {
+    console.error("Error fetching snoozed emails:", error);
+    return { emails: [] };
+  }
 };
 
 // GET /emails/:id

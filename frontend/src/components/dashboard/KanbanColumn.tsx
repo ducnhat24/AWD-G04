@@ -1,7 +1,9 @@
+import { useEffect, useRef } from "react";
 import { Droppable } from "@hello-pangea/dnd";
 import type { Email } from "@/data/mockData";
 import { KanbanCard } from "./KanbanCard";
 import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 interface KanbanColumnProps {
   id: string;
@@ -11,9 +13,46 @@ interface KanbanColumnProps {
   color?: string;
   onSnooze: (emailId: string, date: Date) => void;
   onOpenMail: (emailId: string) => void;
+  onLoadMore: () => void;
+  hasMore: boolean;
+  isLoadingMore: boolean;
 }
 
-export function KanbanColumn({ id, title, emails, count, color = "bg-gray-500", onSnooze, onOpenMail }: KanbanColumnProps) {
+export function KanbanColumn({
+  id,
+  title,
+  emails,
+  count,
+  color = "bg-gray-500",
+  onSnooze,
+  onOpenMail,
+  onLoadMore,
+  hasMore,
+  isLoadingMore,
+}: KanbanColumnProps) {
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+          onLoadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [hasMore, isLoadingMore, onLoadMore]);
+
   return (
     <div className="flex flex-col h-full min-w-[300px] w-full bg-muted/10 rounded-xl border border-border/50">
       {/* Column Header */}
@@ -39,15 +78,24 @@ export function KanbanColumn({ id, title, emails, count, color = "bg-gray-500", 
             )}
           >
             {emails.map((email, index) => (
-              <KanbanCard 
-                key={email.id} 
-                email={email} 
-                index={index} 
+              <KanbanCard
+                key={email.id}
+                email={email}
+                index={index}
                 onSnooze={onSnooze}
                 onOpenMail={onOpenMail}
               />
             ))}
             {provided.placeholder}
+
+            {/* Infinite Scroll Trigger */}
+            <div ref={observerTarget} className="h-4 w-full" />
+
+            {isLoadingMore && (
+              <div className="flex justify-center p-2">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            )}
           </div>
         )}
       </Droppable>

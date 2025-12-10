@@ -10,22 +10,26 @@ const COLUMNS = [
   { id: 'done', title: 'Done', color: 'bg-green-500' },
 ] as const;
 
-interface KanbanBoardProps {
+interface KanbanData {
   emails: Email[];
+  fetchNextPage: () => void;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+}
+
+interface KanbanBoardProps {
+  kanbanData: {
+    inbox: KanbanData;
+    todo: KanbanData;
+    done: KanbanData;
+    snoozed: KanbanData;
+  };
   onMoveEmail: (emailId: string, sourceFolder: string, destinationFolder: string) => void;
   onSnooze: (emailId: string, date: Date) => void;
   onOpenMail: (emailId: string) => void;
 }
 
-export function KanbanBoard({ emails, onMoveEmail, onSnooze, onOpenMail }: KanbanBoardProps) {
-  // Filter emails into columns using useMemo for performance
-  const columnsData = useMemo(() => ({
-    inbox: emails.filter(e => e.folder === 'inbox'),
-    todo: emails.filter(e => e.folder === 'todo'),
-    snoozed: emails.filter(e => e.folder === 'snoozed'),
-    done: emails.filter(e => e.folder === 'done'),
-  }), [emails]);
-
+export function KanbanBoard({ kanbanData, onMoveEmail, onSnooze, onOpenMail }: KanbanBoardProps) {
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
@@ -44,18 +48,24 @@ export function KanbanBoard({ emails, onMoveEmail, onSnooze, onOpenMail }: Kanba
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="flex h-full gap-6 p-6 overflow-x-auto bg-background/50">
-        {COLUMNS.map((col) => (
-          <KanbanColumn
-            key={col.id}
-            id={col.id}
-            title={col.title}
-            emails={columnsData[col.id as keyof typeof columnsData]}
-            count={columnsData[col.id as keyof typeof columnsData].length}
-            color={col.color}
-            onSnooze={onSnooze}
-            onOpenMail={onOpenMail}
-          />
-        ))}
+        {COLUMNS.map((col) => {
+          const columnData = kanbanData[col.id as keyof typeof kanbanData];
+          return (
+            <KanbanColumn
+              key={col.id}
+              id={col.id}
+              title={col.title}
+              emails={columnData.emails}
+              count={columnData.emails.length}
+              color={col.color}
+              onSnooze={onSnooze}
+              onOpenMail={onOpenMail}
+              onLoadMore={columnData.fetchNextPage}
+              hasMore={columnData.hasNextPage}
+              isLoadingMore={columnData.isFetchingNextPage}
+            />
+          );
+        })}
       </div>
     </DragDropContext>
   );

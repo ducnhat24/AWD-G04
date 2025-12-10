@@ -35,7 +35,7 @@ export default function HomePage() {
   const {
     emails,
     folders,
-    kanbanEmails,
+    kanbanData,
     selectedEmail,
     isLoadingList,
     isLoadingKanban,
@@ -60,7 +60,13 @@ export default function HomePage() {
     setSelectedEmailId(emailId);
     setIsKanbanDetailOpen(true);
 
-    const email = kanbanEmails.find((e: any) => e.id === emailId);
+    const allKanbanEmails = [
+      ...kanbanData.inbox.emails,
+      ...kanbanData.todo.emails,
+      ...kanbanData.done.emails,
+      ...kanbanData.snoozed.emails,
+    ];
+    const email = allKanbanEmails.find((e: any) => e.id === emailId);
     if (email && !email.isRead) {
       executeEmailAction("markAsRead", { id: emailId, email });
     }
@@ -199,7 +205,7 @@ export default function HomePage() {
                 </div>
               ) : (
                 <KanbanBoard
-                  emails={kanbanEmails}
+                  kanbanData={kanbanData}
                   onMoveEmail={handleMoveEmail}
                   onSnooze={(id) => {
                     setSnoozeTargetId(id);
