@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Clock, X, Sun, Moon, Calendar, CalendarClock, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface SnoozeDialogProps {
   isOpen: boolean;
@@ -54,13 +55,18 @@ export function SnoozeDialog({ isOpen, onClose, onSnooze }: SnoozeDialogProps) {
     
     // Basic validation
     if (isNaN(date.getTime())) return;
-    if (date < new Date()) return; // Prevent past dates
+    if (date < new Date()) {
+      toast.error("Please select a future date and time");
+      return; // Prevent past dates
+    }
 
     onSnooze(date);
     onClose();
   };
 
-  const nowString = new Date().toISOString().slice(0, 16);
+  const now = new Date();
+  const offset = now.getTimezoneOffset() * 60000;
+  const nowString = new Date(now.getTime() - offset).toISOString().slice(0, 16);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -132,7 +138,10 @@ export function SnoozeDialog({ isOpen, onClose, onSnooze }: SnoozeDialogProps) {
             </button>
 
             <button
-              onClick={() => setIsCustomMode(true)}
+              onClick={() => {
+                setIsCustomMode(true);
+                setCustomDate(nowString);
+              }}
               className="w-full flex items-center justify-between p-3 rounded-md hover:bg-muted transition-colors text-left group"
             >
               <div className="flex items-center gap-3">
@@ -150,7 +159,7 @@ export function SnoozeDialog({ isOpen, onClose, onSnooze }: SnoozeDialogProps) {
               <input
                 type="datetime-local"
                 min={nowString}
-                defaultValue={nowString}
+                value={customDate}
                 onChange={(e) => setCustomDate(e.target.value)}
                 className="w-full p-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />

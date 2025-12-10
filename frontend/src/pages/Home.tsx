@@ -210,9 +210,13 @@ export default function HomePage() {
                 <KanbanBoard
                   kanbanData={kanbanData}
                   onMoveEmail={handleMoveEmail}
-                  onSnooze={(id) => {
-                    setSnoozeTargetId(id);
-                    setIsSnoozeOpen(true);
+                  onSnooze={(id, date) => {
+                    if (date) {
+                      handleSnooze(id, date);
+                    } else {
+                      setSnoozeTargetId(id);
+                      setIsSnoozeOpen(true);
+                    }
                   }}
                   onOpenMail={handleOpenMail}
                 />
