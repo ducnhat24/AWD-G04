@@ -30,10 +30,14 @@ export function EmailDetailDialog({ isOpen, onClose, email, isLoading, onAction 
         <div className="flex-1 overflow-hidden">
           {isLoading ? (
             <div className="flex h-full items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          ) : (
+          ) : email ? (
             <EmailDetail email={email} onAction={onAction} />
+          ) : (
+            <div className="flex h-full items-center justify-center text-muted-foreground">
+              Select an email to view details
+            </div>
           )}
         </div>
       </div>

@@ -77,6 +77,7 @@ export const useEmailLogic = ({
       return Array.from(emailMap.values());
     },
     enabled: viewMode === "kanban",
+    refetchOnWindowFocus: false,
   });
 
   // 4. Mutations
@@ -92,12 +93,15 @@ export const useEmailLogic = ({
     }) => modifyEmail(id, addLabels, removeLabels),
     onMutate: async ({ id, addLabels, removeLabels }) => {
       await queryClient.cancelQueries({ queryKey: ["emails", selectedFolder] });
-      await queryClient.cancelQueries({ queryKey: ["email", id] });
       await queryClient.cancelQueries({ queryKey: ["kanban-emails"] });
 
       const previousEmails = queryClient.getQueryData(["emails", selectedFolder]);
       const previousEmailDetail = queryClient.getQueryData(["email", id]);
       const previousKanbanEmails = queryClient.getQueryData(["kanban-emails"]);
+
+      if (previousEmailDetail) {
+        await queryClient.cancelQueries({ queryKey: ["email", id] });
+      }
 
       queryClient.setQueryData(["emails", selectedFolder], (old: any[]) => {
         if (!old) return [];
@@ -142,7 +146,16 @@ export const useEmailLogic = ({
               else if (addLabels.includes("INBOX") && removeLabels.includes("STARRED")) newFolder = "inbox";
               else if (removeLabels.includes("INBOX") && removeLabels.includes("STARRED")) newFolder = "done";
               
-              return { ...email, folder: newFolder };
+              let isRead = email.isRead;
+              let isStarred = email.isStarred;
+
+              if (addLabels.includes("UNREAD")) isRead = false;
+              if (removeLabels.includes("UNREAD")) isRead = true;
+
+              if (addLabels.includes("STARRED")) isStarred = true;
+              if (removeLabels.includes("STARRED")) isStarred = false;
+
+              return { ...email, folder: newFolder, isRead, isStarred };
             }
             return email;
           });
@@ -162,6 +175,9 @@ export const useEmailLogic = ({
         queryClient.setQueryData(["kanban-emails"], context.previousKanbanEmails);
       }
       toast.error("Failed to update email");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["emails", selectedFolder] });
     },
   });
 
@@ -221,65 +237,7 @@ export const useEmailLogic = ({
     snoozeEmailMutation.mutate({ id: emailId, date });
   };
 
-  const executeEmailAction = (
-    action: "toggleRead" | "delete" | "star" | "markAsRead",
-    email?: Email | null
-  ) => {
-    if (!email && action !== "markAsRead") return; // markAsRead might pass ID only if we change signature, but here we use email object or ID
 
-    // Special case for markAsRead which might be called with just ID in the original code
-    // But here we try to keep it consistent.
-    
-    const addLabels: string[] = [];
-    const removeLabels: string[] = [];
-    let successMessage = "Action completed";
-    let shouldMutate = true;
-
-    switch (action) {
-      case "toggleRead":
-        if (email?.isRead) {
-          addLabels.push("UNREAD");
-          successMessage = "Marked as unread";
-        } else {
-          removeLabels.push("UNREAD");
-          successMessage = "Marked as read";
-        }
-        break;
-      case "markAsRead":
-         removeLabels.push("UNREAD");
-         shouldMutate = false; // We handle mutation below differently or just let it fall through?
-         // In original code: modifyEmailMutation.mutate({ id, addLabels: [], removeLabels: ["UNREAD"] });
-         // So we can just set removeLabels and let it run.
-         successMessage = ""; // No toast for auto-mark-read usually
-         break;
-      case "delete":
-        addLabels.push("TRASH");
-        successMessage = "Moved to trash";
-        break;
-      case "star":
-        if (email?.isStarred) {
-          removeLabels.push("STARRED");
-          successMessage = "Removed from starred";
-        } else {
-          addLabels.push("STARRED");
-          successMessage = "Marked as starred";
-        }
-        break;
-    }
-
-    if (action === "markAsRead") {
-        // For markAsRead, we might not have the full email object if called from list click
-        // But the original code used `kanbanEmails.find` or `emails.find`.
-        // We will assume the caller passes the ID if they don't have the email, 
-        // but `modifyEmailMutation` needs ID.
-        // Let's adjust the signature of executeEmailAction to take ID as well.
-    }
-    
-    // Actually, let's stick to the requested signature or improve it.
-    // The user asked for `executeEmailAction` (generic handler).
-    // I will make it: (action: string, payload: { id: string, email?: Email })
-    
-  };
 
   // Redefining executeEmailAction to be more robust
   const handleEmailAction = (
