@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Draggable } from "@hello-pangea/dnd";
 import type { Email } from "@/data/mockData";
 import { cn } from "@/lib/utils";
-import { Clock, GripVertical, Sparkles } from "lucide-react";
+import { Clock, GripVertical, Sparkles, Maximize2 } from "lucide-react";
 import { SnoozeDialog } from "./SnoozeDialog";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEmailSummary } from "@/services/apiService";
@@ -58,8 +58,9 @@ export function KanbanCard({ email, index, onSnooze, onOpenMail }: KanbanCardPro
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
+            onClick={() => onOpenMail(email.id)}
             className={cn(
-              "bg-card text-card-foreground rounded-lg border shadow-sm p-4 mb-3 select-none transition-shadow",
+              "bg-card text-card-foreground rounded-lg border shadow-sm p-4 mb-3 select-none transition-shadow cursor-pointer",
               snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "hover:shadow-md"
             )}
             style={provided.draggableProps.style}
@@ -71,17 +72,25 @@ export function KanbanCard({ email, index, onSnooze, onOpenMail }: KanbanCardPro
                   {email.sender.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-semibold leading-none">{email.sender}</span>
-                  <span className="text-xs text-muted-foreground">{email.timestamp}</span>
+                  <span className={cn("text-sm leading-none", !email.isRead ? "font-bold" : "font-normal")}>{email.sender}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground">{email.timestamp}</span>
+                    {!email.isRead && (
+                      <span className="w-2 h-2 bg-blue-500 rounded-full" title="Unread" />
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="cursor-grab text-muted-foreground/50 hover:text-foreground">
+              <div 
+                className="cursor-grab text-muted-foreground/50 hover:text-foreground"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <GripVertical className="w-4 h-4" />
               </div>
             </div>
 
             {/* Subject */}
-            <h4 className="font-medium text-sm mb-2 line-clamp-1">{email.subject}</h4>
+            <h4 className={cn("text-sm mb-2 line-clamp-1", !email.isRead ? "font-bold" : "font-normal")}>{email.subject}</h4>
 
             {/* AI Summary Section */}
             <div 
@@ -111,17 +120,24 @@ export function KanbanCard({ email, index, onSnooze, onOpenMail }: KanbanCardPro
             {/* Footer Actions */}
             <div className="flex items-center justify-between mt-2">
               <button
-                onClick={() => setIsSnoozeOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsSnoozeOpen(true);
+                }}
                 className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Clock className="w-3 h-3" />
                 <span>Snooze</span>
               </button>
               <button 
-                onClick={() => onOpenMail(email.id)}
-                className="text-xs font-medium text-primary hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenMail(email.id);
+                }}
+                className="flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
               >
-                Open Mail
+                <span>Open Mail</span>
+                <Maximize2 className="w-3 h-3" />
               </button>
             </div>
           </div>

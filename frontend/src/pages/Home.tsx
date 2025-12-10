@@ -67,7 +67,7 @@ export default function HomePage() {
       const [inbox, starred, archive] = await Promise.all([
         fetchEmails("INBOX").catch(() => []),
         fetchEmails("STARRED").catch(() => []),
-        fetchEmails("ARCHIVE").catch(() => []),
+        fetchEmails("YELLOW_STAR").catch(() => []),
       ]);
 
       const safeInbox = Array.isArray(inbox) ? inbox.map(e => ({ ...e, folder: 'inbox' })) : [];
@@ -232,6 +232,15 @@ export default function HomePage() {
   const handleOpenMail = (emailId: string) => {
     setSelectedEmailId(emailId);
     setIsKanbanDetailOpen(true);
+
+    const email = kanbanEmails.find((e: any) => e.id === emailId);
+    if (email && !email.isRead) {
+      modifyEmailMutation.mutate({
+        id: emailId,
+        addLabels: [],
+        removeLabels: ["UNREAD"],
+      });
+    }
   };
 
   const handleMoveEmail = (emailId: string, _sourceFolder: string, destinationFolder: string) => {
@@ -521,6 +530,7 @@ export default function HomePage() {
           setSelectedEmailId(null);
         }}
         email={selectedEmail}
+        isLoading={isLoadingDetail}
         onAction={handleEmailAction}
       />
     </div>
