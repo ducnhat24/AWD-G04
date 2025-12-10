@@ -5,6 +5,7 @@ import { HttpModule } from '@nestjs/axios'; // Dùng để gọi API nếu khôn
 import { MongooseModule } from '@nestjs/mongoose';
 import { LinkedAccount, LinkedAccountSchema } from '../auth/linked-account.schema';
 import { ConfigModule } from '@nestjs/config';
+import { EmailSummary, EmailSummarySchema } from './entities/email-summary.schema';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { ConfigModule } from '@nestjs/config';
     ConfigModule,
     MongooseModule.forFeature([
       { name: LinkedAccount.name, schema: LinkedAccountSchema },
+      { name: EmailSummary.name, schema: EmailSummarySchema },
     ]),
   ],
   controllers: [MailController],

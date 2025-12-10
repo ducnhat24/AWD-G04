@@ -1,16 +1,29 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { google } from 'googleapis'; // Import thư viện google
 import { LinkedAccount, LinkedAccountDocument } from '../auth/linked-account.schema';
+import { GoogleGenerativeAI } from '@google/generative-ai'; // Import SDK
+import { EmailSummary, EmailSummaryDocument } from './entities/email-summary.schema';
 
 @Injectable()
 export class MailService {
+  private readonly logger = new Logger(MailService.name);
+  private genAI: GoogleGenerativeAI;
+  private model: any;
   constructor(
     @InjectModel(LinkedAccount.name) private linkedAccountModel: Model<LinkedAccountDocument>,
+    @InjectModel(EmailSummary.name) private emailSummaryModel: Model<EmailSummaryDocument>,
     private configService: ConfigService,
-  ) { }
+  ) {
+    this.logger.log('GEMINI_API_KEY=' + this.configService.get<string>('GEMINI_API_KEY'));
+    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+    if (apiKey) {
+      this.genAI = new GoogleGenerativeAI(apiKey);
+      this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    }
+  }
 
   // return OAuth2Client
   private async getAuthenticatedClient(userId: string) {
@@ -378,6 +391,57 @@ export class MailService {
     }
   }
 
+  async summarizeEmail(userId: string, messageId: string): Promise<string> {
+    //  Kiểm tra trong Cache xem đã từng summarize nội dung này chưa
+    const existingSummary = await this.emailSummaryModel.findOne({ messageId });
+    if (existingSummary) {
+      return existingSummary.summary;
+    }
+
+    // Nếu chưa, lấy nội dung chi tiết email
+    // Hàm getEmailDetail của bạn đã trả về body HTML
+    const emailDetail = await this.getEmailDetail(userId, messageId);
+
+    // Làm sạch thẻ HTML để lấy plain text
+    const cleanText = this.stripHtml(emailDetail.body);
+
+    if (!cleanText || cleanText.length < 50) {
+      return "Nội dung quá ngắn để tóm tắt.";
+    }
+
+    // Gọi AI để tóm tắt
+    let summaryText = 'Không thể tóm tắt.';
+    try {
+      if (!this.model) throw new Error('Gemini API Key missing');
+
+      const prompt = `
+        Bạn là một trợ lý AI giúp quản lý email. Hãy tóm tắt email sau đây bằng Tiếng Việt.
+        Yêu cầu:
+        - Tóm tắt cực kỳ ngắn gọn (tối đa 2 câu).
+        - Tập trung vào hành động cần làm hoặc thông tin chính.
+        - Giọng văn chuyên nghiệp.
+        
+        Nội dung email:
+        ${cleanText.substring(0, 8000)} 
+        `;
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      summaryText = response.text();
+    } catch (error) {
+      this.logger.error(`Error summarizing email: ${error.message}`, error.stack);
+      summaryText = 'Lỗi khi gọi AI tóm tắt. Vui lòng thử lại sau.';
+    }
+
+    // Lưu kết quả vào DB để lần sau dùng lại
+    await this.emailSummaryModel.create({
+      messageId,
+      summary: summaryText,
+      originalContentShort: cleanText.substring(0, 100)
+    });
+
+    return summaryText;
+  }
+
   private getBody(payload: any, mimeType: string): string | null {
     if (payload.mimeType === mimeType && payload.body?.data) {
       return this.decodeBase64(payload.body.data);
@@ -446,5 +510,12 @@ export class MailService {
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/, '');
+  }
+
+  private stripHtml(html: string): string {
+    if (!html) return '';
+    return html.replace(/<[^>]*>?/gm, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 }

@@ -94,4 +94,16 @@ export class MailController {
   ) {
     return this.mailService.forwardEmail(req.user._id, originalMessageId, dto.to, dto.body);
   }
+
+  @Get('emails/:id/summary')
+  async getEmailSummary(
+    @Req() req,
+    @Param('id') messageId: string
+  ) {
+    const summary = await this.mailService.summarizeEmail(req.user._id, messageId);
+    return {
+      id: messageId,
+      summary: summary
+    };
+  }
 }
