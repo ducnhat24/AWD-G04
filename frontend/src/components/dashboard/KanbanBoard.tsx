@@ -14,6 +14,7 @@ export function KanbanBoard({ emails, onMoveEmail, onSnooze, onOpenMail }: Kanba
   // We normalize folder names to lowercase to match IDs
   const inboxEmails = emails.filter(e => e.folder.toLowerCase() === 'inbox');
   const todoEmails = emails.filter(e => e.folder.toLowerCase() === 'todo');
+  const snoozedEmails = emails.filter(e => e.folder.toLowerCase() === 'snoozed');
   const doneEmails = emails.filter(e => e.folder.toLowerCase() === 'done');
 
   const onDragEnd = (result: DropResult) => {
@@ -49,6 +50,15 @@ export function KanbanBoard({ emails, onMoveEmail, onSnooze, onOpenMail }: Kanba
           emails={todoEmails}
           count={todoEmails.length}
           color="bg-yellow-500"
+          onSnooze={onSnooze}
+          onOpenMail={onOpenMail}
+        />
+        <KanbanColumn
+          id="snoozed"
+          title="Snoozed"
+          emails={snoozedEmails}
+          count={snoozedEmails.length}
+          color="bg-purple-500"
           onSnooze={onSnooze}
           onOpenMail={onOpenMail}
         />
