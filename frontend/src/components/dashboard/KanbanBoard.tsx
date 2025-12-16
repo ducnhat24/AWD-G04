@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { ArrowUpDown, Filter } from "lucide-react";
 import type { Email } from "@/data/mockData";
@@ -50,28 +50,35 @@ export function KanbanBoard({ kanbanData, onMoveEmail, onSnooze, onOpenMail }: K
     onMoveEmail(draggableId, source.droppableId, destination.droppableId);
   };
 
-  const processEmails = (emails: Email[]) => {
-    let processed = [...emails];
+  const processedColumns = useMemo(() => {
+    const processEmails = (emails: Email[]) => {
+      let processed = [...emails];
 
-    // Filter Unread
-    if (filterUnread) {
-      processed = processed.filter((e) => !e.isRead);
-    }
+      // Filter Unread
+      if (filterUnread) {
+        processed = processed.filter((e) => !e.isRead);
+      }
 
-    // Filter Has Attachments
-    if (filterHasAttachments) {
-      processed = processed.filter((e) => e.attachments && e.attachments.length > 0);
-    }
+      // Filter Has Attachments
+      if (filterHasAttachments) {
+        processed = processed.filter((e) => e.attachments && e.attachments.length > 0);
+      }
 
-    // Sort
-    processed.sort((a, b) => {
-      const dateA = new Date(a.timestamp).getTime();
-      const dateB = new Date(b.timestamp).getTime();
-      return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
-    });
+      // Sort
+      processed.sort((a, b) => {
+        const dateA = new Date(a.timestamp).getTime();
+        const dateB = new Date(b.timestamp).getTime();
+        return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
+      });
 
-    return processed;
-  };
+      return processed;
+    };
+
+    return COLUMNS.reduce((acc, col) => {
+      acc[col.id] = processEmails(kanbanData[col.id as keyof typeof kanbanData].emails);
+      return acc;
+    }, {} as Record<string, Email[]>);
+  }, [kanbanData, sortBy, filterUnread, filterHasAttachments]);
 
   return (
     <div className="flex flex-col h-full">
@@ -121,7 +128,7 @@ export function KanbanBoard({ kanbanData, onMoveEmail, onSnooze, onOpenMail }: K
         <div className="flex h-full gap-6 p-6 overflow-x-auto bg-background/50 items-start">
           {COLUMNS.map((col) => {
             const columnData = kanbanData[col.id as keyof typeof kanbanData];
-            const processedEmails = processEmails(columnData.emails);
+            const processedEmails = processedColumns[col.id];
             
             return (
               <KanbanColumn
