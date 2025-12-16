@@ -142,7 +142,22 @@ export const useEmailLogic = ({
       await queryClient.cancelQueries({ queryKey: ["emails", selectedFolder] });
       
       const previousEmails = queryClient.getQueryData(["emails", selectedFolder]);
-      const previousEmailDetail = queryClient.getQueryData(["email", id]);
+      let previousEmailDetail = queryClient.getQueryData(["email", id]);
+
+      // Try to seed from list if detail is missing
+      if (!previousEmailDetail) {
+        const listData = queryClient.getQueryData<InfiniteData<{ emails: Email[] }>>(["emails", selectedFolder]);
+        if (listData?.pages) {
+          for (const page of listData.pages) {
+            const found = page.emails.find((e) => e.id === id);
+            if (found) {
+              previousEmailDetail = found;
+              queryClient.setQueryData(["email", id], found);
+              break;
+            }
+          }
+        }
+      }
 
       // Kanban Optimistic Update Context
       let previousSource: InfiniteData<any> | undefined;
@@ -274,9 +289,12 @@ export const useEmailLogic = ({
       }
       toast.error("Failed to update email");
     },
-    onSettled: () => {
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: ["emails", selectedFolder] });
       queryClient.invalidateQueries({ queryKey: ["kanban"] });
+      if (variables.id) {
+        queryClient.invalidateQueries({ queryKey: ["email", variables.id] });
+      }
     },
   });
 
