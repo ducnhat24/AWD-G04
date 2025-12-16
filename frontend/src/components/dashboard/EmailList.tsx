@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import type { Email } from "@/data/mockData";
 import { cn } from "@/lib/utils";
-import { Search, Loader2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Loader2 } from "lucide-react";
+
 import { useAuth } from "@/contexts/AuthContext";
 
 interface EmailListProps {
@@ -48,14 +48,6 @@ export function EmailList({
 
   return (
     <div className="flex flex-col h-full border-r">
-      {/* Search Header */}
-      <div className="p-4 border-b flex items-center gap-2">
-        <div className="relative w-full">
-          <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
-          <Input placeholder="Search" className="pl-8" />
-        </div>
-      </div>
-
       {/* Scrollable List */}
       <div className="flex-1 overflow-y-auto">
         {emails.length === 0 ? (
