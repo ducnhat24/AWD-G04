@@ -9,9 +9,13 @@ import { SnoozeDialog } from "@/components/dashboard/SnoozeDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { type Email } from "@/data/mockData";
 import { KanbanBoard } from "@/components/dashboard/KanbanBoard";
+import { KanbanCard } from "@/components/dashboard/KanbanCard";
 import { cn } from "@/lib/utils";
-import { LogOut } from "lucide-react";
+import { LogOut, Search, ArrowLeft } from "lucide-react";
 import { useEmailLogic } from "@/hooks/useEmailLogic";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { searchEmails } from "@/services/apiService";
 
 export default function HomePage() {
   const { logout } = useAuth();
@@ -27,6 +31,12 @@ export default function HomePage() {
   const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
   const [snoozeTargetId, setSnoozeTargetId] = useState<string | null>(null);
   const [snoozeSourceFolder, setSnoozeSourceFolder] = useState<string | undefined>(undefined);
+
+  // Search State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Email[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("viewMode", viewMode);
@@ -52,6 +62,27 @@ export default function HomePage() {
     selectedEmailId,
     viewMode,
   });
+
+  // Search Handler
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    setIsLoadingSearch(true);
+    try {
+      const results = await searchEmails(searchQuery);
+      setSearchResults(results);
+    } catch (error) {
+      console.error("Search failed", error);
+    } finally {
+      setIsLoadingSearch(false);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setIsSearching(false);
+    setSearchQuery("");
+    setSearchResults([]);
+  };
 
   // UI Handlers
   const handleSnooze = (emailId: string, date: Date, sourceFolder?: string) => {
@@ -158,12 +189,26 @@ export default function HomePage() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Bar with Toggle */}
-        <header className="h-14 border-b flex items-center justify-between px-4 bg-background shrink-0">
-          <h2 className="font-semibold text-lg">
-            {viewMode === "list"
-              ? folders.find((f) => f.id === selectedFolder)?.label || "Inbox"
-              : "Kanban Board"}
-          </h2>
+        <header className="h-14 border-b flex items-center justify-between px-4 bg-background shrink-0 gap-4">
+          <div className="flex items-center gap-4 flex-1">
+            <h2 className="font-semibold text-lg shrink-0">
+              {viewMode === "list"
+                ? folders.find((f) => f.id === selectedFolder)?.label || "Inbox"
+                : "Kanban Board"}
+            </h2>
+            <div className="flex items-center gap-2 max-w-md w-full">
+              <Input
+                placeholder="Search emails..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="h-9"
+              />
+              <Button size="icon" variant="ghost" onClick={handleSearch} className="h-9 w-9">
+                <Search className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center border rounded-lg p-1 bg-muted/20">
               <button
@@ -204,7 +249,43 @@ export default function HomePage() {
 
         {/* Content */}
         <div className="flex-1 flex overflow-hidden">
-          {viewMode === "kanban" ? (
+          {isSearching ? (
+            <div className="flex-1 p-4 overflow-y-auto bg-muted/10">
+              <div className="flex items-center gap-2 mb-4">
+                <Button variant="ghost" onClick={handleClearSearch}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Board
+                </Button>
+                <h2 className="text-lg font-semibold">
+                  Search Results for "{searchQuery}"
+                </h2>
+              </div>
+
+              {isLoadingSearch ? (
+                <div className="flex items-center justify-center h-64 text-muted-foreground">
+                  Searching...
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {searchResults.map((email, index) => (
+                    <KanbanCard
+                      key={email.id}
+                      email={email}
+                      index={index}
+                      onSnooze={(id, date) => handleSnooze(id, date)}
+                      onOpenMail={handleOpenMail}
+                      isDraggable={false}
+                    />
+                  ))}
+                  {searchResults.length === 0 && (
+                    <div className="col-span-full text-center text-muted-foreground py-8">
+                      No results found.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : viewMode === "kanban" ? (
             <div className="flex-1 p-4 overflow-hidden bg-muted/10">
               {isLoadingKanban ? (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
