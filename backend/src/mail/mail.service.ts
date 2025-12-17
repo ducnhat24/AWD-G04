@@ -147,21 +147,8 @@ export class MailService {
         limit,
       );
 
-      // Map dữ liệu từ DB (EmailMetadata) sang format Frontend cần
-      const emails = searchResults.map((email) => ({
-        id: email.messageId,
-        threadId: email.threadId,
-        snippet: email.snippet,
-        subject: email.subject,
-        sender: email.from,
-        date: email.date ? email.date.toString() : '', // Chuyển Date object thành string
-        isRead: email.isRead,
-        // Kiểm tra labelIds trong DB để biết có Starred không
-        isStarred: email.labelIds ? email.labelIds.includes('STARRED') : false,
-      }));
-
       return {
-        emails,
+        emails: searchResults,
         nextPageToken: null, // Search DB tạm thời chưa hỗ trợ phân trang token
       };
     }
@@ -194,8 +181,7 @@ export class MailService {
           const detail = await gmail.users.messages.get({
             userId: 'me',
             id: msg.id,
-            format: 'metadata',
-            metadataHeaders: ['Subject', 'From', 'Date'],
+            format: 'full',
           });
 
           const headers = detail.data.payload?.headers || [];
@@ -215,6 +201,7 @@ export class MailService {
             date,
             isRead: !labelIds.includes('UNREAD'),
             isStarred: labelIds.includes('STARRED'),
+            attachments: this.getAttachments(detail.data.payload),
           };
         } catch (err) {
           return null;
@@ -350,6 +337,18 @@ export class MailService {
     labelId?: string,
     limit: number = 20,
   ) {
+    // Escape special characters for regex to prevent errors and ensure literal matching
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escapedQuery, 'i');
+
+    const filter: any = {
+      userId,
+      $or: [
+        { subject: { $regex: regex } },
+        { from: { $regex: regex } },
+        { snippet: { $regex: regex } },
+      ],
+    };
 
 
     const filter: any = { userId };
@@ -357,43 +356,24 @@ export class MailService {
       filter.labelIds = labelId;
     }
 
-    const candidateEmails = await this.emailMetadataModel
+    const results = await this.emailMetadataModel
       .find(filter)
       .sort({ date: -1 })
       .limit(1000)
       .lean()
       .exec();
 
-    if (!candidateEmails || candidateEmails.length === 0) {
-      return [];
-    }
-
-    // BƯỚC 2: Cấu hình Fuse.js (Fuzzy Logic & Ranking)
-    const fuseOptions = {
-      // Các trường dữ liệu sẽ đem đi so sánh
-      keys: [
-        { name: 'subject', weight: 0.5 }, // Ưu tiên 1: Khớp tiêu đề (quan trọng nhất)
-        { name: 'from', weight: 0.3 },    // Ưu tiên 2: Khớp người gửi
-        { name: 'snippet', weight: 0.2 }, // Ưu tiên 3: Khớp nội dung tóm tắt
-      ],
-      includeScore: true,  // Để Fuse tính điểm (dùng cho ranking)
-      threshold: 0.4,      // Độ nhạy: 0.0 (khớp tuyệt đối) -> 0.4 (cho phép sai typo nhẹ) -> 1.0 (khớp lung tung)
-      ignoreLocation: true, // Tìm thấy từ khóa ở bất kỳ đâu trong chuỗi (đầu, giữa, cuối)
-      useExtendedSearch: true // Cho phép tìm kiếm nâng cao nếu cần
-    };
-
-    const fuse = new Fuse(candidateEmails, fuseOptions);
-
-    // BƯỚC 3: Thực hiện Search
-    // Kết quả trả về của Fuse đã được tự động SẮP XẾP theo độ liên quan (Score)
-    const searchResults = fuse.search(query);
-
-    // BƯỚC 4: Map lại dữ liệu về format gốc (bỏ wrapper của Fuse)
-    const finalResults = searchResults
-      .map((result) => result.item) // Lấy ra object email gốc
-      .slice(0, limit);             // Cắt lấy số lượng user yêu cầu (VD: top 20)
-
-    return finalResults;
+    // Map results to frontend compatible format
+    return results.map((email) => ({
+      id: email.messageId,
+      threadId: email.threadId,
+      snippet: email.snippet,
+      subject: email.subject,
+      sender: email.from,
+      date: email.date ? email.date.toString() : '',
+      isRead: email.isRead,
+      isStarred: email.labelIds ? email.labelIds.includes('STARRED') : false,
+    }));
   }
 
   // Lấy chi tiết nội dung 1 Email

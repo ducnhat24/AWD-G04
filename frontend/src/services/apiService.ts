@@ -1,5 +1,5 @@
 // src/services/apiService.ts
-import { type Email, MOCK_EMAILS } from "@/data/mockData";
+import { type Email } from "@/data/mockData";
 import api from "@/lib/api";
 import axios from "axios";
 // Import các kiểu Zod từ form của bạn (Giả sử bạn export chúng)
@@ -235,12 +235,10 @@ export const fetchEmails = async (
   }
 };
 
-// GET /emails/search?q={query}
+// GET /mail/search?q={query}
 export const searchEmails = async (query: string): Promise<Email[]> => {
-  // Tạm thời comment API thật để test giao diện bằng mock data
-  /*
   try {
-    const { data } = await api.get(`/emails/search`, {
+    const { data } = await api.get(`/mail/search`, {
       params: { q: query },
     });
 
@@ -258,23 +256,8 @@ export const searchEmails = async (query: string): Promise<Email[]> => {
     return emails;
   } catch (error) {
     console.error("Error searching emails:", error);
-    return [];
+    throw error;
   }
-  */
-
-  // Mock implementation
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const lowerQuery = query.toLowerCase();
-      const filtered = MOCK_EMAILS.filter(
-        (email) =>
-          email.subject.toLowerCase().includes(lowerQuery) ||
-          email.sender.toLowerCase().includes(lowerQuery) ||
-          email.body.toLowerCase().includes(lowerQuery)
-      );
-      resolve(filtered);
-    }, 500); // Simulate network delay
-  });
 };
 
 // GET /snooze
