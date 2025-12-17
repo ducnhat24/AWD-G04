@@ -79,16 +79,19 @@ export const fetchUserProfile = async (): Promise<UserProfile> => {
 // ========================================================
 
 const LABEL_MAP: Record<string, string> = {
-  'INBOX': 'INBOX',
-  'SENT': 'SENT',
-  'DRAFT': 'DRAFT',
-  'TRASH': 'TRASH',
-  'SPAM': 'SPAM',
-  'STARRED': 'STARRED',
-  'IMPORTANT': 'IMPORTANT'
+  INBOX: "INBOX",
+  SENT: "SENT",
+  DRAFT: "DRAFT",
+  TRASH: "TRASH",
+  SPAM: "SPAM",
+  STARRED: "STARRED",
+  IMPORTANT: "IMPORTANT",
 };
 
-export const findLabelId = (mailboxes: { id: string; label: string }[], name: string): string | undefined => {
+export const findLabelId = (
+  mailboxes: { id: string; label: string }[],
+  name: string
+): string | undefined => {
   const mailbox = mailboxes.find((m) => m.label === name);
   return mailbox?.id;
 };
@@ -112,12 +115,14 @@ const transformEmail = (
   folderId: string = "INBOX"
 ): Email => {
   const { sender, senderEmail } = parseSender(backendEmail.sender || "");
-  
+
   // Parse recipient (to)
   // backendEmail.to might be a string or array, assuming string for now based on parseSender logic
   // If it's an array, we might need to join them or pick the first one.
   // Let's assume it's a string similar to sender for now.
-  const { sender: recipient, senderEmail: recipientEmail } = parseSender(backendEmail.to || "");
+  const { sender: recipient, senderEmail: recipientEmail } = parseSender(
+    backendEmail.to || ""
+  );
 
   let isRead = backendEmail.isRead;
   let isStarred = backendEmail.isStarred;
@@ -184,7 +189,8 @@ export const fetchMailboxes = async () => {
 export const fetchEmails = async (
   folderId: string,
   pageParam: string | number = 1,
-  limit: number = 10
+  limit: number = 10,
+  searchQuery?: string
 ): Promise<{ emails: Email[]; nextPageToken?: string }> => {
   const mappedLabel = LABEL_MAP[folderId] || folderId;
   const params: any = { limit };
@@ -198,6 +204,10 @@ export const fetchEmails = async (
     params.page = pageParam;
   }
 
+  if (searchQuery) {
+    params.search = searchQuery;
+  }
+
   try {
     const { data } = await api.get(`/mail/mailboxes/${mappedLabel}/emails`, {
       params,
@@ -208,7 +218,7 @@ export const fetchEmails = async (
 
     if (Array.isArray(data)) {
       emails = data.map((e) => transformEmail(e, folderId));
-    } else if (data && typeof data === 'object') {
+    } else if (data && typeof data === "object") {
       // Handle case where backend returns { messages: [], nextPageToken: '...' }
       // or { emails: [], nextPageToken: '...' }
       const rawEmails = data.messages || data.emails || [];
@@ -222,6 +232,31 @@ export const fetchEmails = async (
   } catch (error) {
     console.error("Error fetching emails:", error);
     return { emails: [] };
+  }
+};
+
+// GET /mail/search?q={query}
+export const searchEmails = async (query: string): Promise<Email[]> => {
+  try {
+    const { data } = await api.get(`/mail/search`, {
+      params: { q: query },
+    });
+
+    let emails: Email[] = [];
+
+    if (Array.isArray(data)) {
+      emails = data.map((e) => transformEmail(e));
+    } else if (data && typeof data === "object") {
+      const rawEmails = data.messages || data.emails || [];
+      if (Array.isArray(rawEmails)) {
+        emails = rawEmails.map((e: any) => transformEmail(e));
+      }
+    }
+
+    return emails;
+  } catch (error) {
+    console.error("Error searching emails:", error);
+    throw error;
   }
 };
 
@@ -242,7 +277,7 @@ export const fetchSnoozedEmails = async (
     const emails: Email[] = rawEmails.map((item: any) => ({
       id: item.id || item.messageId,
       sender: item.sender || "Unknown",
-      senderEmail: item.sender || "", 
+      senderEmail: item.sender || "",
       recipient: "Me",
       recipientEmail: "me@example.com",
       subject: item.subject || "(No Subject)",
@@ -258,14 +293,17 @@ export const fetchSnoozedEmails = async (
     }));
 
     // If meta.page exists, use it to calculate next page, otherwise rely on array length
-    const nextPageToken = rawEmails.length === limit 
-      ? (meta.page ? meta.page + 1 : pageParam + 1)
-      : undefined;
+    const nextPageToken =
+      rawEmails.length === limit
+        ? meta.page
+          ? meta.page + 1
+          : pageParam + 1
+        : undefined;
 
-    return { 
-      emails, 
+    return {
+      emails,
       nextPageToken,
-      total: meta.total 
+      total: meta.total,
     };
   } catch (error) {
     console.error("Error fetching snoozed emails:", error);
@@ -315,7 +353,10 @@ export interface SnoozeResponse {
   __v: number;
 }
 
-export const snoozeEmail = async (id: string, date: string): Promise<SnoozeResponse> => {
+export const snoozeEmail = async (
+  id: string,
+  date: string
+): Promise<SnoozeResponse> => {
   const { data } = await api.post("/snooze", {
     messageId: id,
     wakeUpTime: date,
@@ -324,7 +365,9 @@ export const snoozeEmail = async (id: string, date: string): Promise<SnoozeRespo
 };
 
 export const fetchEmailSummary = async (id: string): Promise<string> => {
-  const { data } = await api.get<{ id: string; summary: string }>(`/mail/emails/${id}/summary`);
+  const { data } = await api.get<{ id: string; summary: string }>(
+    `/mail/emails/${id}/summary`
+  );
   return data.summary;
 };
 
