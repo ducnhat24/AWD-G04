@@ -15,7 +15,7 @@ import { LogOut, Search, ArrowLeft } from "lucide-react";
 import { useEmailLogic } from "@/hooks/useEmailLogic";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { searchEmails } from "@/services/apiService";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export default function HomePage() {
   const { logout } = useAuth();
@@ -24,24 +24,31 @@ export default function HomePage() {
   const [selectedFolder, setSelectedFolder] = useState<string>("INBOX");
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
-  const [composeMode, setComposeMode] = useState<"compose" | "reply" | "forward">("compose");
-  const [composeOriginalEmail, setComposeOriginalEmail] = useState<Email | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "kanban">(() => (localStorage.getItem("viewMode") as "list" | "kanban") || "list");
+  const [composeMode, setComposeMode] = useState<
+    "compose" | "reply" | "forward"
+  >("compose");
+  const [composeOriginalEmail, setComposeOriginalEmail] =
+    useState<Email | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "kanban">(
+    () => (localStorage.getItem("viewMode") as "list" | "kanban") || "list"
+  );
   const [isKanbanDetailOpen, setIsKanbanDetailOpen] = useState(false);
   const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
   const [snoozeTargetId, setSnoozeTargetId] = useState<string | null>(null);
-  const [snoozeSourceFolder, setSnoozeSourceFolder] = useState<string | undefined>(undefined);
+  const [snoozeSourceFolder, setSnoozeSourceFolder] = useState<
+    string | undefined
+  >(undefined);
 
   // Search State
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Email[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("viewMode", viewMode);
   }, [viewMode]);
 
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
   // Custom Hook for Business Logic
   const {
     emails,
@@ -61,22 +68,8 @@ export default function HomePage() {
     selectedFolder,
     selectedEmailId,
     viewMode,
+    searchQuery: debouncedSearchQuery,
   });
-
-  // Search Handler
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-    setIsSearching(true);
-    setIsLoadingSearch(true);
-    try {
-      const results = await searchEmails(searchQuery);
-      setSearchResults(results);
-    } catch (error) {
-      console.error("Search failed", error);
-    } finally {
-      setIsLoadingSearch(false);
-    }
-  };
 
   const handleClearSearch = () => {
     setIsSearching(false);
@@ -109,7 +102,11 @@ export default function HomePage() {
     }
   };
 
-  const handleMoveEmail = (emailId: string, sourceFolder: string, destinationFolder: string) => {
+  const handleMoveEmail = (
+    emailId: string,
+    sourceFolder: string,
+    destinationFolder: string
+  ) => {
     if (destinationFolder === "snoozed") {
       setSnoozeTargetId(emailId);
       setSnoozeSourceFolder(sourceFolder);
@@ -201,10 +198,9 @@ export default function HomePage() {
                 placeholder="Search emails..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 className="h-9"
               />
-              <Button size="icon" variant="ghost" onClick={handleSearch} className="h-9 w-9">
+              <Button size="icon" variant="ghost" className="h-9 w-9">
                 <Search className="w-4 h-4" />
               </Button>
             </div>
@@ -261,7 +257,7 @@ export default function HomePage() {
                 </h2>
               </div>
 
-              {isLoadingSearch ? (
+              {isLoadingList ? (
                 <div className="flex items-center justify-center h-64 text-muted-foreground">
                   Searching...
                 </div>
@@ -363,8 +359,8 @@ export default function HomePage() {
 
       {/* COMPOSE EMAIL MODAL */}
       {isComposeOpen && (
-        <ComposeEmail 
-          onClose={() => setIsComposeOpen(false)} 
+        <ComposeEmail
+          onClose={() => setIsComposeOpen(false)}
           mode={composeMode}
           originalEmail={composeOriginalEmail}
         />
