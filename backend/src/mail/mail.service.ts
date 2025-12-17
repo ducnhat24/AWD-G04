@@ -22,6 +22,7 @@ import {
   EmailMetadataDocument,
 } from './entities/email-metadata.schema';
 import { Cron, CronExpression } from '@nestjs/schedule';
+const Fuse = require('fuse.js');
 
 @Injectable()
 export class MailService {
@@ -330,13 +331,11 @@ export class MailService {
     console.log('>>> Cron Job Finished.');
   }
 
-  // --- PHẦN 3: FUZZY SEARCH ---
-
   async searchEmailsFuzzy(
     userId: string,
     query: string,
-    labelId?: string, // Thêm tham số optional này
-    limit: number = 50,
+    labelId?: string,
+    limit: number = 20,
   ) {
     // Escape special characters for regex to prevent errors and ensure literal matching
     const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -351,15 +350,17 @@ export class MailService {
       ],
     };
 
-    // Nếu có truyền labelId thì filter thêm
-    if (labelId) {
+
+    const filter: any = { userId };
+    if (labelId && (!query || query.trim() === '')) {
       filter.labelIds = labelId;
     }
 
     const results = await this.emailMetadataModel
       .find(filter)
       .sort({ date: -1 })
-      .limit(limit)
+      .limit(1000)
+      .lean()
       .exec();
 
     // Map results to frontend compatible format
