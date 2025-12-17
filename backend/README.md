@@ -141,7 +141,6 @@ Server chạy tại: **[http://localhost:3000](http://localhost:3000)**
 
 | Method | Endpoint                        | Mô tả                       |
 | ------ | ------------------------------- | --------------------------- |
-| POST   | /mail/sync                      | Đồng bộ email từ Gmail      |
 | GET    | /mail/search                    | Fuzzy Search (`?q=keyword`) |
 | GET    | /mail/mailboxes/:id/emails      | Lấy email (filter/sort)     |
 | GET    | /mail/attachments/:msgId/:attId | Tải đính kèm                |
