@@ -20,6 +20,12 @@ import { Response } from 'express';
 export class MailController {
   constructor(private readonly mailService: MailService) {}
 
+  // Tìm kiếm Email (Fuzzy Search)
+  @Get('search')
+  searchEmails(@Req() req, @Query('q') query: string) {
+    return this.mailService.searchEmailsFuzzy(req.user._id, query);
+  }
+
   // Lấy danh sách hộp thư (mailboxes/labels)
   @Get('mailboxes')
   getMailboxes(@Req() req) {

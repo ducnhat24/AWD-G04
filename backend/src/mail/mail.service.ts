@@ -146,21 +146,8 @@ export class MailService {
         limit,
       );
 
-      // Map dữ liệu từ DB (EmailMetadata) sang format Frontend cần
-      const emails = searchResults.map((email) => ({
-        id: email.messageId,
-        threadId: email.threadId,
-        snippet: email.snippet,
-        subject: email.subject,
-        sender: email.from,
-        date: email.date ? email.date.toString() : '', // Chuyển Date object thành string
-        isRead: email.isRead,
-        // Kiểm tra labelIds trong DB để biết có Starred không
-        isStarred: email.labelIds ? email.labelIds.includes('STARRED') : false,
-      }));
-
       return {
-        emails,
+        emails: searchResults,
         nextPageToken: null, // Search DB tạm thời chưa hỗ trợ phân trang token
       };
     }
@@ -351,7 +338,9 @@ export class MailService {
     labelId?: string, // Thêm tham số optional này
     limit: number = 50,
   ) {
-    const regex = new RegExp(query, 'i');
+    // Escape special characters for regex to prevent errors and ensure literal matching
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escapedQuery, 'i');
 
     const filter: any = {
       userId,
@@ -367,11 +356,23 @@ export class MailService {
       filter.labelIds = labelId;
     }
 
-    return this.emailMetadataModel
+    const results = await this.emailMetadataModel
       .find(filter)
       .sort({ date: -1 })
       .limit(limit)
       .exec();
+
+    // Map results to frontend compatible format
+    return results.map((email) => ({
+      id: email.messageId,
+      threadId: email.threadId,
+      snippet: email.snippet,
+      subject: email.subject,
+      sender: email.from,
+      date: email.date ? email.date.toString() : '',
+      isRead: email.isRead,
+      isStarred: email.labelIds ? email.labelIds.includes('STARRED') : false,
+    }));
   }
 
   // Lấy chi tiết nội dung 1 Email
