@@ -350,12 +350,6 @@ export class MailService {
       ],
     };
 
-
-    const filter: any = { userId };
-    if (labelId && (!query || query.trim() === '')) {
-      filter.labelIds = labelId;
-    }
-
     const results = await this.emailMetadataModel
       .find(filter)
       .sort({ date: -1 })
