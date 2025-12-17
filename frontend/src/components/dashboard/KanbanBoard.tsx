@@ -35,6 +35,8 @@ export function KanbanBoard({ kanbanData, onMoveEmail, onSnooze, onOpenMail }: K
   const [filterUnread, setFilterUnread] = useState(false);
   const [filterHasAttachments, setFilterHasAttachments] = useState(false);
 
+  const isFiltering = filterUnread || filterHasAttachments;
+
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
@@ -141,7 +143,7 @@ export function KanbanBoard({ kanbanData, onMoveEmail, onSnooze, onOpenMail }: K
                 onSnooze={onSnooze}
                 onOpenMail={onOpenMail}
                 onLoadMore={columnData.fetchNextPage}
-                hasMore={columnData.hasNextPage}
+                hasMore={!isFiltering && columnData.hasNextPage}
                 isLoadingMore={columnData.isFetchingNextPage}
               />
             );

@@ -15,7 +15,6 @@ import { LogOut, Search, ArrowLeft } from "lucide-react";
 import { useEmailLogic } from "@/hooks/useEmailLogic";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useDebounce } from "@/hooks/useDebounce";
 
 export default function HomePage() {
   const { logout } = useAuth();
