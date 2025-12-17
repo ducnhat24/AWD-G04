@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Req, Query, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+  Query,
+  Res,
+} from '@nestjs/common';
 import { MailService } from './mail.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SendEmailDto } from './dto/send-email.dto';
@@ -8,7 +18,7 @@ import { Response } from 'express';
 @Controller('mail')
 @UseGuards(JwtAuthGuard) // Bảo vệ toàn bộ endpoint, bắt buộc phải login
 export class MailController {
-  constructor(private readonly mailService: MailService) { }
+  constructor(private readonly mailService: MailService) {}
 
   // Lấy danh sách hộp thư (mailboxes/labels)
   @Get('mailboxes')
@@ -24,10 +34,17 @@ export class MailController {
     @Param('labelId') labelId: string,
     @Query('limit') limit: string,
     @Query('pageToken') pageToken: string,
+    @Query('search') search: string,
   ) {
     const limitNum = limit ? parseInt(limit) : 20;
 
-    return this.mailService.getEmails(req.user._id, labelId, limitNum, pageToken);
+    return this.mailService.getEmails(
+      req.user._id,
+      labelId,
+      limitNum,
+      pageToken,
+      search,
+    );
   }
 
   // Lấy chi tiết 1 Email
@@ -44,7 +61,11 @@ export class MailController {
     @Param('attachmentId') attachmentId: string,
     @Res() res: Response, // Dùng @Res để tự control response trả về file
   ) {
-    const file = await this.mailService.getAttachment(req.user._id, messageId, attachmentId);
+    const file = await this.mailService.getAttachment(
+      req.user._id,
+      messageId,
+      attachmentId,
+    );
 
     // Set header để trình duyệt hiểu đây là file tải về
     res.set({
@@ -59,7 +80,12 @@ export class MailController {
   // Gửi Email
   @Post('send')
   sendEmail(@Req() req, @Body() dto: SendEmailDto) {
-    return this.mailService.sendEmail(req.user._id, dto.to, dto.subject, dto.body);
+    return this.mailService.sendEmail(
+      req.user._id,
+      dto.to,
+      dto.subject,
+      dto.body,
+    );
   }
 
   // Thao tác Modify (Xóa, Đánh dấu đọc...)
@@ -67,13 +93,13 @@ export class MailController {
   modifyEmail(
     @Req() req,
     @Param('id') messageId: string,
-    @Body() dto: ModifyEmailDto
+    @Body() dto: ModifyEmailDto,
   ) {
     return this.mailService.modifyEmail(
       req.user._id,
       messageId,
       dto.addLabels || [],
-      dto.removeLabels || []
+      dto.removeLabels || [],
     );
   }
 
@@ -94,18 +120,23 @@ export class MailController {
     @Param('id') originalMessageId: string,
     @Body() dto: SendEmailDto,
   ) {
-    return this.mailService.forwardEmail(req.user._id, originalMessageId, dto.to, dto.body);
+    return this.mailService.forwardEmail(
+      req.user._id,
+      originalMessageId,
+      dto.to,
+      dto.body,
+    );
   }
 
   @Get('emails/:id/summary')
-  async getEmailSummary(
-    @Req() req,
-    @Param('id') messageId: string
-  ) {
-    const summary = await this.mailService.summarizeEmail(req.user._id, messageId);
+  async getEmailSummary(@Req() req, @Param('id') messageId: string) {
+    const summary = await this.mailService.summarizeEmail(
+      req.user._id,
+      messageId,
+    );
     return {
       id: messageId,
-      summary: summary
+      summary: summary,
     };
   }
 }

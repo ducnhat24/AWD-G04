@@ -1,11 +1,27 @@
-import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { google } from 'googleapis'; // Import thư viện google
-import { LinkedAccount, LinkedAccountDocument } from '../auth/linked-account.schema';
+import {
+  LinkedAccount,
+  LinkedAccountDocument,
+} from '../auth/linked-account.schema';
 import { GoogleGenerativeAI } from '@google/generative-ai'; // Import SDK
-import { EmailSummary, EmailSummaryDocument } from './entities/email-summary.schema';
+import {
+  EmailSummary,
+  EmailSummaryDocument,
+} from './entities/email-summary.schema';
+import {
+  EmailMetadata,
+  EmailMetadataDocument,
+} from './entities/email-metadata.schema';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class MailService {
@@ -13,11 +29,17 @@ export class MailService {
   private genAI: GoogleGenerativeAI;
   private model: any;
   constructor(
-    @InjectModel(LinkedAccount.name) private linkedAccountModel: Model<LinkedAccountDocument>,
-    @InjectModel(EmailSummary.name) private emailSummaryModel: Model<EmailSummaryDocument>,
+    @InjectModel(LinkedAccount.name)
+    private linkedAccountModel: Model<LinkedAccountDocument>,
+    @InjectModel(EmailSummary.name)
+    private emailSummaryModel: Model<EmailSummaryDocument>,
+    @InjectModel(EmailMetadata.name)
+    private emailMetadataModel: Model<EmailMetadataDocument>,
     private configService: ConfigService,
   ) {
-    this.logger.log('GEMINI_API_KEY=' + this.configService.get<string>('GEMINI_API_KEY'));
+    this.logger.log(
+      'GEMINI_API_KEY=' + this.configService.get<string>('GEMINI_API_KEY'),
+    );
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
@@ -27,7 +49,7 @@ export class MailService {
 
   // return OAuth2Client
   private async getAuthenticatedClient(userId: string) {
-    // Lấy LinkedAccount từ DB theo userId và provider 'google' để lấy google access_token và refresh_token 
+    // Lấy LinkedAccount từ DB theo userId và provider 'google' để lấy google access_token và refresh_token
     const userObjectId = new Types.ObjectId(userId);
 
     const linkedAccount = await this.linkedAccountModel.findOne({
@@ -76,7 +98,7 @@ export class MailService {
       });
 
       let labels = response.data.labels || [];
-      const labelNames = labels.map(l => l.name);
+      const labelNames = labels.map((l) => l.name);
 
       const requiredLabels = ['TODO', 'DONE'];
 
@@ -95,20 +117,55 @@ export class MailService {
         labels = retryResponse.data.labels || [];
       }
 
-      return labels.map(label => ({
+      return labels.map((label) => ({
         id: label.id,
         name: label.name,
         type: label.type,
-        unread: label.messagesUnread
+        unread: label.messagesUnread,
       }));
-
     } catch (error) {
       console.error('Gmail API Error:', error);
       throw new UnauthorizedException('Failed to fetch mailboxes');
     }
   }
 
-  async getEmails(userId: string, labelId: string = 'INBOX', limit: number = 20, pageToken?: string) {
+  async getEmails(
+    userId: string,
+    labelId: string = 'INBOX',
+    limit: number = 20,
+    pageToken?: string,
+    search?: string,
+  ) {
+    // 1. NẾU CÓ SEARCH -> TÌM TRONG DB (Fuzzy Search)
+    if (search && search.trim().length > 0) {
+      // Gọi hàm search tái sử dụng logic
+      const searchResults = await this.searchEmailsFuzzy(
+        userId,
+        search,
+        labelId,
+        limit,
+      );
+
+      // Map dữ liệu từ DB (EmailMetadata) sang format Frontend cần
+      const emails = searchResults.map((email) => ({
+        id: email.messageId,
+        threadId: email.threadId,
+        snippet: email.snippet,
+        subject: email.subject,
+        sender: email.from,
+        date: email.date ? email.date.toString() : '', // Chuyển Date object thành string
+        isRead: email.isRead,
+        // Kiểm tra labelIds trong DB để biết có Starred không
+        isStarred: email.labelIds ? email.labelIds.includes('STARRED') : false,
+      }));
+
+      return {
+        emails,
+        nextPageToken: null, // Search DB tạm thời chưa hỗ trợ phân trang token
+      };
+    }
+
+    // 2. NẾU KHÔNG SEARCH -> GỌI GMAIL API (Logic cũ)
     const auth = await this.getAuthenticatedClient(userId);
     const gmail = google.gmail({ version: 'v1', auth });
 
@@ -116,24 +173,23 @@ export class MailService {
       const listResponse = await gmail.users.messages.list({
         userId: 'me',
         labelIds: [labelId],
-        maxResults: limit,     // Số lượng mail mỗi lần tải
-        pageToken: pageToken,  // Mã trang tiếp theo (nếu null là trang đầu)
+        maxResults: limit,
+        pageToken: pageToken,
       });
 
       const messages = listResponse.data.messages || [];
-      const nextToken = listResponse.data.nextPageToken; // Lưu lại cái này để trả về
+      const nextToken = listResponse.data.nextPageToken;
 
       if (messages.length === 0) {
         return {
           emails: [],
-          nextPageToken: null
+          nextPageToken: null,
         };
       }
 
       const detailsPromise = messages.map(async (msg) => {
         if (!msg.id) return null;
         try {
-          // Chỉ lấy metadata cần thiết để hiện Card cho nhẹ
           const detail = await gmail.users.messages.get({
             userId: 'me',
             id: msg.id,
@@ -142,8 +198,10 @@ export class MailService {
           });
 
           const headers = detail.data.payload?.headers || [];
-          const subject = headers.find((h) => h.name === 'Subject')?.value || '(No Subject)';
-          const from = headers.find((h) => h.name === 'From')?.value || 'Unknown';
+          const subject =
+            headers.find((h) => h.name === 'Subject')?.value || '(No Subject)';
+          const from =
+            headers.find((h) => h.name === 'From')?.value || 'Unknown';
           const date = headers.find((h) => h.name === 'Date')?.value || '';
           const labelIds = detail.data.labelIds || [];
 
@@ -162,20 +220,161 @@ export class MailService {
         }
       });
 
-      const emails = (await Promise.all(detailsPromise)).filter((item) => item !== null);
+      const emails = (await Promise.all(detailsPromise)).filter(
+        (item) => item !== null,
+      );
 
       return {
         emails,
-        nextPageToken: nextToken || null
+        nextPageToken: nextToken || null,
       };
-
     } catch (error) {
       console.error('Error fetching emails:', error);
       throw new UnauthorizedException('Failed to fetch emails');
     }
   }
 
-  // Lấy chi tiết nội dung 1 Email 
+  async syncEmailsForUser(userId: string) {
+    try {
+      // 1. Tìm ngày của email mới nhất đang có trong DB
+      const lastEmail = await this.emailMetadataModel
+        .findOne({ userId })
+        .sort({ date: -1 }) // Sắp xếp giảm dần theo ngày
+        .exec();
+
+      let gmailQuery = '';
+      if (lastEmail) {
+        // Nếu đã có mail, chỉ lấy mail SAU ngày đó (tránh trùng lặp)
+        const timestamp = Math.floor(lastEmail.date.getTime() / 1000) + 1;
+        gmailQuery = `after:${timestamp}`;
+      } else {
+        // Nếu chưa có mail nào (Initial Sync), có thể giới hạn lấy 30 ngày gần nhất cho nhẹ
+        // gmailQuery = 'newer_than:30d';
+      }
+
+      console.log(`[Sync] User ${userId} - Query: ${gmailQuery || 'ALL'}`);
+
+      // 3. Gọi Gmail API
+      const auth = await this.getAuthenticatedClient(userId);
+      const gmail = google.gmail({ version: 'v1', auth });
+
+      const res = await gmail.users.messages.list({
+        userId: 'me',
+        q: gmailQuery,
+        maxResults: 50, // Mỗi lần sync lấy tối đa 50 mail mới nhất
+      });
+
+      const messages = res.data.messages || [];
+      if (messages.length === 0) return;
+
+      // 4. Lấy chi tiết từng mail (Batch request hoặc Promise.all)
+      const detailsPromise = messages.map(async (msg) => {
+        if (!msg.id) return null;
+        try {
+          const detail = await gmail.users.messages.get({
+            userId: 'me',
+            id: msg.id,
+            format: 'metadata',
+            metadataHeaders: ['Subject', 'From', 'Date'],
+          });
+
+          const headers = detail.data.payload?.headers || [];
+          const subject =
+            headers.find((h) => h.name === 'Subject')?.value || '(No Subject)';
+          const from =
+            headers.find((h) => h.name === 'From')?.value || 'Unknown';
+          const dateStr = headers.find((h) => h.name === 'Date')?.value || '';
+          const date = new Date(dateStr);
+          const labelIds = detail.data.labelIds || [];
+
+          return {
+            updateOne: {
+              filter: { messageId: msg.id },
+              update: {
+                $set: {
+                  userId,
+                  messageId: msg.id,
+                  threadId: msg.threadId,
+                  subject,
+                  from,
+                  snippet: detail.data.snippet,
+                  date,
+                  isRead: !labelIds.includes('UNREAD'),
+                  labelIds: labelIds,
+                },
+              },
+              upsert: true,
+            },
+          };
+        } catch (e) {
+          return null;
+        }
+      });
+
+      const operations = (await Promise.all(detailsPromise)).filter(
+        (op) => op !== null,
+      );
+
+      // 5. Lưu xuống DB (Bulk Write cho nhanh)
+      if (operations.length > 0) {
+        await this.emailMetadataModel.bulkWrite(operations);
+        console.log(
+          `[Sync] Saved ${operations.length} new emails for User ${userId}`,
+        );
+      }
+    } catch (error) {
+      console.error(`[Sync Error] User ${userId}:`, error.message);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async handleCronSync() {
+    console.log('>>> Starting Cron Job: Sync Emails...');
+
+    const linkedAccounts = await this.linkedAccountModel.find({
+      provider: 'google',
+    });
+
+    // Chạy vòng lặp (với project nhỏ thì loop ok, project lớn cần Queue)
+    for (const acc of linkedAccounts) {
+      // acc.user là ObjectId reference đến User
+      await this.syncEmailsForUser(acc.user.toString());
+    }
+    console.log('>>> Cron Job Finished.');
+  }
+
+  // --- PHẦN 3: FUZZY SEARCH ---
+
+  async searchEmailsFuzzy(
+    userId: string,
+    query: string,
+    labelId?: string, // Thêm tham số optional này
+    limit: number = 50,
+  ) {
+    const regex = new RegExp(query, 'i');
+
+    const filter: any = {
+      userId,
+      $or: [
+        { subject: { $regex: regex } },
+        { from: { $regex: regex } },
+        { snippet: { $regex: regex } },
+      ],
+    };
+
+    // Nếu có truyền labelId thì filter thêm
+    if (labelId) {
+      filter.labelIds = labelId;
+    }
+
+    return this.emailMetadataModel
+      .find(filter)
+      .sort({ date: -1 })
+      .limit(limit)
+      .exec();
+  }
+
+  // Lấy chi tiết nội dung 1 Email
   async getEmailDetail(userId: string, messageId: string) {
     const auth = await this.getAuthenticatedClient(userId);
     const gmail = google.gmail({ version: 'v1', auth });
@@ -195,7 +394,8 @@ export class MailService {
 
       const headers = payload.headers || [];
 
-      const subject = headers.find((h) => h.name === 'Subject')?.value || '(No Subject)';
+      const subject =
+        headers.find((h) => h.name === 'Subject')?.value || '(No Subject)';
       const from = headers.find((h) => h.name === 'From')?.value || 'Unknown';
       const to = headers.find((h) => h.name === 'To')?.value || '';
       const date = headers.find((h) => h.name === 'Date')?.value || '';
@@ -219,7 +419,6 @@ export class MailService {
         body: bodyHtml,
         attachments,
       };
-
     } catch (error) {
       console.error('Error fetching email detail:', error);
       throw new UnauthorizedException('Failed to fetch email detail');
@@ -250,7 +449,6 @@ export class MailService {
         buffer,
         size: response.data.size,
       };
-
     } catch (error) {
       console.error('Error fetching attachment:', error);
       throw new UnauthorizedException('Failed to fetch attachment');
@@ -279,8 +477,16 @@ export class MailService {
     }
   }
   // Thao tác Modify: Đánh dấu đã đọc, Xóa (Trash), Gắn sao
-  async modifyEmail(userId: string, messageId: string, addLabels: string[], removeLabels: string[]) {
-    if ((!addLabels || addLabels.length === 0) && (!removeLabels || removeLabels.length === 0)) {
+  async modifyEmail(
+    userId: string,
+    messageId: string,
+    addLabels: string[],
+    removeLabels: string[],
+  ) {
+    if (
+      (!addLabels || addLabels.length === 0) &&
+      (!removeLabels || removeLabels.length === 0)
+    ) {
       return { success: true, message: 'No changes applied (lists are empty)' };
     }
     const auth = await this.getAuthenticatedClient(userId);
@@ -313,9 +519,9 @@ export class MailService {
       });
 
       const headers = originalMsg.data.payload?.headers || [];
-      const subjectObj = headers.find(h => h.name === 'Subject');
-      const msgIdObj = headers.find(h => h.name === 'Message-ID');
-      const fromObj = headers.find(h => h.name === 'From');
+      const subjectObj = headers.find((h) => h.name === 'Subject');
+      const msgIdObj = headers.find((h) => h.name === 'Message-ID');
+      const fromObj = headers.find((h) => h.name === 'From');
 
       // Xử lý Subject (Thêm Re: nếu chưa có)
       let subject = subjectObj?.value || '';
@@ -323,10 +529,13 @@ export class MailService {
         subject = `Re: ${subject}`;
       }
 
-      // Xử lý Header Threading 
-      const references = headers.find(h => h.name === 'References')?.value || '';
+      // Xử lý Header Threading
+      const references =
+        headers.find((h) => h.name === 'References')?.value || '';
       const inReplyTo = msgIdObj?.value || '';
-      const newReferences = references ? `${references} ${inReplyTo}` : inReplyTo;
+      const newReferences = references
+        ? `${references} ${inReplyTo}`
+        : inReplyTo;
 
       const fromValue = fromObj?.value || '';
 
@@ -340,10 +549,10 @@ export class MailService {
       // Lúc này 'to' sẽ chỉ là "ducnhat@gmail.com" thay vì cả cụm dài
       const to = extractEmail(fromValue);
 
-      // Tạo Raw Message 
+      // Tạo Raw Message
       const rawMessage = this.createRawMessage(to, subject, body, {
         'In-Reply-To': inReplyTo,
-        'References': newReferences
+        References: newReferences,
       });
 
       // Gửi đi kèm threadId để Gmail gộp nhóm
@@ -356,14 +565,18 @@ export class MailService {
       });
 
       return response.data;
-
     } catch (error) {
       console.error('Error replying email:', error);
       throw new UnauthorizedException('Failed to reply email');
     }
   }
 
-  async forwardEmail(userId: string, originalMessageId: string, to: string, body: string) {
+  async forwardEmail(
+    userId: string,
+    originalMessageId: string,
+    to: string,
+    body: string,
+  ) {
     const auth = await this.getAuthenticatedClient(userId);
     const gmail = google.gmail({ version: 'v1', auth });
 
@@ -406,7 +619,6 @@ export class MailService {
       });
 
       return response.data;
-
     } catch (error) {
       console.error('Error forwarding email:', error);
       throw new UnauthorizedException('Failed to forward email');
@@ -428,7 +640,7 @@ export class MailService {
     const cleanText = this.stripHtml(emailDetail.body);
 
     if (!cleanText || cleanText.length < 50) {
-      return "Nội dung quá ngắn để tóm tắt.";
+      return 'Nội dung quá ngắn để tóm tắt.';
     }
 
     // Gọi AI để tóm tắt
@@ -450,7 +662,10 @@ export class MailService {
       const response = await result.response;
       summaryText = response.text();
     } catch (error) {
-      this.logger.error(`Error summarizing email: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error summarizing email: ${error.message}`,
+        error.stack,
+      );
       summaryText = 'Lỗi khi gọi AI tóm tắt. Vui lòng thử lại sau.';
     }
 
@@ -458,7 +673,7 @@ export class MailService {
     await this.emailSummaryModel.create({
       messageId,
       summary: summaryText,
-      originalContentShort: cleanText.substring(0, 100)
+      originalContentShort: cleanText.substring(0, 100),
     });
 
     return summaryText;
@@ -481,7 +696,8 @@ export class MailService {
         });
 
         const headers = detail.data.payload?.headers || [];
-        const subject = headers.find((h) => h.name === 'Subject')?.value || '(No Subject)';
+        const subject =
+          headers.find((h) => h.name === 'Subject')?.value || '(No Subject)';
         const from = headers.find((h) => h.name === 'From')?.value || 'Unknown';
         const date = headers.find((h) => h.name === 'Date')?.value || '';
 
@@ -502,7 +718,7 @@ export class MailService {
 
     const results = await Promise.all(detailsPromise);
     // Lọc bỏ các email null (đã bị xóa)
-    return results.filter(item => item !== null);
+    return results.filter((item) => item !== null);
   }
 
   private async createLabel(gmail: any, name: string) {
@@ -566,7 +782,12 @@ export class MailService {
     return attachments;
   }
 
-  private createRawMessage(to: string, subject: string, body: string, extraHeaders: Record<string, string> = {}): string {
+  private createRawMessage(
+    to: string,
+    subject: string,
+    body: string,
+    extraHeaders: Record<string, string> = {},
+  ): string {
     const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
 
     let messageParts = [
@@ -578,7 +799,7 @@ export class MailService {
     ];
 
     // Add extra headers (In-Reply-To, References)
-    Object.keys(extraHeaders).forEach(key => {
+    Object.keys(extraHeaders).forEach((key) => {
       messageParts.push(`${key}: ${extraHeaders[key]}`);
     });
 
@@ -596,7 +817,8 @@ export class MailService {
 
   private stripHtml(html: string): string {
     if (!html) return '';
-    return html.replace(/<[^>]*>?/gm, ' ')
+    return html
+      .replace(/<[^>]*>?/gm, ' ')
       .replace(/\s+/g, ' ')
       .trim();
   }
