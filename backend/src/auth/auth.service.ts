@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service'; // Changed from 'src/user/user.service'
@@ -10,6 +14,7 @@ import { jwtDecode } from 'jwt-decode';
 import { InjectModel } from '@nestjs/mongoose/dist/common/mongoose.decorators';
 import { LinkedAccount, LinkedAccountDocument } from './linked-account.schema';
 import { Model } from 'mongoose';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -17,10 +22,11 @@ export class AuthService {
     private userService: UserService, // <--- 2. Inject UserService
     private jwtService: JwtService,
     private configService: ConfigService,
-    @InjectModel(LinkedAccount.name) private linkedAccountModel: Model<LinkedAccountDocument>,
-  ) { }
+    @InjectModel(LinkedAccount.name)
+    private linkedAccountModel: Model<LinkedAccountDocument>,
+    private mailService: MailService,
+  ) {}
 
-  // HÀM 1: LOGIN
   async login(loginDto: LoginUserDto) {
     // 1. Tìm user
     const user = await this.userService.findByEmail(loginDto.email);
@@ -86,15 +92,19 @@ export class AuthService {
 
     try {
       const tokenUrl = 'https://oauth2.googleapis.com/token';
-      const googleRes = await axios.post(tokenUrl, {
-        code,
-        client_id: this.configService.get('GOOGLE_CLIENT_ID'),
-        client_secret: this.configService.get('GOOGLE_CLIENT_SECRET'),
-        redirect_uri: this.configService.get('GOOGLE_REDIRECT_URI'),
-        grant_type: 'authorization_code',
-      }, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      });
+      const googleRes = await axios.post(
+        tokenUrl,
+        {
+          code,
+          client_id: this.configService.get('GOOGLE_CLIENT_ID'),
+          client_secret: this.configService.get('GOOGLE_CLIENT_SECRET'),
+          redirect_uri: this.configService.get('GOOGLE_REDIRECT_URI'),
+          grant_type: 'authorization_code',
+        },
+        {
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        },
+      );
 
       const { access_token, refresh_token, id_token } = googleRes.data;
 
@@ -116,7 +126,6 @@ export class AuthService {
         linkedAccount.accessToken = access_token;
         if (refresh_token) linkedAccount.refreshToken = refresh_token;
         await linkedAccount.save();
-
       } else {
         // Case B: Chưa link -> Check xem email đã có trong bảng User chưa
         user = await this.userService.findByEmail(email);
@@ -134,13 +143,22 @@ export class AuthService {
         });
       }
 
-      return this.generateTokens(user);
+      this.mailService
+        .syncEmailsForUser(user._id.toString())
+        .then(() =>
+          console.log(`[Initial Sync] Started for user ${user.email}`),
+        )
+        .catch((err) => console.error(`[Initial Sync] Error:`, err));
 
+      return this.generateTokens(user);
     } catch (error) {
       console.error('============ GOOGLE ERROR LOG ============');
       console.error('Status:', error.response?.status);
       console.error('Data:', JSON.stringify(error.response?.data));
-      console.error('Config Redirect URI:', this.configService.get('GOOGLE_REDIRECT_URI')); // In luôn cái URI đang dùng ra xem đúng không
+      console.error(
+        'Config Redirect URI:',
+        this.configService.get('GOOGLE_REDIRECT_URI'),
+      ); // In luôn cái URI đang dùng ra xem đúng không
       console.error('==========================================');
       throw new UnauthorizedException('Google authentication failed');
     }
