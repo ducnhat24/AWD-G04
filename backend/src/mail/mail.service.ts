@@ -180,8 +180,7 @@ export class MailService {
           const detail = await gmail.users.messages.get({
             userId: 'me',
             id: msg.id,
-            format: 'metadata',
-            metadataHeaders: ['Subject', 'From', 'Date'],
+            format: 'full',
           });
 
           const headers = detail.data.payload?.headers || [];
@@ -201,6 +200,7 @@ export class MailService {
             date,
             isRead: !labelIds.includes('UNREAD'),
             isStarred: labelIds.includes('STARRED'),
+            attachments: this.getAttachments(detail.data.payload),
           };
         } catch (err) {
           return null;
