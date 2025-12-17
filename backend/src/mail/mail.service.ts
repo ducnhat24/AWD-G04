@@ -22,6 +22,7 @@ import {
   EmailMetadataDocument,
 } from './entities/email-metadata.schema';
 import { Cron, CronExpression } from '@nestjs/schedule';
+const Fuse = require('fuse.js');
 
 @Injectable()
 export class MailService {
@@ -343,35 +344,56 @@ export class MailService {
     console.log('>>> Cron Job Finished.');
   }
 
-  // --- PHẦN 3: FUZZY SEARCH ---
-
   async searchEmailsFuzzy(
     userId: string,
     query: string,
-    labelId?: string, // Thêm tham số optional này
-    limit: number = 50,
+    labelId?: string,
+    limit: number = 20,
   ) {
-    const regex = new RegExp(query, 'i');
 
-    const filter: any = {
-      userId,
-      $or: [
-        { subject: { $regex: regex } },
-        { from: { $regex: regex } },
-        { snippet: { $regex: regex } },
-      ],
-    };
 
-    // Nếu có truyền labelId thì filter thêm
-    if (labelId) {
+    const filter: any = { userId };
+    if (labelId && (!query || query.trim() === '')) {
       filter.labelIds = labelId;
     }
 
-    return this.emailMetadataModel
+    const candidateEmails = await this.emailMetadataModel
       .find(filter)
       .sort({ date: -1 })
-      .limit(limit)
+      .limit(1000)
+      .lean()
       .exec();
+
+    if (!candidateEmails || candidateEmails.length === 0) {
+      return [];
+    }
+
+    // BƯỚC 2: Cấu hình Fuse.js (Fuzzy Logic & Ranking)
+    const fuseOptions = {
+      // Các trường dữ liệu sẽ đem đi so sánh
+      keys: [
+        { name: 'subject', weight: 0.5 }, // Ưu tiên 1: Khớp tiêu đề (quan trọng nhất)
+        { name: 'from', weight: 0.3 },    // Ưu tiên 2: Khớp người gửi
+        { name: 'snippet', weight: 0.2 }, // Ưu tiên 3: Khớp nội dung tóm tắt
+      ],
+      includeScore: true,  // Để Fuse tính điểm (dùng cho ranking)
+      threshold: 0.4,      // Độ nhạy: 0.0 (khớp tuyệt đối) -> 0.4 (cho phép sai typo nhẹ) -> 1.0 (khớp lung tung)
+      ignoreLocation: true, // Tìm thấy từ khóa ở bất kỳ đâu trong chuỗi (đầu, giữa, cuối)
+      useExtendedSearch: true // Cho phép tìm kiếm nâng cao nếu cần
+    };
+
+    const fuse = new Fuse(candidateEmails, fuseOptions);
+
+    // BƯỚC 3: Thực hiện Search
+    // Kết quả trả về của Fuse đã được tự động SẮP XẾP theo độ liên quan (Score)
+    const searchResults = fuse.search(query);
+
+    // BƯỚC 4: Map lại dữ liệu về format gốc (bỏ wrapper của Fuse)
+    const finalResults = searchResults
+      .map((result) => result.item) // Lấy ra object email gốc
+      .slice(0, limit);             // Cắt lấy số lượng user yêu cầu (VD: top 20)
+
+    return finalResults;
   }
 
   // Lấy chi tiết nội dung 1 Email
