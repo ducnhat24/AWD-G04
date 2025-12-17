@@ -40,15 +40,14 @@ export default function HomePage() {
   >(undefined);
 
   // Search State
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Email[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [activeSearchQuery, setActiveSearchQuery] = useState("");
+  const [searchFilter, setSearchFilter] = useState<"all" | "unread" | "has_attachment">("all");
 
   useEffect(() => {
     localStorage.setItem("viewMode", viewMode);
   }, [viewMode]);
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
   // Custom Hook for Business Logic
   const {
     emails,
@@ -64,17 +63,27 @@ export default function HomePage() {
     moveEmail,
     snoozeEmail,
     executeEmailAction,
+    searchResults,
+    isLoadingSearch,
+    searchError,
   } = useEmailLogic({
     selectedFolder,
     selectedEmailId,
     viewMode,
-    searchQuery: debouncedSearchQuery,
+    searchQuery: activeSearchQuery,
   });
 
+  const handleSearch = () => {
+    if (searchInput.trim()) {
+      setActiveSearchQuery(searchInput);
+      setSearchFilter("all");
+    }
+  };
+
   const handleClearSearch = () => {
-    setIsSearching(false);
-    setSearchQuery("");
-    setSearchResults([]);
+    setSearchInput("");
+    setActiveSearchQuery("");
+    setSearchFilter("all");
   };
 
   // UI Handlers
@@ -189,18 +198,24 @@ export default function HomePage() {
         <header className="h-14 border-b flex items-center justify-between px-4 bg-background shrink-0 gap-4">
           <div className="flex items-center gap-4 flex-1">
             <h2 className="font-semibold text-lg shrink-0">
-              {viewMode === "list"
-                ? folders.find((f) => f.id === selectedFolder)?.label || "Inbox"
-                : "Kanban Board"}
+              {viewMode === "list" ? "Search" : "Kanban Board"}
             </h2>
             <div className="flex items-center gap-2 max-w-md w-full">
               <Input
                 placeholder="Search emails..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSearch();
+                }}
                 className="h-9"
               />
-              <Button size="icon" variant="ghost" className="h-9 w-9">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-9 w-9"
+                onClick={handleSearch}
+              >
                 <Search className="w-4 h-4" />
               </Button>
             </div>
@@ -245,35 +260,80 @@ export default function HomePage() {
 
         {/* Content */}
         <div className="flex-1 flex overflow-hidden">
-          {isSearching ? (
+          {activeSearchQuery ? (
             <div className="flex-1 p-4 overflow-y-auto bg-muted/10">
-              <div className="flex items-center gap-2 mb-4">
-                <Button variant="ghost" onClick={handleClearSearch}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Board
-                </Button>
-                <h2 className="text-lg font-semibold">
-                  Search Results for "{searchQuery}"
-                </h2>
+              <div className="flex flex-col gap-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" onClick={handleClearSearch}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Board
+                  </Button>
+                  <h2 className="text-lg font-semibold">
+                    Search Results for "{activeSearchQuery}"
+                  </h2>
+                </div>
+
+                <div className="flex items-center gap-2 ml-4">
+                  <span className="text-sm text-muted-foreground">Filter:</span>
+                  <Button
+                    variant={searchFilter === "all" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSearchFilter("all")}
+                  >
+                    All
+                  </Button>
+                  <Button
+                    variant={searchFilter === "unread" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSearchFilter("unread")}
+                  >
+                    Unread
+                  </Button>
+                  <Button
+                    variant={searchFilter === "has_attachment" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSearchFilter("has_attachment")}
+                  >
+                    Has Attachment
+                  </Button>
+                </div>
               </div>
 
-              {isLoadingList ? (
+              {isLoadingSearch ? (
                 <div className="flex items-center justify-center h-64 text-muted-foreground">
                   Searching...
                 </div>
+              ) : searchError ? (
+                <div className="flex items-center justify-center h-64 text-red-500">
+                  Error searching emails.
+                </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {searchResults.map((email, index) => (
-                    <KanbanCard
-                      key={email.id}
-                      email={email}
-                      index={index}
-                      onSnooze={(id, date) => handleSnooze(id, date)}
-                      onOpenMail={handleOpenMail}
-                      isDraggable={false}
-                    />
-                  ))}
-                  {searchResults.length === 0 && (
+                <div className="flex flex-col gap-4 max-w-3xl mx-auto">
+                  {searchResults
+                    .filter((email) => {
+                      if (searchFilter === "unread") return !email.isRead;
+                      if (searchFilter === "has_attachment")
+                        return (
+                          email.attachments && email.attachments.length > 0
+                        );
+                      return true;
+                    })
+                    .map((email, index) => (
+                      <KanbanCard
+                        key={email.id}
+                        email={email}
+                        index={index}
+                        onSnooze={(id, date) => handleSnooze(id, date)}
+                        onOpenMail={handleOpenMail}
+                        isDraggable={false}
+                      />
+                    ))}
+                  {searchResults.filter((email) => {
+                    if (searchFilter === "unread") return !email.isRead;
+                    if (searchFilter === "has_attachment")
+                      return email.attachments && email.attachments.length > 0;
+                    return true;
+                  }).length === 0 && (
                     <div className="col-span-full text-center text-muted-foreground py-8">
                       No results found.
                     </div>

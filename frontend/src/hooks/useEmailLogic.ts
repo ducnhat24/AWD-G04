@@ -14,6 +14,7 @@ import {
   snoozeEmail as apiSnoozeEmail,
   fetchSnoozedEmails,
   findLabelId,
+  searchEmails,
 } from "@/services/apiService";
 import { type Email } from "@/data/mockData";
 
@@ -158,7 +159,19 @@ export const useEmailLogic = ({
       .flatMap((page) => page.emails)
       .map((e) => ({ ...e, folder: "snoozed" })) || [];
 
-  // 4. Mutations
+  // 4. Search Emails
+  const {
+    data: searchResults = [],
+    isLoading: isLoadingSearch,
+    error: searchError,
+  } = useQuery({
+    queryKey: ["search", searchQuery],
+    queryFn: () => searchEmails(searchQuery),
+    enabled: !!searchQuery,
+    refetchOnWindowFocus: false,
+  });
+
+  // 5. Mutations
   const modifyEmailMutation = useMutation({
     mutationFn: ({
       id,
@@ -519,5 +532,8 @@ export const useEmailLogic = ({
     moveEmail,
     snoozeEmail,
     executeEmailAction: handleEmailAction,
+    searchResults,
+    isLoadingSearch,
+    searchError,
   };
 };
