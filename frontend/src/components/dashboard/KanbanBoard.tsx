@@ -3,13 +3,7 @@ import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { ArrowUpDown, Filter } from "lucide-react";
 import type { Email } from "@/data/mockData";
 import { KanbanColumn } from "./KanbanColumn";
-
-const COLUMNS = [
-  { id: 'inbox', title: 'Inbox', color: 'bg-red-500' },
-  { id: 'todo', title: 'To Do', color: 'bg-yellow-500' },
-  { id: 'snoozed', title: 'Snoozed', color: 'bg-purple-500' },
-  { id: 'done', title: 'Done', color: 'bg-green-500' },
-] as const;
+import { KANBAN_COLUMNS } from "@/constants/kanban";
 
 interface KanbanData {
   emails: Email[];
@@ -76,7 +70,7 @@ export function KanbanBoard({ kanbanData, onMoveEmail, onSnooze, onOpenMail }: K
       return processed;
     };
 
-    return COLUMNS.reduce((acc, col) => {
+    return KANBAN_COLUMNS.reduce((acc, col) => {
       acc[col.id] = processEmails(kanbanData[col.id as keyof typeof kanbanData].emails);
       return acc;
     }, {} as Record<string, Email[]>);
@@ -128,10 +122,10 @@ export function KanbanBoard({ kanbanData, onMoveEmail, onSnooze, onOpenMail }: K
 
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex h-full gap-6 p-6 overflow-x-auto bg-background/50 items-start">
-          {COLUMNS.map((col) => {
+          {KANBAN_COLUMNS.map((col) => {
             const columnData = kanbanData[col.id as keyof typeof kanbanData];
             const processedEmails = processedColumns[col.id];
-            
+
             return (
               <KanbanColumn
                 key={col.id}
