@@ -118,7 +118,7 @@ export class AuthService {
         user = await this.userService.findById(linkedAccount.user.toString());
 
         await this.linkedAccountRepository.updateTokens(
-          linkedAccount._id,
+          (linkedAccount as any)._id,
           access_token,
           refresh_token,
         );
