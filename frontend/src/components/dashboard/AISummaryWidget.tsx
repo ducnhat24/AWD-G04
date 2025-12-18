@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
-import { fetchEmailSummary } from "@/services/apiService";
+import { fetchEmailSummary } from "@/services/email.service";
 
 interface AISummaryWidgetProps {
   emailId: string;
@@ -39,7 +39,7 @@ export const AISummaryWidget = memo(function AISummaryWidget({ emailId, preview 
   });
 
   return (
-    <div 
+    <div
       ref={summaryRef}
       className="bg-muted/50 rounded-md p-3 mb-3 border border-border/50"
     >

@@ -16,7 +16,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMutation } from "@tanstack/react-query";
-import { loginUser } from "@/services/apiService";
+import { loginUser } from "@/services/auth.service";
 import OtherMethodLogin from "@/components/ui/OtherMethodLogin";
 // import { getGoogleAuthUrl } from "@/utils/oauth";
 
