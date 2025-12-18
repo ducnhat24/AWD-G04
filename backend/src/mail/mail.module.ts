@@ -6,7 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import {
   LinkedAccount,
   LinkedAccountSchema,
-} from '../auth/linked-account.schema';
+} from '../user/entities/linked-account.entity';
 import { ConfigModule } from '@nestjs/config';
 import {
   EmailSummary,

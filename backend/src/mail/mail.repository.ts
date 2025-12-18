@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { EmailMetadata, EmailMetadataDocument } from './entities/email-metadata.schema';
 import { EmailSummary, EmailSummaryDocument } from './entities/email-summary.schema';
-import { LinkedAccount, LinkedAccountDocument } from '../auth/linked-account.schema';
+import { LinkedAccount, LinkedAccountDocument } from '../user/entities/linked-account.entity';
 import { Types } from 'mongoose';
 
 @Injectable()

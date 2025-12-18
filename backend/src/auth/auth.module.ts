@@ -6,7 +6,7 @@ import { UserModule } from '../user/user.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './jwt.strategy';
-import { LinkedAccount, LinkedAccountSchema } from './linked-account.schema';
+import { LinkedAccount, LinkedAccountSchema } from '../user/entities/linked-account.entity';
 import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module';
 import { MailModule } from 'src/mail/mail.module';
 
@@ -33,4 +33,4 @@ import { MailModule } from 'src/mail/mail.module';
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
 })
-export class AuthModule {}
+export class AuthModule { }

@@ -12,7 +12,7 @@ import * as bcrypt from 'bcrypt';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { InjectModel } from '@nestjs/mongoose/dist/common/mongoose.decorators';
-import { LinkedAccount, LinkedAccountDocument } from './linked-account.schema';
+import { LinkedAccount, LinkedAccountDocument } from '../user/entities/linked-account.entity';
 import { Model } from 'mongoose';
 import { MailService } from 'src/mail/mail.service';
 
@@ -25,7 +25,7 @@ export class AuthService {
     @InjectModel(LinkedAccount.name)
     private linkedAccountModel: Model<LinkedAccountDocument>,
     private mailService: MailService,
-  ) {}
+  ) { }
 
   async login(loginDto: LoginUserDto) {
     // 1. Tìm user
