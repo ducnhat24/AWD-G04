@@ -10,6 +10,7 @@ import { useEmailLogic } from "@/hooks/useEmailLogic";
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { DashboardModals } from "@/components/dashboard/DashboardModals";
+import { KanbanProvider } from "@/contexts/KanbanContext";
 
 export default function HomePage() {
   // Dashboard State
@@ -221,37 +222,41 @@ export default function HomePage() {
                 Error searching emails.
               </div>
             ) : (
-              <div className="flex flex-col gap-4 max-w-3xl mx-auto">
-                {searchResults
-                  .filter((email) => {
+              <KanbanProvider
+                onMoveEmail={handleMoveEmail}
+                onSnooze={handleSnooze}
+                onOpenMail={handleOpenMail}
+              >
+                <div className="flex flex-col gap-4 max-w-3xl mx-auto">
+                  {searchResults
+                    .filter((email) => {
+                      if (searchFilter === "unread") return !email.isRead;
+                      if (searchFilter === "has_attachment")
+                        return (
+                          email.attachments && email.attachments.length > 0
+                        );
+                      return true;
+                    })
+                    .map((email, index) => (
+                      <KanbanCard
+                        key={email.id}
+                        email={email}
+                        index={index}
+                        isDraggable={false}
+                      />
+                    ))}
+                  {searchResults.filter((email) => {
                     if (searchFilter === "unread") return !email.isRead;
                     if (searchFilter === "has_attachment")
-                      return (
-                        email.attachments && email.attachments.length > 0
-                      );
+                      return email.attachments && email.attachments.length > 0;
                     return true;
-                  })
-                  .map((email, index) => (
-                    <KanbanCard
-                      key={email.id}
-                      email={email}
-                      index={index}
-                      onSnooze={(id, date) => handleSnooze(id, date)}
-                      onOpenMail={handleOpenMail}
-                      isDraggable={false}
-                    />
-                  ))}
-                {searchResults.filter((email) => {
-                  if (searchFilter === "unread") return !email.isRead;
-                  if (searchFilter === "has_attachment")
-                    return email.attachments && email.attachments.length > 0;
-                  return true;
-                }).length === 0 && (
-                    <div className="col-span-full text-center text-muted-foreground py-8">
-                      No results found.
-                    </div>
-                  )}
-              </div>
+                  }).length === 0 && (
+                      <div className="col-span-full text-center text-muted-foreground py-8">
+                        No results found.
+                      </div>
+                    )}
+                </div>
+              </KanbanProvider>
             )}
           </div>
         ) : viewMode === "kanban" ? (
@@ -261,8 +266,7 @@ export default function HomePage() {
                 Loading Kanban...
               </div>
             ) : (
-              <KanbanBoard
-                kanbanData={kanbanData}
+              <KanbanProvider
                 onMoveEmail={handleMoveEmail}
                 onSnooze={(id, date) => {
                   if (date) {
@@ -273,7 +277,9 @@ export default function HomePage() {
                   }
                 }}
                 onOpenMail={handleOpenMail}
-              />
+              >
+                <KanbanBoard kanbanData={kanbanData} />
+              </KanbanProvider>
             )}
           </div>
         ) : (

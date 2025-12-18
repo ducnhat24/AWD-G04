@@ -4,6 +4,7 @@ import { ArrowUpDown, Filter } from "lucide-react";
 import type { Email } from "@/data/mockData";
 import { KanbanColumn } from "./KanbanColumn";
 import { KANBAN_COLUMNS } from "@/constants/kanban";
+import { useKanban } from "@/contexts/KanbanContext";
 
 interface KanbanData {
   emails: Email[];
@@ -19,15 +20,13 @@ interface KanbanBoardProps {
     done: KanbanData;
     snoozed: KanbanData;
   };
-  onMoveEmail: (emailId: string, sourceFolder: string, destinationFolder: string) => void;
-  onSnooze: (emailId: string, date: Date, sourceFolder?: string) => void;
-  onOpenMail: (emailId: string) => void;
 }
 
-export function KanbanBoard({ kanbanData, onMoveEmail, onSnooze, onOpenMail }: KanbanBoardProps) {
+export function KanbanBoard({ kanbanData }: KanbanBoardProps) {
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
   const [filterUnread, setFilterUnread] = useState(false);
   const [filterHasAttachments, setFilterHasAttachments] = useState(false);
+  const { onMoveEmail } = useKanban();
 
   const isFiltering = filterUnread || filterHasAttachments;
 
@@ -134,8 +133,6 @@ export function KanbanBoard({ kanbanData, onMoveEmail, onSnooze, onOpenMail }: K
                 emails={processedEmails}
                 count={processedEmails.length}
                 color={col.color}
-                onSnooze={onSnooze}
-                onOpenMail={onOpenMail}
                 onLoadMore={columnData.fetchNextPage}
                 hasMore={!isFiltering && columnData.hasNextPage}
                 isLoadingMore={columnData.isFetchingNextPage}

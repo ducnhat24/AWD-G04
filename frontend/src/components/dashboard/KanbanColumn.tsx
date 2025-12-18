@@ -11,8 +11,6 @@ interface KanbanColumnProps {
   emails: Email[];
   count: number;
   color?: string;
-  onSnooze: (emailId: string, date: Date, sourceFolder?: string) => void;
-  onOpenMail: (emailId: string) => void;
   onLoadMore: () => void;
   hasMore: boolean;
   isLoadingMore: boolean;
@@ -24,8 +22,6 @@ export function KanbanColumn({
   emails,
   count,
   color = "bg-gray-500",
-  onSnooze,
-  onOpenMail,
   onLoadMore,
   hasMore,
   isLoadingMore,
@@ -83,8 +79,6 @@ export function KanbanColumn({
                 email={email}
                 index={index}
                 columnId={id}
-                onSnooze={onSnooze}
-                onOpenMail={onOpenMail}
               />
             ))}
             {provided.placeholder}
