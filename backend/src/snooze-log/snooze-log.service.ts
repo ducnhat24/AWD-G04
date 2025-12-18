@@ -1,41 +1,28 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { SnoozeLog, SnoozeLogDocument } from './entities/snooze-log.entity';
 import { MailService } from '../mail/mail.service';
+import { SnoozeLogRepository } from './snooze-log.repository';
 
 @Injectable()
 export class SnoozeLogService {
   private readonly logger = new Logger(SnoozeLogService.name);
 
   constructor(
-    @InjectModel(SnoozeLog.name) private snoozeLogModel: Model<SnoozeLogDocument>,
+    private readonly snoozeLogRepository: SnoozeLogRepository,
     private readonly mailService: MailService,
   ) { }
 
   async snoozeEmail(userId: string, messageId: string, wakeUpTime: Date) {
     await this.mailService.modifyEmail(userId, messageId, [], ['INBOX']);
-
-    const newLog = new this.snoozeLogModel({
-      userId,
-      messageId,
-      wakeUpTime,
-      status: 'ACTIVE',
-    });
-    return newLog.save();
+    return this.snoozeLogRepository.createSnoozeLog(userId, messageId, wakeUpTime);
   }
 
   async getSnoozedEmails(userId: string, page: number, limit: number) {
-    const skip = (page - 1) * limit;
-
-    const logs = await this.snoozeLogModel.find({ userId, status: 'ACTIVE' })
-      .sort({ wakeUpTime: 1 })
-      .skip(skip)
-      .limit(limit)
-      .exec();
-
-    const total = await this.snoozeLogModel.countDocuments({ userId, status: 'ACTIVE' });
+    const { logs, total } = await this.snoozeLogRepository.findActiveByUserPaginated(
+      userId,
+      page,
+      limit,
+    );
 
     if (!logs.length) {
       return {
@@ -54,7 +41,7 @@ export class SnoozeLogService {
         ...email,
         snoozeInfo: {
           wakeUpTime: log ? log.wakeUpTime : null,
-          snoozeId: log ? log._id : null
+          snoozeId: log ? log._id : null,
         }
       };
     });
@@ -75,10 +62,7 @@ export class SnoozeLogService {
     const now = new Date();
 
     // find all snooze logs that are due
-    const dueEmails = await this.snoozeLogModel.find({
-      status: 'ACTIVE',
-      wakeUpTime: { $lte: now },
-    });
+    const dueEmails = await this.snoozeLogRepository.findDueActive(now);
 
     if (dueEmails.length > 0) {
       this.logger.debug(`Found ${dueEmails.length} emails to wake up.`);
@@ -87,9 +71,7 @@ export class SnoozeLogService {
     for (const log of dueEmails) {
       try {
         await this.mailService.modifyEmail(log.userId, log.messageId, ['INBOX'], []);
-
-        log.status = 'PROCESSED';
-        await log.save();
+        await this.snoozeLogRepository.markProcessed(log._id);
 
         this.logger.log(`Woke up email ${log.messageId} for user ${log.userId}`);
       } catch (error) {

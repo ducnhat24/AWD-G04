@@ -4,6 +4,7 @@ import { SnoozeLogController } from './snooze-log.controller';
 import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module';
 import { MailModule } from 'src/mail/mail.module';
 import { SnoozeLog, SnoozeLogSchema } from './entities/snooze-log.entity';
+import { SnoozeLogRepository } from './snooze-log.repository';
 
 @Module({
   imports: [
@@ -11,6 +12,6 @@ import { SnoozeLog, SnoozeLogSchema } from './entities/snooze-log.entity';
     MailModule,
   ],
   controllers: [SnoozeLogController],
-  providers: [SnoozeLogService],
+  providers: [SnoozeLogService, SnoozeLogRepository],
 })
 export class SnoozeLogModule { }
