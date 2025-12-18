@@ -1,0 +1,110 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { MailRepository } from '../mail.repository';
+const Fuse = require('fuse.js');
+
+/**
+ * MailSearchService
+ * Chịu trách nhiệm tìm kiếm và lọc emails
+ * - Fuzzy search trong DB với Fuse.js
+ * - Ranking theo độ liên quan
+ * - Filter theo label
+ */
+@Injectable()
+export class MailSearchService {
+    private readonly logger = new Logger(MailSearchService.name);
+
+    constructor(
+        private mailRepository: MailRepository,
+    ) { }
+
+    /**
+     * Fuzzy search emails trong DB
+     * Sử dụng Fuse.js cho partial match và typo tolerance
+     * 
+     * @param userId - ID của user
+     * @param query - Từ khóa tìm kiếm
+     * @param labelId - Filter theo label (optional)
+     * @param limit - Số lượng kết quả trả về
+     * @returns Danh sách emails theo độ liên quan
+     */
+    async searchEmailsFuzzy(
+        userId: string,
+        query: string,
+        labelId?: string,
+        limit: number = 20,
+    ) {
+        if (!query || query.trim().length === 0) {
+            return [];
+        }
+
+        // 1. Lấy emails từ DB (giới hạn 1000 emails gần nhất để tối ưu)
+        const allEmails = await this.mailRepository.findAllByUserId(userId, 1000);
+
+        if (allEmails.length === 0) {
+            return [];
+        }
+
+        // 2. Cấu hình Fuse.js cho fuzzy search
+        const options = {
+            keys: [
+                { name: 'subject', weight: 0.5 },  // Subject quan trọng nhất
+                { name: 'from', weight: 0.3 },     // Sender quan trọng nhì
+                { name: 'snippet', weight: 0.2 },  // Snippet ít quan trọng hơn
+            ],
+            includeScore: true,
+            threshold: 0.4,        // Độ mờ: 0.0 = khớp tuyệt đối, 1.0 = khớp tất cả
+            ignoreLocation: true,  // Tìm bất kỳ đâu trong chuỗi (partial match)
+        };
+
+        const fuse = new Fuse(allEmails, options);
+
+        // 3. Thực hiện search
+        const result = fuse.search(query);
+
+        // 4. Map kết quả theo format frontend
+        const mappedResults = result.slice(0, limit).map((fuseResult: any) => {
+            const email = fuseResult.item;
+            return {
+                id: email.messageId,
+                threadId: email.threadId,
+                snippet: email.snippet,
+                subject: email.subject,
+                sender: email.from,
+                date: email.date ? email.date.toString() : '',
+                isRead: email.isRead,
+                isStarred: email.labelIds ? email.labelIds.includes('STARRED') : false,
+            };
+        });
+
+        return mappedResults;
+    }
+
+    /**
+     * Filter emails theo các tiêu chí
+     * (Có thể mở rộng thêm các filter khác: date range, has attachment, etc.)
+     */
+    async filterEmails(
+        userId: string,
+        filters: {
+            labelId?: string;
+            isRead?: boolean;
+            isStarred?: boolean;
+            dateFrom?: Date;
+            dateTo?: Date;
+        },
+        limit: number = 20,
+    ) {
+        const emails = await this.mailRepository.filterEmails(userId, filters, limit);
+
+        return emails.map((email) => ({
+            id: email.messageId,
+            threadId: email.threadId,
+            snippet: email.snippet,
+            subject: email.subject,
+            sender: email.from,
+            date: email.date ? email.date.toString() : '',
+            isRead: email.isRead,
+            isStarred: email.labelIds ? email.labelIds.includes('STARRED') : false,
+        }));
+    }
+}

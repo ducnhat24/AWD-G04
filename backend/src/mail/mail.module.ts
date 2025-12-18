@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MailService } from './mail.service';
 import { MailController } from './mail.controller';
-import { HttpModule } from '@nestjs/axios'; // Dùng để gọi API nếu không dùng thư viện googleapis
+import { HttpModule } from '@nestjs/axios';
 import { MongooseModule } from '@nestjs/mongoose';
 import {
   LinkedAccount,
@@ -16,6 +16,10 @@ import {
   EmailMetadata,
   EmailMetadataSchema,
 } from './entities/email-metadata.schema';
+import { GmailIntegrationService } from './services/gmail-integration.service';
+import { MailSyncService } from './services/mail-sync.service';
+import { MailSearchService } from './services/mail-search.service';
+import { MailRepository } from './mail.repository';
 
 @Module({
   imports: [
@@ -28,7 +32,13 @@ import {
     ]),
   ],
   controllers: [MailController],
-  providers: [MailService],
+  providers: [
+    MailService,
+    GmailIntegrationService,
+    MailSyncService,
+    MailSearchService,
+    MailRepository
+  ],
   exports: [MailService],
 })
-export class MailModule {}
+export class MailModule { }
