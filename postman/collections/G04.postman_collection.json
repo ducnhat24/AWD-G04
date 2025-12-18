@@ -19,7 +19,9 @@
               "    console.log(\"Collection variable updated!\");\r",
               "}"
             ],
-            "type": "text/javascript"
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
           }
         },
         {
@@ -29,7 +31,9 @@
             "exec": [
               ""
             ],
-            "type": "text/javascript"
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
           }
         }
       ],
@@ -453,12 +457,12 @@
   ],
   "variable": [
     {
-      "id": "8758c50c-06b9-49b7-a117-5021f126f951",
+      "id": "a53e92f3-c17a-4383-9906-bb9e6507d1f3",
       "key": "base-path",
       "value": ""
     },
     {
-      "id": "a9a28fcf-41a5-4dd3-aa3e-e8ef54d69dcd",
+      "id": "f3162320-d1ef-4d0c-8ef9-97de2b996984",
       "key": "access_token",
       "value": "",
       "type": "default"

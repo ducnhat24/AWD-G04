@@ -11,11 +11,10 @@ import {
   fetchMailboxes,
   fetchEmailDetail,
   modifyEmail,
-  snoozeEmail as apiSnoozeEmail,
-  fetchSnoozedEmails,
   findLabelId,
   searchEmails,
-} from "@/services/apiService";
+} from "@/services/email.service";
+import { snoozeEmail as apiSnoozeEmail, fetchSnoozedEmails } from "@/services/snooze.service";
 import { type Email } from "@/data/mockData";
 
 interface UseEmailLogicProps {

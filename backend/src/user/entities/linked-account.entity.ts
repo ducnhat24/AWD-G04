@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { User } from '../user/user.schema'; // Import class User của bạn
+import { User } from './user.entity'; // Import class User của bạn
 
 export type LinkedAccountDocument = LinkedAccount & Document;
 

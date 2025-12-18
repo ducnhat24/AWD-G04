@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Clock, GripVertical, Maximize2 } from "lucide-react";
 import { SnoozeDialog } from "./SnoozeDialog";
 import { AISummaryWidget } from "./AISummaryWidget";
+import { useKanban } from "@/contexts/KanbanContext";
 
 const cardVariants = cva(
   "rounded-lg border shadow-sm p-4 mb-3 select-none transition-all cursor-pointer bg-card text-card-foreground",
@@ -31,13 +32,12 @@ interface KanbanCardProps {
   email: Email;
   index: number;
   columnId?: string;
-  onSnooze: (emailId: string, date: Date, sourceFolder?: string) => void;
-  onOpenMail: (emailId: string) => void;
   isDraggable?: boolean;
 }
 
-export const KanbanCard = memo(function KanbanCard({ email, index, columnId, onSnooze, onOpenMail, isDraggable = true }: KanbanCardProps) {
+export const KanbanCard = memo(function KanbanCard({ email, index, columnId, isDraggable = true }: KanbanCardProps) {
   const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
+  const { onSnooze, onOpenMail } = useKanban();
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -70,7 +70,7 @@ export const KanbanCard = memo(function KanbanCard({ email, index, columnId, onS
           </div>
         </div>
         {isDraggable && (
-          <div 
+          <div
             className="cursor-grab text-muted-foreground/50 hover:text-foreground"
             onClick={(e) => e.stopPropagation()}
           >
@@ -104,7 +104,7 @@ export const KanbanCard = memo(function KanbanCard({ email, index, columnId, onS
             <span>Snooze</span>
           </button>
         )}
-        <button 
+        <button
           onClick={(e) => {
             e.stopPropagation();
             onOpenMail(email.id);

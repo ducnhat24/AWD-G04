@@ -2,7 +2,7 @@ import type { Email, Attachment } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { Reply, Trash2, Star, Mail, MailOpen, Inbox, Paperclip, Download, Forward } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchAttachment } from "@/services/apiService";
+import { fetchAttachment } from "@/services/email.service";
 import { toast } from "sonner";
 import { SafeHTML } from "@/components/ui/SafeHTML";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,7 +42,7 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center text-muted-foreground">
         <div className="rounded-full bg-muted p-4 mb-4">
-           <Inbox className="size-8" />
+          <Inbox className="size-8" />
         </div>
         <h3 className="text-lg font-semibold">Select an email to view</h3>
         <p>Choose an item from the list to see details.</p>
@@ -115,7 +115,7 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
           <div className="flex items-start gap-4">
             {/* Avatar Placeholder */}
             <div className={`flex items-center justify-center size-10 rounded-full text-white font-bold ${email.avatarColor || 'bg-gray-500'}`}>
-                {email.sender[0]}
+              {email.sender[0]}
             </div>
             <div className="grid gap-1">
               <div className="font-semibold">{email.sender}</div>
@@ -123,11 +123,11 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
                 {email.senderEmail}
               </div>
               <div className="line-clamp-1 text-xs text-muted-foreground">
-                 To: <span className="text-foreground">
-                  {user && (email.recipientEmail === user.email || email.recipient === user.email) 
-                    ? "Me" 
+                To: <span className="text-foreground">
+                  {user && (email.recipientEmail === user.email || email.recipient === user.email)
+                    ? "Me"
                     : (email.recipient || email.recipientEmail || 'Me')}
-                 </span>
+                </span>
               </div>
             </div>
           </div>
@@ -137,10 +137,10 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
         </div>
 
         <h1 className="text-2xl font-bold mb-4">{email.subject}</h1>
-        
+
         {/* Email Body */}
-        <SafeHTML 
-          html={email.body} 
+        <SafeHTML
+          html={email.body}
           className="text-sm text-foreground max-w-none"
         />
 
@@ -163,9 +163,9 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
                       <p className="text-xs text-muted-foreground">{(att.size / 1024).toFixed(1)} KB</p>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="shrink-0"
                     onClick={() => handleDownloadAttachment(att)}
                     title="Download"
@@ -181,9 +181,9 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
 
       {/* Reply Area Mockup */}
       <div className="p-4 border-t bg-background">
-          <div className="text-sm text-muted-foreground">
-            Click here to <span className="text-blue-500 cursor-pointer font-medium hover:underline" onClick={() => onAction("reply")}>Reply</span> or <span className="text-blue-500 cursor-pointer font-medium hover:underline" onClick={() => onAction("forward")}>Forward</span>
-          </div>
+        <div className="text-sm text-muted-foreground">
+          Click here to <span className="text-blue-500 cursor-pointer font-medium hover:underline" onClick={() => onAction("reply")}>Reply</span> or <span className="text-blue-500 cursor-pointer font-medium hover:underline" onClick={() => onAction("forward")}>Forward</span>
+        </div>
       </div>
     </div>
   );

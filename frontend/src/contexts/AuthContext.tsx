@@ -7,7 +7,8 @@ import {
   type ReactNode,
 } from "react";
 import { setAccessToken } from "@/lib/api"; // Import từ file api
-import { refreshAccessToken, fetchUserProfile, type UserProfile } from "@/services/apiService"; // Import từ service
+import { refreshAccessToken } from "@/services/auth.service"; // Import từ service
+import { fetchUserProfile, type UserProfile } from "@/services/user.service"; // Import từ service
 
 // Định nghĩa kiểu dữ liệu cho context
 interface AuthContextType {

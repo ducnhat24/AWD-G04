@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { X, Minus, Maximize2, Minimize2, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { sendEmail, replyEmail, forwardEmail } from "@/services/apiService";
+import { sendEmail, replyEmail, forwardEmail } from "@/services/email.service";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { type Email } from "@/data/mockData";
@@ -31,10 +31,10 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
   });
   const [body, setBody] = useState(() => {
     if (mode === "forward" && originalEmail) {
-       return `<br><br><div class="gmail_quote"><div dir="ltr" class="gmail_attr">---------- Forwarded message ---------<br>From: <strong>${originalEmail.sender}</strong> &lt;${originalEmail.senderEmail}&gt;<br>Date: ${originalEmail.timestamp}<br>Subject: ${originalEmail.subject}<br>To: ${originalEmail.recipient || "Me"}<br></div><br>${originalEmail.body}</div>`;
+      return `<br><br><div class="gmail_quote"><div dir="ltr" class="gmail_attr">---------- Forwarded message ---------<br>From: <strong>${originalEmail.sender}</strong> &lt;${originalEmail.senderEmail}&gt;<br>Date: ${originalEmail.timestamp}<br>Subject: ${originalEmail.subject}<br>To: ${originalEmail.recipient || "Me"}<br></div><br>${originalEmail.body}</div>`;
     }
     return "";
- });
+  });
   const [isSending, setIsSending] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
@@ -67,17 +67,17 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
 
   useEffect(() => {
     if (editorRef.current && body) {
-        if (editorRef.current.innerHTML === "") {
-            editorRef.current.innerHTML = body;
-        }
+      if (editorRef.current.innerHTML === "") {
+        editorRef.current.innerHTML = body;
+      }
     }
   }, []);
 
   const execFormat = (command: string, value: string | undefined = undefined) => {
     document.execCommand(command, false, value);
     if (editorRef.current) {
-        setBody(editorRef.current.innerHTML);
-        editorRef.current.focus();
+      setBody(editorRef.current.innerHTML);
+      editorRef.current.focus();
     }
     checkFormats();
   };
@@ -88,7 +88,7 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
       toast.error("Please specify a recipient.");
       return;
     }
-    
+
     setIsSending(true);
     try {
       // Use the current HTML content from the editor
@@ -117,8 +117,8 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
       <div className="fixed bottom-0 right-20 w-64 bg-white border border-gray-300 rounded-t-lg shadow-lg z-[100] flex justify-between items-center p-3 cursor-pointer" onClick={() => setIsMinimized(false)}>
         <span className="font-medium truncate text-sm">New Message</span>
         <div className="flex gap-2">
-            <button onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }} className="hover:bg-gray-100 p-1 rounded"><Minus size={14} /></button>
-            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="hover:bg-gray-100 p-1 rounded"><X size={14} /></button>
+          <button onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }} className="hover:bg-gray-100 p-1 rounded"><Minus size={14} /></button>
+          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="hover:bg-gray-100 p-1 rounded"><X size={14} /></button>
         </div>
       </div>
     );
@@ -127,40 +127,40 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
   return (
     <>
       {isMaximized && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-[90]" 
+        <div
+          className="fixed inset-0 bg-black/50 z-[90]"
           onClick={() => setIsMaximized(false)}
         />
       )}
-      <div 
+      <div
         className={cn(
           "bg-white flex flex-col font-sans transition-all duration-200 ease-in-out z-[100] shadow-xl overflow-hidden",
-          isMaximized 
-            ? "fixed inset-10 rounded-lg border border-gray-200" 
+          isMaximized
+            ? "fixed inset-10 rounded-lg border border-gray-200"
             : "fixed bottom-0 right-20 w-[500px] h-[500px] border border-gray-300 rounded-t-lg"
         )}
       >
         {/* Header */}
-        <div 
-          className="flex justify-between items-center px-4 py-2 bg-[#f2f6fc] border-b border-gray-200 cursor-pointer shrink-0" 
+        <div
+          className="flex justify-between items-center px-4 py-2 bg-[#f2f6fc] border-b border-gray-200 cursor-pointer shrink-0"
           onClick={() => !isMaximized && setIsMinimized(true)}
         >
           <span className="font-medium text-sm text-gray-700">New Message</span>
           <div className="flex gap-2 text-gray-600">
-            <button 
-              onClick={(e) => { e.stopPropagation(); setIsMinimized(true); }} 
+            <button
+              onClick={(e) => { e.stopPropagation(); setIsMinimized(true); }}
               className="hover:bg-gray-200 p-1 rounded"
             >
               <Minus size={16} />
             </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); setIsMaximized(!isMaximized); }} 
+            <button
+              onClick={(e) => { e.stopPropagation(); setIsMaximized(!isMaximized); }}
               className="hover:bg-gray-200 p-1 rounded"
             >
               {isMaximized ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
             </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); onClose(); }} 
+            <button
+              onClick={(e) => { e.stopPropagation(); onClose(); }}
               className="hover:bg-gray-200 p-1 rounded"
             >
               <X size={16} />
@@ -171,24 +171,24 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
         {/* Form */}
         <form onSubmit={handleSend} className="flex flex-col flex-1 overflow-hidden">
           <div className="border-b border-gray-200 shrink-0">
-              <Input 
-                  placeholder="To" 
-                  value={to} 
-                  onChange={(e) => setTo(e.target.value)} 
-                  disabled={mode === "reply"}
-                  className="border-none shadow-none focus-visible:ring-0 px-4 py-3 text-sm rounded-none disabled:opacity-50"
-              />
+            <Input
+              placeholder="To"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              disabled={mode === "reply"}
+              className="border-none shadow-none focus-visible:ring-0 px-4 py-3 text-sm rounded-none disabled:opacity-50"
+            />
           </div>
           <div className="border-b border-gray-200 shrink-0">
-              <Input 
-                  placeholder="Subject" 
-                  value={subject} 
-                  onChange={(e) => setSubject(e.target.value)} 
-                  disabled={mode === "reply"}
-                  className="border-none shadow-none focus-visible:ring-0 px-4 py-3 text-sm rounded-none disabled:opacity-50"
-              />
+            <Input
+              placeholder="Subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              disabled={mode === "reply"}
+              className="border-none shadow-none focus-visible:ring-0 px-4 py-3 text-sm rounded-none disabled:opacity-50"
+            />
           </div>
-          <div 
+          <div
             ref={editorRef}
             contentEditable
             className="flex-1 w-full overflow-auto p-4 text-sm focus:outline-none"
@@ -201,40 +201,40 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
           {/* Formatting Toolbar */}
           {showFormatting && (
             <div className="flex items-center gap-1 px-4 py-2 border-t border-gray-100 bg-gray-50">
-               <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('bold'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.bold && "bg-gray-300 text-black")} title="Bold"><Bold size={16} /></button>
-               <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('italic'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.italic && "bg-gray-300 text-black")} title="Italic"><Italic size={16} /></button>
-               <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('underline'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.underline && "bg-gray-300 text-black")} title="Underline"><Underline size={16} /></button>
-               <div className="w-px h-4 bg-gray-300 mx-1" />
-               <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('justifyLeft'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.justifyLeft && "bg-gray-300 text-black")} title="Align Left"><AlignLeft size={16} /></button>
-               <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('justifyCenter'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.justifyCenter && "bg-gray-300 text-black")} title="Align Center"><AlignCenter size={16} /></button>
-               <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('justifyRight'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.justifyRight && "bg-gray-300 text-black")} title="Align Right"><AlignRight size={16} /></button>
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('bold'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.bold && "bg-gray-300 text-black")} title="Bold"><Bold size={16} /></button>
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('italic'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.italic && "bg-gray-300 text-black")} title="Italic"><Italic size={16} /></button>
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('underline'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.underline && "bg-gray-300 text-black")} title="Underline"><Underline size={16} /></button>
+              <div className="w-px h-4 bg-gray-300 mx-1" />
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('justifyLeft'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.justifyLeft && "bg-gray-300 text-black")} title="Align Left"><AlignLeft size={16} /></button>
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('justifyCenter'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.justifyCenter && "bg-gray-300 text-black")} title="Align Center"><AlignCenter size={16} /></button>
+              <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('justifyRight'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.justifyRight && "bg-gray-300 text-black")} title="Align Right"><AlignRight size={16} /></button>
             </div>
           )}
 
           {/* Footer */}
           <div className="flex justify-between items-center p-3 border-t border-gray-100 mt-auto shrink-0">
             <div className="flex gap-2 items-center">
-              <Button 
-                  type="submit" 
-                  disabled={isSending}
-                  className="bg-[#0b57d0] hover:bg-[#0b57d0]/90 text-white rounded-full px-6 h-9 font-medium text-sm"
+              <Button
+                type="submit"
+                disabled={isSending}
+                className="bg-[#0b57d0] hover:bg-[#0b57d0]/90 text-white rounded-full px-6 h-9 font-medium text-sm"
               >
                 {isSending ? "Sending..." : "Send"}
               </Button>
               {/* Formatting options placeholders */}
               <div className="flex items-center gap-1 text-gray-500 ml-2">
-                  <span 
-                    className={cn("p-2 hover:bg-gray-100 rounded cursor-pointer font-bold text-gray-600", showFormatting && "bg-gray-200")}
-                    onClick={() => setShowFormatting(!showFormatting)}
-                    title="Formatting options"
-                  >
-                    A
-                  </span>
+                <span
+                  className={cn("p-2 hover:bg-gray-100 rounded cursor-pointer font-bold text-gray-600", showFormatting && "bg-gray-200")}
+                  onClick={() => setShowFormatting(!showFormatting)}
+                  title="Formatting options"
+                >
+                  A
+                </span>
               </div>
             </div>
             <div className="text-gray-500">
               <button type="button" onClick={onClose} className="p-2 hover:bg-gray-100 rounded">
-                  <X size={18} className="text-gray-500" />
+                <X size={18} className="text-gray-500" />
               </button>
             </div>
           </div>

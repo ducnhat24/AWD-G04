@@ -3,13 +3,8 @@ import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { ArrowUpDown, Filter } from "lucide-react";
 import type { Email } from "@/data/mockData";
 import { KanbanColumn } from "./KanbanColumn";
-
-const COLUMNS = [
-  { id: 'inbox', title: 'Inbox', color: 'bg-red-500' },
-  { id: 'todo', title: 'To Do', color: 'bg-yellow-500' },
-  { id: 'snoozed', title: 'Snoozed', color: 'bg-purple-500' },
-  { id: 'done', title: 'Done', color: 'bg-green-500' },
-] as const;
+import { KANBAN_COLUMNS } from "@/constants/kanban";
+import { useKanban } from "@/contexts/KanbanContext";
 
 interface KanbanData {
   emails: Email[];
@@ -25,15 +20,13 @@ interface KanbanBoardProps {
     done: KanbanData;
     snoozed: KanbanData;
   };
-  onMoveEmail: (emailId: string, sourceFolder: string, destinationFolder: string) => void;
-  onSnooze: (emailId: string, date: Date, sourceFolder?: string) => void;
-  onOpenMail: (emailId: string) => void;
 }
 
-export function KanbanBoard({ kanbanData, onMoveEmail, onSnooze, onOpenMail }: KanbanBoardProps) {
+export function KanbanBoard({ kanbanData }: KanbanBoardProps) {
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
   const [filterUnread, setFilterUnread] = useState(false);
   const [filterHasAttachments, setFilterHasAttachments] = useState(false);
+  const { onMoveEmail } = useKanban();
 
   const isFiltering = filterUnread || filterHasAttachments;
 
@@ -76,7 +69,7 @@ export function KanbanBoard({ kanbanData, onMoveEmail, onSnooze, onOpenMail }: K
       return processed;
     };
 
-    return COLUMNS.reduce((acc, col) => {
+    return KANBAN_COLUMNS.reduce((acc, col) => {
       acc[col.id] = processEmails(kanbanData[col.id as keyof typeof kanbanData].emails);
       return acc;
     }, {} as Record<string, Email[]>);
@@ -128,10 +121,10 @@ export function KanbanBoard({ kanbanData, onMoveEmail, onSnooze, onOpenMail }: K
 
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex h-full gap-6 p-6 overflow-x-auto bg-background/50 items-start">
-          {COLUMNS.map((col) => {
+          {KANBAN_COLUMNS.map((col) => {
             const columnData = kanbanData[col.id as keyof typeof kanbanData];
             const processedEmails = processedColumns[col.id];
-            
+
             return (
               <KanbanColumn
                 key={col.id}
@@ -140,8 +133,6 @@ export function KanbanBoard({ kanbanData, onMoveEmail, onSnooze, onOpenMail }: K
                 emails={processedEmails}
                 count={processedEmails.length}
                 color={col.color}
-                onSnooze={onSnooze}
-                onOpenMail={onOpenMail}
                 onLoadMore={columnData.fetchNextPage}
                 hasMore={!isFiltering && columnData.hasNextPage}
                 isLoadingMore={columnData.isFetchingNextPage}
