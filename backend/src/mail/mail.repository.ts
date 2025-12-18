@@ -4,8 +4,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { EmailMetadata, EmailMetadataDocument } from './entities/email-metadata.schema';
 import { EmailSummary, EmailSummaryDocument } from './entities/email-summary.schema';
-import { LinkedAccount, LinkedAccountDocument } from '../user/entities/linked-account.entity';
-import { Types } from 'mongoose';
 
 @Injectable()
 export class MailRepository {
@@ -14,9 +12,7 @@ export class MailRepository {
         private readonly emailMetadataModel: Model<EmailMetadataDocument>,
         @InjectModel(EmailSummary.name)
         private readonly emailSummaryModel: Model<EmailSummaryDocument>,
-        @InjectModel(LinkedAccount.name)
-        private readonly linkedAccountModel: Model<LinkedAccountDocument>,
-    ) { }
+    ) {}
 
     // ==================== EMAIL METADATA ====================
 
@@ -114,44 +110,5 @@ export class MailRepository {
             summary,
             originalContentShort,
         });
-    }
-
-    // ==================== LINKED ACCOUNT ====================
-
-    /**
-     * Tìm linked account của user theo provider
-     */
-    async findLinkedAccount(userId: string, provider: string = 'google'): Promise<LinkedAccountDocument | null> {
-        const userObjectId = new Types.ObjectId(userId);
-        return this.linkedAccountModel.findOne({
-            user: userObjectId,
-            provider: provider,
-        }).exec();
-    }
-
-    /**
-     * Lấy tất cả linked accounts theo provider
-     */
-    async findAllLinkedAccounts(provider: string = 'google'): Promise<LinkedAccountDocument[]> {
-        return this.linkedAccountModel.find({ provider }).exec();
-    }
-
-    /**
-     * Cập nhật tokens cho linked account
-     */
-    async updateLinkedAccountTokens(
-        accountId: Types.ObjectId,
-        accessToken?: string,
-        refreshToken?: string,
-    ) {
-        const updateData: any = {};
-        if (accessToken) updateData.accessToken = accessToken;
-        if (refreshToken) updateData.refreshToken = refreshToken;
-
-        return this.linkedAccountModel.findByIdAndUpdate(
-            accountId,
-            { $set: updateData },
-            { new: true },
-        ).exec();
     }
 }

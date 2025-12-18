@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { GmailIntegrationService } from './gmail-integration.service';
 import { MailRepository } from '../mail.repository';
+import { LinkedAccountRepository } from '../../user/repositories/linked-account.repository';
 
 /**
  * MailSyncService
@@ -17,6 +18,7 @@ export class MailSyncService {
     constructor(
         private mailRepository: MailRepository,
         private gmailIntegrationService: GmailIntegrationService,
+        private linkedAccountRepository: LinkedAccountRepository,
     ) { }
 
     /**
@@ -96,7 +98,7 @@ export class MailSyncService {
         this.logger.log('>>> Starting Cron Job: Sync Emails...');
 
         try {
-            const linkedAccounts = await this.mailRepository.findAllLinkedAccounts('google');
+            const linkedAccounts = await this.linkedAccountRepository.findAllByProvider('google');
 
             // Chạy vòng lặp sync cho từng user
             for (const acc of linkedAccounts) {

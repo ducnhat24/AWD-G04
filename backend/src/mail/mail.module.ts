@@ -3,10 +3,6 @@ import { MailService } from './mail.service';
 import { MailController } from './mail.controller';
 import { HttpModule } from '@nestjs/axios';
 import { MongooseModule } from '@nestjs/mongoose';
-import {
-  LinkedAccount,
-  LinkedAccountSchema,
-} from '../user/entities/linked-account.entity';
 import { ConfigModule } from '@nestjs/config';
 import {
   EmailSummary,
@@ -20,13 +16,14 @@ import { GmailIntegrationService } from './services/gmail-integration.service';
 import { MailSyncService } from './services/mail-sync.service';
 import { MailSearchService } from './services/mail-search.service';
 import { MailRepository } from './mail.repository';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
     HttpModule,
     ConfigModule,
+    UserModule,
     MongooseModule.forFeature([
-      { name: LinkedAccount.name, schema: LinkedAccountSchema },
       { name: EmailSummary.name, schema: EmailSummarySchema },
       { name: EmailMetadata.name, schema: EmailMetadataSchema },
     ]),
@@ -41,4 +38,4 @@ import { MailRepository } from './mail.repository';
   ],
   exports: [MailService],
 })
-export class MailModule { }
+export class MailModule {}

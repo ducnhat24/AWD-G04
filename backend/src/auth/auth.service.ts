@@ -5,25 +5,22 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from '../user/user.service'; // Changed from 'src/user/user.service'
+import { UserService } from '../user/user.service';
+import { LinkedAccountRepository } from '../user/repositories/linked-account.repository';
 import { LoginUserDto } from './dto/login-user.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import * as bcrypt from 'bcrypt';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
-import { InjectModel } from '@nestjs/mongoose/dist/common/mongoose.decorators';
-import { LinkedAccount, LinkedAccountDocument } from '../user/entities/linked-account.entity';
-import { Model } from 'mongoose';
 import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private userService: UserService, // <--- 2. Inject UserService
+    private userService: UserService,
     private jwtService: JwtService,
     private configService: ConfigService,
-    @InjectModel(LinkedAccount.name)
-    private linkedAccountModel: Model<LinkedAccountDocument>,
+    private linkedAccountRepository: LinkedAccountRepository,
     private mailService: MailService,
   ) { }
 
@@ -66,16 +63,13 @@ export class AuthService {
   }
 
   private async generateTokens(user: any) {
-    const payload = { email: user.email, sub: user.id }; // 'sub' là viết tắt của 'subject', thường dùng để lưu ID
+    const payload = { email: user.email, sub: user.id };
 
     const [accessToken, refreshToken] = await Promise.all([
-      // Access Token
-      this.jwtService.signAsync(payload), // Dùng secret và thời hạn mặc định (JWT_SECRET, 15m)
-
-      // Refresh Token
+      this.jwtService.signAsync(payload),
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get('JWT_REFRESH_SECRET'), // Dùng secret riêng
-        expiresIn: this.configService.get('REFRESH_TOKEN_EXPIRATION'), // Dùng thời hạn riêng (7d)
+        secret: this.configService.get('JWT_REFRESH_SECRET'),
+        expiresIn: this.configService.get('REFRESH_TOKEN_EXPIRATION'),
       }),
     ]);
 
@@ -112,10 +106,10 @@ export class AuthService {
       const googleUser: any = jwtDecode(id_token);
       const { sub: googleId, email, name, picture } = googleUser;
 
-      let linkedAccount = await this.linkedAccountModel.findOne({
-        provider: 'google',
-        providerId: googleId,
-      });
+      let linkedAccount = await this.linkedAccountRepository.findByProviderAndId(
+        'google',
+        googleId,
+      );
 
       let user;
 
@@ -123,9 +117,11 @@ export class AuthService {
         // Case A: Đã link trước đó -> Lấy user ra
         user = await this.userService.findById(linkedAccount.user.toString());
 
-        linkedAccount.accessToken = access_token;
-        if (refresh_token) linkedAccount.refreshToken = refresh_token;
-        await linkedAccount.save();
+        await this.linkedAccountRepository.updateTokens(
+          linkedAccount._id,
+          access_token,
+          refresh_token,
+        );
       } else {
         // Case B: Chưa link -> Check xem email đã có trong bảng User chưa
         user = await this.userService.findByEmail(email);
@@ -134,7 +130,7 @@ export class AuthService {
           user = await this.userService.createByGoogle(email, name, picture);
         }
 
-        await this.linkedAccountModel.create({
+        await this.linkedAccountRepository.create({
           user: user._id,
           provider: 'google',
           providerId: googleId,
@@ -158,7 +154,7 @@ export class AuthService {
       console.error(
         'Config Redirect URI:',
         this.configService.get('GOOGLE_REDIRECT_URI'),
-      ); // In luôn cái URI đang dùng ra xem đúng không
+      );
       console.error('==========================================');
       throw new UnauthorizedException('Google authentication failed');
     }

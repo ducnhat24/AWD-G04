@@ -3,7 +3,7 @@ import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from './entities/user.entity';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { JwtService } from '@nestjs/jwt';
-import { UserRepository } from './user.repository';
+import { UserRepository } from './repositories/user.repository';
 
 @Injectable()
 export class UserService {

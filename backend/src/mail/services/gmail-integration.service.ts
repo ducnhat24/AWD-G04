@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { google } from 'googleapis';
-import { MailRepository } from '../mail.repository';
+import { LinkedAccountRepository } from '../../user/repositories/linked-account.repository';
 
 /**
  * GmailIntegrationService
@@ -23,7 +23,7 @@ export class GmailIntegrationService {
     private readonly logger = new Logger(GmailIntegrationService.name);
 
     constructor(
-        private mailRepository: MailRepository,
+        private linkedAccountRepository: LinkedAccountRepository,
         private configService: ConfigService,
     ) { }
 
@@ -32,11 +32,12 @@ export class GmailIntegrationService {
      * Tự động refresh token khi hết hạn
      */
     async getAuthenticatedClient(userId: string) {
-        const linkedAccount = await this.mailRepository.findLinkedAccount(userId, 'google');
+        const linkedAccount = await this.linkedAccountRepository.findByUserIdAndProvider(userId, 'google');
 
         if (!linkedAccount) {
             throw new NotFoundException('Google account not linked');
         }
+
         const oauth2Client = new google.auth.OAuth2(
             this.configService.get('GOOGLE_CLIENT_ID'),
             this.configService.get('GOOGLE_CLIENT_SECRET'),
@@ -50,14 +51,15 @@ export class GmailIntegrationService {
 
         // Auto-refresh tokens
         oauth2Client.on('tokens', async (tokens) => {
-            if (tokens.access_token) {
-                linkedAccount.accessToken = tokens.access_token;
+            if (tokens.access_token || tokens.refresh_token) {
+                const id = (linkedAccount as any)._id;
+                await this.linkedAccountRepository.updateTokens(
+                    id,
+                    tokens.access_token || linkedAccount.accessToken,
+                    tokens.refresh_token || linkedAccount.refreshToken,
+                );
+                this.logger.log('Tokens updated automatically');
             }
-            if (tokens.refresh_token) {
-                linkedAccount.refreshToken = tokens.refresh_token;
-            }
-            await linkedAccount.save();
-            this.logger.log('Tokens updated automatically');
         });
 
         return oauth2Client;
