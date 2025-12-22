@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { setAccessToken } from "@/lib/api"; // Import từ file api
-import { refreshAccessToken } from "@/services/auth.service"; // Import từ service
+import { refreshAccessToken } from "@/features/auth/services/auth.api"; // Import từ service
 import { fetchUserProfile, type UserProfile } from "@/services/user.service"; // Import từ service
 
 // Định nghĩa kiểu dữ liệu cho context
@@ -31,9 +31,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // 1. Access token lưu trong MEMORY (React state) (Req 21)
   const [accessToken, setTokenInState] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [authProvider, setAuthProvider] = useState<
-    "local" | "google" | null
-  >(null);
+  const [authProvider, setAuthProvider] = useState<"local" | "google" | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   // 2. Kiểm tra Refresh Token khi app tải

@@ -1,19 +1,31 @@
 import type { Email, Attachment } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
-import { Reply, Trash2, Star, Mail, MailOpen, Inbox, Paperclip, Download, Forward } from "lucide-react";
+import {
+  Reply,
+  Trash2,
+  Star,
+  Mail,
+  MailOpen,
+  Inbox,
+  Paperclip,
+  Download,
+  Forward,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchAttachment } from "@/services/email.service";
 import { toast } from "sonner";
 import { SafeHTML } from "@/components/ui/SafeHTML";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthStore } from "@/stores/auth.store";
 
 interface EmailDetailProps {
   email: Email | null;
-  onAction: (action: "toggleRead" | "delete" | "star" | "reply" | "forward") => void;
+  onAction: (
+    action: "toggleRead" | "delete" | "star" | "reply" | "forward"
+  ) => void;
 }
 
 export function EmailDetail({ email, onAction }: EmailDetailProps) {
-  const { user } = useAuth();
+  const { user } = useAuthStore((state) => ({ user: state.user }));
 
   const handleDownloadAttachment = async (attachment: Attachment) => {
     if (!email) return;
@@ -24,7 +36,7 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
     try {
       const blob = await fetchAttachment(email.id, attachment.id);
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = attachment.filename;
       document.body.appendChild(a);
@@ -94,11 +106,7 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onAction("star")}
-          >
+          <Button variant="ghost" size="icon" onClick={() => onAction("star")}>
             <Star
               className={cn(
                 "size-4",
@@ -114,7 +122,11 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-start gap-4">
             {/* Avatar Placeholder */}
-            <div className={`flex items-center justify-center size-10 rounded-full text-white font-bold ${email.avatarColor || 'bg-gray-500'}`}>
+            <div
+              className={`flex items-center justify-center size-10 rounded-full text-white font-bold ${
+                email.avatarColor || "bg-gray-500"
+              }`}
+            >
               {email.sender[0]}
             </div>
             <div className="grid gap-1">
@@ -123,17 +135,18 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
                 {email.senderEmail}
               </div>
               <div className="line-clamp-1 text-xs text-muted-foreground">
-                To: <span className="text-foreground">
-                  {user && (email.recipientEmail === user.email || email.recipient === user.email)
+                To:{" "}
+                <span className="text-foreground">
+                  {user &&
+                  (email.recipientEmail === user.email ||
+                    email.recipient === user.email)
                     ? "Me"
-                    : (email.recipient || email.recipientEmail || 'Me')}
+                    : email.recipient || email.recipientEmail || "Me"}
                 </span>
               </div>
             </div>
           </div>
-          <div className="text-xs text-muted-foreground">
-            {email.timestamp}
-          </div>
+          <div className="text-xs text-muted-foreground">{email.timestamp}</div>
         </div>
 
         <h1 className="text-2xl font-bold mb-4">{email.subject}</h1>
@@ -153,14 +166,24 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {email.attachments.map((att) => (
-                <div key={att.id} className="flex items-center justify-between p-3 border rounded-md bg-muted/30 hover:bg-muted/50 transition-colors">
+                <div
+                  key={att.id}
+                  className="flex items-center justify-between p-3 border rounded-md bg-muted/30 hover:bg-muted/50 transition-colors"
+                >
                   <div className="flex items-center gap-3 overflow-hidden">
                     <div className="bg-background p-2 rounded border">
                       <Paperclip className="size-4 text-muted-foreground" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate" title={att.filename}>{att.filename}</p>
-                      <p className="text-xs text-muted-foreground">{(att.size / 1024).toFixed(1)} KB</p>
+                      <p
+                        className="text-sm font-medium truncate"
+                        title={att.filename}
+                      >
+                        {att.filename}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {(att.size / 1024).toFixed(1)} KB
+                      </p>
                     </div>
                   </div>
                   <Button
@@ -182,7 +205,20 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
       {/* Reply Area Mockup */}
       <div className="p-4 border-t bg-background">
         <div className="text-sm text-muted-foreground">
-          Click here to <span className="text-blue-500 cursor-pointer font-medium hover:underline" onClick={() => onAction("reply")}>Reply</span> or <span className="text-blue-500 cursor-pointer font-medium hover:underline" onClick={() => onAction("forward")}>Forward</span>
+          Click here to{" "}
+          <span
+            className="text-blue-500 cursor-pointer font-medium hover:underline"
+            onClick={() => onAction("reply")}
+          >
+            Reply
+          </span>{" "}
+          or{" "}
+          <span
+            className="text-blue-500 cursor-pointer font-medium hover:underline"
+            onClick={() => onAction("forward")}
+          >
+            Forward
+          </span>
         </div>
       </div>
     </div>

@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { registerUser } from "@/services/auth.service";
+import { registerUser } from "@/features/auth/services/auth.api";
 import OtherMethodLogin from "@/components/ui/OtherMethodLogin";
 import { useAuth } from "@/contexts/AuthContext";
 

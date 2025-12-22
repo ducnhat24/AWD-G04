@@ -3,7 +3,7 @@ import type { Email } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthStore } from "@/stores/auth.store";
 
 interface EmailListProps {
   emails: Email[];
@@ -22,7 +22,7 @@ export function EmailList({
   hasMore,
   isLoadingMore,
 }: EmailListProps) {
-  const { user } = useAuth();
+  const user = useAuthStore((state) => state.user);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -70,8 +70,18 @@ export function EmailList({
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">
                       {email.folder.toLowerCase() === "sent" && email.recipient
-                        ? `To: ${user && (email.recipientEmail === user.email || email.recipient === user.email) ? "Me" : email.recipient}`
-                        : (user && (email.senderEmail === user.email || email.sender === user.email) ? "Me" : email.sender)}
+                        ? `To: ${
+                            user &&
+                            (email.recipientEmail === user.email ||
+                              email.recipient === user.email)
+                              ? "Me"
+                              : email.recipient
+                          }`
+                        : user &&
+                          (email.senderEmail === user.email ||
+                            email.sender === user.email)
+                        ? "Me"
+                        : email.sender}
                     </span>
                     {!email.isRead && (
                       <span className="flex size-2 rounded-full bg-blue-600" />
@@ -88,10 +98,14 @@ export function EmailList({
                   {email.preview}
                 </div>
                 <div className="flex items-center gap-2 mt-1">
-                   {email.isStarred && (
-                       <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">Important</span>
-                   )}
-                   <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 capitalize">{email.folder}</span>
+                  {email.isStarred && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
+                      Important
+                    </span>
+                  )}
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 capitalize">
+                    {email.folder}
+                  </span>
                 </div>
               </button>
             ))}

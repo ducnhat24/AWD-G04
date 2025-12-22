@@ -16,7 +16,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMutation } from "@tanstack/react-query";
-import { loginUser } from "@/services/auth.service";
+import { loginUser } from "@/features/auth/services/auth.api";
 import OtherMethodLogin from "@/components/ui/OtherMethodLogin";
 // import { getGoogleAuthUrl } from "@/utils/oauth";
 
@@ -67,7 +67,6 @@ export default function SignInPage() {
       console.error("Submit error:", err);
     }
   }
-
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
@@ -147,7 +146,6 @@ export default function SignInPage() {
           }}
         />
       </div>
-
     </div>
   );
 }
