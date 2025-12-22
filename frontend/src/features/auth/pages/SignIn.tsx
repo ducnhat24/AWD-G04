@@ -1,6 +1,3 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -12,75 +9,25 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Navigate, useNavigate } from "react-router-dom";
-import { AxiosError } from "axios";
-import { useAuth } from "@/contexts/AuthContext";
-import { useMutation } from "@tanstack/react-query";
-import { loginUser } from "@/features/auth/services/auth.api";
 import OtherMethodLogin from "@/components/ui/OtherMethodLogin";
-// import { getGoogleAuthUrl } from "@/utils/oauth";
-
-// 1. Schema Validation (tương tự SignUp)
-const formSchema = z.object({
-  email: z.string().email({ message: "Invalid email address." }),
-  password: z.string().min(1, { message: "Please enter your password." }), // Chỉ cần không trống
-});
+import { useSignIn } from "../hooks/useSignIn";
 
 export default function SignInPage() {
-  // 2. Setup React Hook Form
-  const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth(); // Lấy isAuthenticated
+  const { signInForm, isProcessing, handlers } = useSignIn();
 
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-
-  const mutation = useMutation({
-    mutationFn: loginUser,
-    onSuccess: (data) => {
-      login(data.accessToken, data.refreshToken, "local");
-
-      toast.success("Sign in successfully!");
-      navigate("/"); // Chuyển hướng về trang chủ
-    },
-    onError: (error: AxiosError) => {
-      console.log("Lỗi đăng nhập:", error);
-      toast.error("Failed to sign in. Please check your email and password.");
-    },
-  });
-
-  // 3. Hàm Submit (Mô phỏng) [cite: 41]
-
-  // 5. Hàm Submit
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      mutation.mutate(values);
-    } catch (err) {
-      console.error("Submit error:", err);
-    }
-  }
+  const { control, handleSubmit } = signInForm;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-      <Form {...form}>
+      <Form {...signInForm}>
         <form
-          onSubmit={(e) => {
-            form.handleSubmit(onSubmit)(e);
-          }}
+          onSubmit={handleSubmit(handlers.onSignIn)}
           className="space-y-4 w-full max-w-sm p-8 border rounded-lg shadow-lg"
         >
           <h2 className="text-2xl font-bold text-center">Sign In</h2>
           {/* Email field [cite: 40] */}
           <FormField
-            control={form.control}
+            control={control}
             name="email"
             render={({ field }) => (
               <FormItem>
@@ -94,7 +41,7 @@ export default function SignInPage() {
           />
           {/* Password field [cite: 40] */}
           <FormField
-            control={form.control}
+            control={control}
             name="password"
             render={({ field }) => (
               <FormItem>
@@ -109,9 +56,9 @@ export default function SignInPage() {
           <Button
             type="submit"
             className="w-full cursor-pointer"
-            disabled={mutation.isPending}
+            disabled={isProcessing}
           >
-            {mutation.isPending ? "Processing..." : "Sign In"}
+            {isProcessing ? "Processing..." : "Sign In"}
           </Button>
           <div className="flex items-center justify-center space-x-2">
             <p className="text-muted-foreground text-sm">
@@ -120,7 +67,7 @@ export default function SignInPage() {
             <Button
               type="button"
               variant="link"
-              onClick={() => navigate("/signup")}
+              onClick={handlers.onSignUpRedirect}
               className="cursor-pointer text-blue-600"
             >
               Sign Up
@@ -131,15 +78,7 @@ export default function SignInPage() {
 
       <div className="mt-6 w-full max-w-sm flex justify-center">
         <OtherMethodLogin
-          onGoogleSuccess={(payload) => {
-            if (payload?.accessToken && payload?.refreshToken) {
-              login(payload.accessToken, payload.refreshToken, "google");
-              toast.success("Sign in successfully!");
-              navigate("/");
-            } else {
-              toast.error("Google sign in failed.");
-            }
-          }}
+          onGoogleSuccess={handlers.onGoogleSuccess}
           onGoogleError={(err) => {
             console.error("Google OAuth error:", err);
             toast.error("Google sign in failed.");

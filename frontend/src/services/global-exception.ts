@@ -23,8 +23,7 @@ export const catchGlobalAxiosError = (error: any): CustomError => {
 export const handleErrorUi = (
   error: any,
   notifyCallback: (message: string) => void,
-  form?: any,
-  setError?: any
+  form?: any
 ): void => {
   if (error instanceof CustomError) {
     console.log("Setting form errors: ", error.fieldErrors);
@@ -43,7 +42,7 @@ export const handleErrorUi = (
       for (const field in error.fieldErrors) {
         //Kiểm tra field đó có tồn tại trong form không trước khi gọi setError
         if (field in form.getValues()) {
-          setError(field as keyof typeof form, {
+          form.setError(field as keyof typeof form, {
             type: "manual",
             message: error.fieldErrors[field],
           });
@@ -53,7 +52,7 @@ export const handleErrorUi = (
     }
 
     for (const field of Object.keys(form.getValues())) {
-      setError(field as keyof typeof form, {
+      form.setError(field as keyof typeof form, {
         type: "manual",
         message: error.message,
       });
