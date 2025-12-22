@@ -6,7 +6,7 @@ import { type Email } from "@/data/mockData";
 import { KanbanBoard } from "@/features/home/components/KanbanBoard";
 import { KanbanCard } from "@/features/home/components/KanbanCard";
 import { ArrowLeft } from "lucide-react";
-import { useEmailLogic } from "@/hooks/useEmailLogic";
+import { useEmailLogic } from "@/features/home/hooks/useEmailLogic";
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { DashboardModals } from "@/features/home/components/DashboardModals";
