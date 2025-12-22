@@ -1,15 +1,15 @@
 // src/pages/Home.tsx
 import { useState, useEffect } from "react";
-import { EmailList } from "@/components/dashboard/EmailList";
-import { EmailDetail } from "@/components/dashboard/EmailDetail";
+import { EmailList } from "@/features/home/components/EmailList";
+import { EmailDetail } from "@/features/home/components/EmailDetail";
 import { type Email } from "@/data/mockData";
-import { KanbanBoard } from "@/components/dashboard/KanbanBoard";
-import { KanbanCard } from "@/components/dashboard/KanbanCard";
+import { KanbanBoard } from "@/features/home/components/KanbanBoard";
+import { KanbanCard } from "@/features/home/components/KanbanCard";
 import { ArrowLeft } from "lucide-react";
 import { useEmailLogic } from "@/hooks/useEmailLogic";
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { DashboardModals } from "@/components/dashboard/DashboardModals";
+import { DashboardModals } from "@/features/home/components/DashboardModals";
 import { KanbanProvider } from "@/contexts/KanbanContext";
 
 export default function HomePage() {
@@ -35,7 +35,9 @@ export default function HomePage() {
   // Search State
   const [searchInput, setSearchInput] = useState("");
   const [activeSearchQuery, setActiveSearchQuery] = useState("");
-  const [searchFilter, setSearchFilter] = useState<"all" | "unread" | "has_attachment">("all");
+  const [searchFilter, setSearchFilter] = useState<
+    "all" | "unread" | "has_attachment"
+  >("all");
 
   useEffect(() => {
     localStorage.setItem("viewMode", viewMode);
@@ -204,7 +206,9 @@ export default function HomePage() {
                   Unread
                 </Button>
                 <Button
-                  variant={searchFilter === "has_attachment" ? "default" : "outline"}
+                  variant={
+                    searchFilter === "has_attachment" ? "default" : "outline"
+                  }
                   size="sm"
                   onClick={() => setSearchFilter("has_attachment")}
                 >
@@ -251,10 +255,10 @@ export default function HomePage() {
                       return email.attachments && email.attachments.length > 0;
                     return true;
                   }).length === 0 && (
-                      <div className="col-span-full text-center text-muted-foreground py-8">
-                        No results found.
-                      </div>
-                    )}
+                    <div className="col-span-full text-center text-muted-foreground py-8">
+                      No results found.
+                    </div>
+                  )}
                 </div>
               </KanbanProvider>
             )}

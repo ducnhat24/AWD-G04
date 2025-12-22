@@ -1,6 +1,6 @@
 // src/layouts/DashboardLayout.tsx
 import { type ReactNode } from "react";
-import { Sidebar } from "@/components/dashboard/Sidebar";
+import { Sidebar } from "@/components/common/Sidebar";
 import { cn } from "@/lib/utils";
 import { LogOut, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";

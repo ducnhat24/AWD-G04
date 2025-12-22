@@ -23,7 +23,7 @@ interface KanbanBoardProps {
 }
 
 export function KanbanBoard({ kanbanData }: KanbanBoardProps) {
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
+  const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
   const [filterUnread, setFilterUnread] = useState(false);
   const [filterHasAttachments, setFilterHasAttachments] = useState(false);
   const { onMoveEmail } = useKanban();
@@ -56,21 +56,25 @@ export function KanbanBoard({ kanbanData }: KanbanBoardProps) {
 
       // Filter Has Attachments
       if (filterHasAttachments) {
-        processed = processed.filter((e) => e.attachments && e.attachments.length > 0);
+        processed = processed.filter(
+          (e) => e.attachments && e.attachments.length > 0
+        );
       }
 
       // Sort
       processed.sort((a, b) => {
         const dateA = new Date(a.timestamp).getTime();
         const dateB = new Date(b.timestamp).getTime();
-        return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
+        return sortBy === "newest" ? dateB - dateA : dateA - dateB;
       });
 
       return processed;
     };
 
     return KANBAN_COLUMNS.reduce((acc, col) => {
-      acc[col.id] = processEmails(kanbanData[col.id as keyof typeof kanbanData].emails);
+      acc[col.id] = processEmails(
+        kanbanData[col.id as keyof typeof kanbanData].emails
+      );
       return acc;
     }, {} as Record<string, Email[]>);
   }, [kanbanData, sortBy, filterUnread, filterHasAttachments]);
@@ -83,7 +87,7 @@ export function KanbanBoard({ kanbanData }: KanbanBoardProps) {
           <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest')}
+            onChange={(e) => setSortBy(e.target.value as "newest" | "oldest")}
             className="bg-transparent text-sm font-medium focus:outline-none cursor-pointer"
           >
             <option value="newest">Date: Newest</option>

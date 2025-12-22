@@ -4,8 +4,8 @@ import { cva } from "class-variance-authority";
 import type { Email } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Clock, GripVertical, Maximize2 } from "lucide-react";
-import { SnoozeDialog } from "./SnoozeDialog";
-import { AISummaryWidget } from "./AISummaryWidget";
+import { SnoozeDialog } from "../../../components/common/SnoozeDialog";
+import { AISummaryWidget } from "../../../components/common/AISummaryWidget";
 import { useKanban } from "@/contexts/KanbanContext";
 
 const cardVariants = cva(
@@ -19,7 +19,7 @@ const cardVariants = cva(
       isRead: {
         true: "opacity-80",
         false: "opacity-100",
-      }
+      },
     },
     defaultVariants: {
       isDragging: false,
@@ -35,13 +35,22 @@ interface KanbanCardProps {
   isDraggable?: boolean;
 }
 
-export const KanbanCard = memo(function KanbanCard({ email, index, columnId, isDraggable = true }: KanbanCardProps) {
+export const KanbanCard = memo(function KanbanCard({
+  email,
+  index,
+  columnId,
+  isDraggable = true,
+}: KanbanCardProps) {
   const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
   const { onSnooze, onOpenMail } = useKanban();
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
+    return new Intl.DateTimeFormat("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(date);
   };
 
   const renderCard = (provided?: any, snapshot?: any) => (
@@ -50,21 +59,43 @@ export const KanbanCard = memo(function KanbanCard({ email, index, columnId, isD
       {...(provided?.draggableProps || {})}
       {...(provided?.dragHandleProps || {})}
       onClick={() => onOpenMail(email.id)}
-      className={cn(cardVariants({ isDragging: snapshot?.isDragging || false, isRead: email.isRead }))}
+      className={cn(
+        cardVariants({
+          isDragging: snapshot?.isDragging || false,
+          isRead: email.isRead,
+        })
+      )}
       style={provided?.draggableProps?.style}
     >
       {/* Header: Sender & Actions */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold", email.avatarColor || "bg-gray-500")}>
+          <div
+            className={cn(
+              "w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold",
+              email.avatarColor || "bg-gray-500"
+            )}
+          >
             {email.sender.charAt(0).toUpperCase()}
           </div>
           <div className="flex flex-col">
-            <span className={cn("text-sm leading-none", !email.isRead ? "font-bold" : "font-normal")}>{email.sender}</span>
+            <span
+              className={cn(
+                "text-sm leading-none",
+                !email.isRead ? "font-bold" : "font-normal"
+              )}
+            >
+              {email.sender}
+            </span>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">{email.timestamp}</span>
+              <span className="text-xs text-muted-foreground">
+                {email.timestamp}
+              </span>
               {!email.isRead && (
-                <span className="w-2 h-2 bg-blue-500 rounded-full" title="Unread" />
+                <span
+                  className="w-2 h-2 bg-blue-500 rounded-full"
+                  title="Unread"
+                />
               )}
             </div>
           </div>
@@ -80,14 +111,21 @@ export const KanbanCard = memo(function KanbanCard({ email, index, columnId, isD
       </div>
 
       {/* Subject */}
-      <h4 className={cn("text-sm mb-2 line-clamp-1", !email.isRead ? "font-bold" : "font-normal")}>{email.subject}</h4>
+      <h4
+        className={cn(
+          "text-sm mb-2 line-clamp-1",
+          !email.isRead ? "font-bold" : "font-normal"
+        )}
+      >
+        {email.subject}
+      </h4>
 
       {/* AI Summary Section */}
       <AISummaryWidget emailId={email.id} preview={email.preview} />
 
       {/* Footer Actions */}
       <div className="flex items-center justify-between mt-2">
-        {columnId === 'snoozed' && email.snoozeUntil ? (
+        {columnId === "snoozed" && email.snoozeUntil ? (
           <div className="flex items-center gap-2 text-xs text-orange-500 font-medium">
             <Clock className="w-3 h-3" />
             <span>{formatDate(email.snoozeUntil)}</span>

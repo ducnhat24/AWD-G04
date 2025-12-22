@@ -55,7 +55,9 @@ export function KanbanColumn({
       <div className="p-4 flex items-center justify-between border-b border-border/50 bg-background/50 rounded-t-xl backdrop-blur-sm sticky top-0 z-10">
         <div className="flex items-center gap-2">
           <div className={cn("w-1 h-4 rounded-full", color)} />
-          <h3 className="font-semibold text-sm uppercase tracking-wider text-foreground/80">{title}</h3>
+          <h3 className="font-semibold text-sm uppercase tracking-wider text-foreground/80">
+            {title}
+          </h3>
           <span className="bg-muted text-muted-foreground text-xs font-medium px-2 py-0.5 rounded-full">
             {count}
           </span>

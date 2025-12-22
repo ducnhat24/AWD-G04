@@ -8,10 +8,18 @@ interface EmailDetailDialogProps {
   onClose: () => void;
   email: Email | null;
   isLoading?: boolean;
-  onAction: (action: "toggleRead" | "delete" | "star" | "reply" | "forward") => void;
+  onAction: (
+    action: "toggleRead" | "delete" | "star" | "reply" | "forward"
+  ) => void;
 }
 
-export function EmailDetailDialog({ isOpen, onClose, email, isLoading, onAction }: EmailDetailDialogProps) {
+export function EmailDetailDialog({
+  isOpen,
+  onClose,
+  email,
+  isLoading,
+  onAction,
+}: EmailDetailDialogProps) {
   if (!isOpen) return null;
 
   return (
@@ -21,8 +29,15 @@ export function EmailDetailDialog({ isOpen, onClose, email, isLoading, onAction 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
-          <span className="text-sm font-medium text-muted-foreground">Email Details</span>
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 rounded-full hover:bg-muted">
+          <span className="text-sm font-medium text-muted-foreground">
+            Email Details
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-8 w-8 rounded-full hover:bg-muted"
+          >
             <X className="h-4 w-4" />
           </Button>
         </div>

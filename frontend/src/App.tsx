@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import SignInPage from "./features/auth/pages/SignIn";
-import HomePage from "./pages/Home";
+import HomePage from "./features/home/pages/Home";
 import SignUpPage from "./features/auth/pages/SignUp";
 import ProtectedRoute from "./components/ProtectRoute";
 import PublicRoute from "./components/PublicRoute";
