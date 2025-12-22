@@ -20,3 +20,7 @@ export type RefreshResponseDto = {
 export type RefreshRequestDto = {
   refreshToken: string;
 };
+
+export type loginWithGoogleDto = {
+  code: string;
+};

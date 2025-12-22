@@ -3,6 +3,7 @@ import { http } from "../../../services/http.client";
 import type {
   LoginRequestDto,
   LoginResponseDto,
+  loginWithGoogleDto,
   RefreshRequestDto,
   RefreshResponseDto,
   RegisterRequestDto,
@@ -35,6 +36,25 @@ export const refreshAccessToken = async (
     const { data } = await http.post(`/auth/refresh`, {
       refreshToken: values.refreshToken,
     });
+    return data;
+  } catch (error) {
+    throw catchGlobalAxiosError(error);
+  }
+};
+
+export const logoutUser = async (): Promise<void> => {
+  try {
+    await http.post("/auth/logout");
+  } catch (error) {
+    throw catchGlobalAxiosError(error);
+  }
+};
+
+export const loginWithGoogle = async (
+  values: loginWithGoogleDto
+): Promise<LoginResponseDto> => {
+  try {
+    const { data } = await http.post("/auth/google", { code: values.code });
     return data;
   } catch (error) {
     throw catchGlobalAxiosError(error);
