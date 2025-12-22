@@ -8,7 +8,7 @@ const GoogleCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isAuthenticated = useAuthStore((state) => !!state.accessToken);
   const isCalled = useRef(false);
 
   useEffect(() => {
@@ -31,8 +31,7 @@ const GoogleCallback = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    const isAuth = isAuthenticated();
-    if (isAuth) {
+    if (isAuthenticated) {
       navigate("/");
     }
   }, [isAuthenticated, navigate]);

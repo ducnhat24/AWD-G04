@@ -6,7 +6,7 @@ import SignUpPage from "./features/auth/pages/SignUp";
 import ProtectedRoute from "./components/ProtectRoute";
 import PublicRoute from "./components/PublicRoute";
 import NotFoundRedirect from "./components/NotFoundRoute";
-import GoogleCallback from "./pages/GoogleCallBack";
+import GoogleCallback from "./features/google/GoogleCallBack";
 import { useAuthStore } from "./stores/auth.store";
 
 function App() {

@@ -25,7 +25,7 @@ interface EmailDetailProps {
 }
 
 export function EmailDetail({ email, onAction }: EmailDetailProps) {
-  const { user } = useAuthStore((state) => ({ user: state.user }));
+  const user = useAuthStore((state) => state.user);
 
   const handleDownloadAttachment = async (attachment: Attachment) => {
     if (!email) return;

@@ -3,11 +3,12 @@ import { useAuthStore } from "@/stores/auth.store";
 import { Navigate, Outlet } from "react-router-dom";
 
 const ProtectedRoute = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+  const isAuthenticated = useAuthStore((state) => !!state.accessToken);
+
   const isLoading = useAuthStore((state) => state.isLoading);
 
   if (isLoading) {
-    return <div>Đang tải...</div>; // Hoặc Spinner Component
+    return <div>Loading...</div>;
   }
 
   if (!isAuthenticated) {
