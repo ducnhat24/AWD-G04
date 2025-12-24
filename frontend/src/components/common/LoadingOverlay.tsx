@@ -14,7 +14,7 @@ export function LoadingOverlay({ visible, title, description }: Props) {
       <div className="bg-background p-6 rounded-lg shadow-xl flex flex-col items-center gap-4 min-w-[200px]">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
         <div className="flex flex-col items-center gap-1">
-          <p className="font-semibold text-lg">{title || "Đang cập nhật..."}</p>
+          <p className="font-semibold text-lg">{title || "Đang tải..."}</p>
           <p className="text-sm text-muted-foreground">
             {description || "Vui lòng chờ trong giây lát"}
           </p>

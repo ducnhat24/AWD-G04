@@ -4,6 +4,8 @@ import { ArrowUpDown } from "lucide-react";
 import { useKanban } from "@/contexts/KanbanContext";
 import { KanbanColumnContainer } from "./KanbanColumnContainer";
 import type { KanbanColumnConfig } from "../types/kanban.type";
+import { useKanbanDelete } from "../hooks/useKanbanDelete";
+import { LoadingOverlay } from "@/components/common/LoadingOverlay";
 
 // Props mới: Board chỉ quan tâm đến Cấu hình
 interface KanbanBoardProps {
@@ -15,6 +17,8 @@ export function KanbanBoard({ columns }: KanbanBoardProps) {
   const [filterUnread, setFilterUnread] = useState(false);
   const [filterHasAttachments, setFilterHasAttachments] = useState(false);
   const { onMoveEmail } = useKanban();
+
+  const { isDeletingColumn, handlers } = useKanbanDelete();
 
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
@@ -31,6 +35,7 @@ export function KanbanBoard({ columns }: KanbanBoardProps) {
 
   return (
     <div className="flex flex-col h-full">
+      <LoadingOverlay visible={isDeletingColumn} />
       {/* --- Toolbar --- */}
       <div className="flex items-center gap-4 p-4 bg-muted/20 rounded-lg mb-4 shrink-0">
         <div className="flex items-center gap-2">
@@ -76,6 +81,7 @@ export function KanbanBoard({ columns }: KanbanBoardProps) {
               config={col}
               filterUnread={filterUnread}
               filterHasAttachments={filterHasAttachments}
+              onDeleteColumn={handlers.onDeleteColumn}
               sortBy={sortBy}
             />
           ))}

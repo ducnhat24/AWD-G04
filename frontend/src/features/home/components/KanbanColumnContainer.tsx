@@ -10,6 +10,7 @@ interface Props {
   filterUnread: boolean;
   filterHasAttachments: boolean;
   sortBy: "newest" | "oldest";
+  onDeleteColumn: (columnId: string) => void;
 }
 
 export function KanbanColumnContainer({
@@ -17,6 +18,7 @@ export function KanbanColumnContainer({
   filterUnread,
   filterHasAttachments,
   sortBy,
+  onDeleteColumn,
 }: Props) {
   // 1. Lấy thêm isRefetching
   const {
@@ -71,7 +73,8 @@ export function KanbanColumnContainer({
       onLoadMore={fetchNextPage}
       hasMore={!filterUnread && !filterHasAttachments && hasNextPage}
       isLoadingMore={isFetchingNextPage}
-      isRefetching={isRefetching || isLoading} // <--- TRUYỀN XUỐNG DƯỚI
+      isRefetching={isRefetching || isLoading}
+      onDeleteColumn={onDeleteColumn}
     />
   );
 }

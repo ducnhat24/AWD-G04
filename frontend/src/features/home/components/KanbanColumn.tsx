@@ -4,7 +4,8 @@ import { Droppable } from "@hello-pangea/dnd";
 import type { Email } from "@/data/mockData";
 import { KanbanCard } from "./KanbanCard";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface KanbanColumnProps {
   id: string;
@@ -16,6 +17,7 @@ interface KanbanColumnProps {
   hasMore: boolean;
   isLoadingMore: boolean;
   isRefetching?: boolean; // <--- THÊM PROP MỚI
+  onDeleteColumn: (columnId: string) => void;
 }
 
 export function KanbanColumn({
@@ -28,6 +30,7 @@ export function KanbanColumn({
   hasMore,
   isLoadingMore,
   isRefetching, // <--- Destructure
+  onDeleteColumn,
 }: KanbanColumnProps) {
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -67,15 +70,25 @@ export function KanbanColumn({
           </span>
         </div>
 
-        {/* --- HIỂN THỊ LOADING KHI REFETCH --- */}
-        {isRefetching && (
-          <div className="flex items-center gap-2 animate-in fade-in duration-300">
-            <span className="text-[10px] text-muted-foreground hidden sm:inline-block">
-              Syncing...
-            </span>
-            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-          </div>
-        )}
+        <div className="flex gap-2">
+          {isRefetching && (
+            <div className="flex items-center gap-2 animate-in fade-in duration-300">
+              <span className="text-[10px] text-muted-foreground hidden sm:inline-block">
+                Syncing...
+              </span>
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            </div>
+          )}
+
+          <Button
+            disabled={isRefetching}
+            className="cursor-pointer"
+            onClick={() => onDeleteColumn(id)}
+            variant="destructive"
+          >
+            <Trash size={16} />
+          </Button>
+        </div>
       </div>
 
       {/* Droppable Area (Giữ nguyên) */}
