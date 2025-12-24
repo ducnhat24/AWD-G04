@@ -6,11 +6,13 @@ import { KanbanConfig, KanbanConfigDocument } from './entities/kanban-config.ent
 import { UpdateKanbanConfigDto } from './dto/update-kanban.dto';
 import { CreateKanbanConfigDto } from './dto/create-kanban.dto';
 import { UpdateColumnDto } from './dto/update-column.dto';
+import { GmailIntegrationService } from 'src/mail/services/gmail-integration.service';
 
 @Injectable()
 export class KanbanService {
   constructor(
     @InjectModel(KanbanConfig.name) private kanbanModel: Model<KanbanConfigDocument>,
+    private readonly gmailService: GmailIntegrationService,
   ) { }
   // Lấy config, nếu chưa có thì tạo Default
   async getConfig(userId: string) {
@@ -39,7 +41,7 @@ export class KanbanService {
     if (!config) {
       const columnsToSave = (createDto && createDto.columns && createDto.columns.length > 0)
         ? processColumns(createDto.columns)
-        : this.getDefaultColumns(); // Default columns cũng đã có UUID
+        : await this.getDefaultColumns(userId); // Default columns cũng đã có UUID
 
       config = new this.kanbanModel({
         userId,
@@ -129,44 +131,54 @@ export class KanbanService {
   }
 
   // Cập nhật Default Columns dùng UUID
-  private getDefaultColumns() {
+  private async getDefaultColumns(userId: string) {
+    // Gọi sang Gmail Service. Hàm này bên đó đã có logic: 
+    // Nếu chưa có label TODO/DONE/SNOOZED thì tự tạo, sau đó trả về danh sách đầy đủ kèm ID thật.
+    const mailboxes = await this.gmailService.getMailboxes(userId);
+
+    // Helper tìm ID thật dựa vào tên
+    const findLabelId = (name: string) => {
+      const found = mailboxes.find(m => m.name === name);
+      return found ? found.id : name; // Fallback về name nếu không tìm thấy (hiếm khi xảy ra)
+    };
+
     return [
       {
         id: uuidv4(),
         title: 'Hộp thư đến',
-        gmailLabelId: 'INBOX',
+        gmailLabelId: 'INBOX', // ID hệ thống luôn là INBOX
         color: '#3b82f6',
         order: 0
       },
       {
         id: uuidv4(),
         title: 'Cần làm',
-        gmailLabelId: 'TODO',
+        gmailLabelId: findLabelId('TODO'), // Lấy ID thật (VD: Label_3)
         color: '#eab308',
         order: 1
       },
       {
         id: uuidv4(),
         title: 'Đã xong',
-        gmailLabelId: 'DONE',
+        gmailLabelId: findLabelId('DONE'), // Lấy ID thật
         color: '#22c55e',
         order: 2
       },
       {
         id: uuidv4(),
         title: 'Snoozed',
-        gmailLabelId: 'SNOOZED',
-        color: '#22c55e',
+        gmailLabelId: findLabelId('SNOOZED'), // Lấy ID thật
+        color: '#a855f7', // Sửa màu tím cho khác DONE
         order: 3
       }
     ];
   }
 
-  // Hàm createDefaultConfig cũng update tương tự...
   private async createDefaultConfig(userId: string) {
+    const columns = await this.getDefaultColumns(userId); // Thêm await
     const defaultConfig = new this.kanbanModel({
       userId,
-      columns: this.getDefaultColumns() // Tái sử dụng hàm trên cho gọn
+      columns: columns
     });
     return defaultConfig.save();
   }

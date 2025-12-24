@@ -36,6 +36,6 @@ import { UserModule } from '../user/user.module';
     MailSearchService,
     MailRepository
   ],
-  exports: [MailService],
+  exports: [MailService, GmailIntegrationService],
 })
-export class MailModule {}
+export class MailModule { }
