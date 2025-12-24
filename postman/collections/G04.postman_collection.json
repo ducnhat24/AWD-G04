@@ -558,7 +558,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"columns\": [\r\n        {\r\n            \"id\": \"col_leads\",\r\n            \"title\": \"Khách tiềm năng\",\r\n            \"gmailLabelId\": \"LEADS\", \r\n            \"color\": \"#64748b\",\r\n            \"order\": 0\r\n        },\r\n        {\r\n            \"id\": \"col_contacted\",\r\n            \"title\": \"Đã liên hệ\",\r\n            \"gmailLabelId\": \"CONTACTED\",\r\n            \"color\": \"#3b82f6\",\r\n            \"order\": 1\r\n        },\r\n        {\r\n            \"id\": \"col_negotiation\",\r\n            \"title\": \"Đang thương lượng\",\r\n            \"gmailLabelId\": \"NEGOTIATION\",\r\n            \"color\": \"#eab308\",\r\n            \"order\": 2\r\n        },\r\n        {\r\n            \"id\": \"col_won\",\r\n            \"title\": \"Đã chốt đơn\",\r\n            \"gmailLabelId\": \"WON\",\r\n            \"color\": \"#22c55e\",\r\n            \"order\": 3\r\n        }\r\n    ]\r\n}",
+              "raw": "{\r\n    \"columns\": [\r\n        {\r\n            \"title\": \"Khách tiềm năng\",\r\n            \"gmailLabelId\": \"LEADS\", \r\n            \"color\": \"#64748b\",\r\n            \"order\": 0\r\n        },\r\n        {\r\n            \"title\": \"Đã liên hệ\",\r\n            \"gmailLabelId\": \"CONTACTED\",\r\n            \"color\": \"#3b82f6\",\r\n            \"order\": 1\r\n        },\r\n        {\r\n            \"title\": \"Đang thương lượng\",\r\n            \"gmailLabelId\": \"NEGOTIATION\",\r\n            \"color\": \"#eab308\",\r\n            \"order\": 2\r\n        },\r\n        {\r\n            \"title\": \"Đã chốt đơn\",\r\n            \"gmailLabelId\": \"WON\",\r\n            \"color\": \"#22c55e\",\r\n            \"order\": 3\r\n        }\r\n    ]\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -573,6 +573,36 @@
               "path": [
                 "kanban",
                 "config"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "kanban/config/column/{id}",
+          "id": "1ca9585d-cb09-4306-b341-1cbfe247cfd0",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"title\": \"Nhật đã liên hệ\",\r\n    \"gmailLabelId\": \"NHAT_CONTACTED\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base-path}}/kanban/config/column/{{column-id}}",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "kanban",
+                "config",
+                "column",
+                "{{column-id}}"
               ]
             }
           },
@@ -620,6 +650,27 @@
               "path": [
                 "kanban",
                 "config"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "kanban/config/column/{id}",
+          "id": "3b106555-244a-4a59-893d-e2b2d054f107",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base-path}}/kanban/config/column/{{column-id}}",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "kanban",
+                "config",
+                "column",
+                "{{column-id}}"
               ]
             }
           },
