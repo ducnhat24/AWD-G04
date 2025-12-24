@@ -6,463 +6,647 @@
   },
   "item": [
     {
-      "name": "auth/login",
-      "event": [
+      "name": "apis",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "id": "db9343a3-abbf-4921-920b-0e2560a0e3e0",
-            "exec": [
-              "var jsonData = pm.response.json();\r",
-              "if (jsonData.accessToken) {\r",
-              "    pm.collectionVariables.set(\"access_token\", jsonData.accessToken);\r",
-              "    console.log(\"Collection variable updated!\");\r",
-              "}"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
+          "name": "auth/login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "9ae369cd-0aae-4f46-a542-61628c1a0928",
+                "exec": [
+                  "// Test kiểm tra status code 200",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Xử lý response và set access_token",
+                  "let jsonData;",
+                  "",
+                  "try {",
+                  "    jsonData = pm.response.json();",
+                  "} catch (e) {",
+                  "    console.log(\"Response body is not valid JSON:\");",
+                  "    console.log(pm.response.text());",
+                  "    jsonData = null;",
+                  "}",
+                  "",
+                  "if (jsonData) {",
+                  "    // Danh sách các key phổ biến để tìm token",
+                  "    const tokenPaths = [",
+                  "        { path: \"accessToken\", getValue: () => jsonData.accessToken },",
+                  "        { path: \"access_token\", getValue: () => jsonData.access_token },",
+                  "        { path: \"token\", getValue: () => jsonData.token },",
+                  "        { path: \"data.accessToken\", getValue: () => jsonData.data?.accessToken },",
+                  "        { path: \"data.access_token\", getValue: () => jsonData.data?.access_token },",
+                  "        { path: \"data.token\", getValue: () => jsonData.data?.token },",
+                  "        { path: \"result.accessToken\", getValue: () => jsonData.result?.accessToken },",
+                  "        { path: \"result.access_token\", getValue: () => jsonData.result?.access_token },",
+                  "        { path: \"result.token\", getValue: () => jsonData.result?.token }",
+                  "    ];",
+                  "",
+                  "    let tokenValue = null;",
+                  "    let foundPath = null;",
+                  "",
+                  "    // Tìm token từ các path phổ biến",
+                  "    for (const item of tokenPaths) {",
+                  "        const value = item.getValue();",
+                  "        if (value && typeof value === \"string\" && value.trim() !== \"\") {",
+                  "            tokenValue = value;",
+                  "            foundPath = item.path;",
+                  "            break;",
+                  "        }",
+                  "    }",
+                  "",
+                  "    if (tokenValue) {",
+                  "        pm.collectionVariables.set(\"access_token\", tokenValue);",
+                  "        console.log(\"Token found at path: \" + foundPath);",
+                  "        console.log(\"Env token:\", pm.environment.get(\"access_token\"));",
+                  "console.log(\"Collection token:\", pm.collectionVariables.get(\"access_token\"));",
+                  "console.log(\"Resolved token:\", pm.variables.get(\"access_token\"));",
+                  "        console.log(\"Collection token:\", pm.collectionVariables.get(\"access_token\"));",
+                  "        console.log(\"Collection variable 'access_token' updated successfully!\");",
+                  "",
+                  "        // Test kiểm tra token không rỗng",
+                  "        pm.test(\"Access token is present and not empty\", function () {",
+                  "            pm.expect(tokenValue).to.be.a(\"string\").and.not.be.empty;",
+                  "        });",
+                  "    } else {",
+                  "        console.log(\"Token not found in response. Response body:\");",
+                  "        console.log(JSON.stringify(jsonData, null, 2));",
+                  "",
+                  "        pm.test(\"Access token should be present\", function () {",
+                  "            pm.expect.fail(\"Token not found in any common paths: accessToken, access_token, token, data.accessToken, data.access_token, data.token, result.accessToken, result.access_token, result.token\");",
+                  "        });",
+                  "    }",
+                  "} else {",
+                  "    pm.test(\"Response should be valid JSON\", function () {",
+                  "        pm.expect.fail(\"Response body is not valid JSON\");",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "id": "d4309047-7cea-4b9f-bf69-18765064983b",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "id": "fdcee3c2-daf2-44b5-ba9c-cf5bd845d61f",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"email\":\"ducnhaat@gmail.com\",\r\n    \"password\":\"hihihi\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base-path}}/auth/login",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Endpoint đăng nhập hệ thống"
+          },
+          "response": []
         },
         {
-          "listen": "prerequest",
-          "script": {
-            "id": "292e3cd8-c7ed-4766-a165-b0f59a7459a8",
-            "exec": [
-              ""
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
+          "name": "user/me",
+          "id": "fec39480-503d-48b5-830e-802f194ab98a",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base-path}}/user/me",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "user",
+                "me"
+              ]
+            },
+            "description": "Lấy thông tin user đang đăng nhập"
+          },
+          "response": []
+        },
+        {
+          "name": "mail/mailboxes",
+          "id": "e8b6e332-afce-4b5e-bb7e-62f7b05ee359",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base-path}}/mail/mailboxes",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "mail",
+                "mailboxes"
+              ]
+            },
+            "description": "Lấy danh sách mailboxes của user đang đăng nhập"
+          },
+          "response": []
+        },
+        {
+          "name": "auth/refresh",
+          "id": "4f803025-8b3e-4992-ba37-2f87b7d02536",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"refreshToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImR1Y25oYWF0QGdtYWlsLmNvbSIsInN1YiI6IjY5MjNmMzUzZDc1MWQ4OGY1MmZhNjM4NiIsImlhdCI6MTc2NDQ0NjQwNiwiZXhwIjoxNzY1MDUxMjA2fQ.Hjs8L9VMErvuaEDj0nIS8ixmObXQ3PbKIIgjYOlhjv0\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base-path}}/auth/refresh",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Refresh access token"
+          },
+          "response": []
+        },
+        {
+          "name": "mail/mailboxes/{{label-id}}/emails",
+          "id": "f6fbeeb6-9e11-41c2-b000-d9eb9dc1a57e",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base-path}}/mail/mailboxes/{{label-id}}/emails?pageToken=01498950159027296820&limit=20",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "mail",
+                "mailboxes",
+                "{{label-id}}",
+                "emails"
+              ],
+              "query": [
+                {
+                  "key": "pageToken",
+                  "value": "01498950159027296820",
+                  "uuid": "15a64a18-6c26-4ed1-af94-ec0508fd8b3a"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "uuid": "c1901d46-cb22-4436-b536-b389f325931f"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "mail/emails/{email-id}",
+          "id": "4a10c69e-d4ae-4493-b06b-9c9fd118a2c7",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base-path}}/mail/emails/{{email-id}}",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "mail",
+                "emails",
+                "{{email-id}}"
+              ]
+            },
+            "description": "Lấy chi tiết email có emailId tương ứng"
+          },
+          "response": []
+        },
+        {
+          "name": "mail/attachments/{email-id}/{attachment-id}",
+          "id": "7f29ca82-29f4-47c0-ab04-cee676ab01ca",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base-path}}/mail/attachments/{{email-id}}/{{attachment-id}}",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "mail",
+                "attachments",
+                "{{email-id}}",
+                "{{attachment-id}}"
+              ]
+            },
+            "description": "Lấy attachemnt có {attachment-id} nằm trong email có {email-id}"
+          },
+          "response": []
+        },
+        {
+          "name": "mail/send",
+          "id": "b19638bd-d19b-4bb0-842b-d1ff000c9ab0",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"to\": \"ducnhaat@yopmail.com\",\r\n    \"subject\": \"Hi\",\r\n    \"body\": \"<p>Hello</p>\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base-path}}/mail/send",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "mail",
+                "send"
+              ]
+            },
+            "description": "Endpoint để gửi email (Gmail)"
+          },
+          "response": []
+        },
+        {
+          "name": "mail/emails/{{email-id}}/summary",
+          "id": "5305026b-c64e-4bb0-b256-4278b17eca2b",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base-path}}/mail/emails/{{email-id}}/summary",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "mail",
+                "emails",
+                "{{email-id}}",
+                "summary"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "mail/emails/{email-id}/modify",
+          "id": "62b1a4dd-97d6-420e-8b67-09768ca037de",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"addLabels\": [\r\n        \"TRASH\"\r\n    ],\r\n    \"removeLabels\": [\r\n        \"INBOX\"\r\n    ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base-path}}/mail/emails/{{email-id}}/modify",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "mail",
+                "emails",
+                "{{email-id}}",
+                "modify"
+              ]
+            },
+            "description": "Endpoint để modify email"
+          },
+          "response": []
+        },
+        {
+          "name": "snooze",
+          "id": "a5a630b6-a324-43a6-8fae-d0a11afb4d4b",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base-path}}/snooze?page=2&limit=20",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "snooze"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "2"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "snooze",
+          "id": "13a5f9dd-2009-4635-b6e8-ec0cf46c876f",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"messageId\":\"\",\r\n    \"wakeUpTime\":\"\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base-path}}/snooze",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "snooze"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "kanban/config",
+          "id": "ae2f6184-ed06-4749-9e7a-f901ee8c43b1",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base-path}}/kanban/config",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "kanban",
+                "config"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "kanban/config",
+          "id": "80c62c20-67e3-4e58-9031-74b9973a0fa6",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"columns\": [\r\n        {\r\n            \"id\": \"col_leads\",\r\n            \"title\": \"Khách tiềm năng\",\r\n            \"gmailLabelId\": \"LEADS\", \r\n            \"color\": \"#64748b\",\r\n            \"order\": 0\r\n        },\r\n        {\r\n            \"id\": \"col_contacted\",\r\n            \"title\": \"Đã liên hệ\",\r\n            \"gmailLabelId\": \"CONTACTED\",\r\n            \"color\": \"#3b82f6\",\r\n            \"order\": 1\r\n        },\r\n        {\r\n            \"id\": \"col_negotiation\",\r\n            \"title\": \"Đang thương lượng\",\r\n            \"gmailLabelId\": \"NEGOTIATION\",\r\n            \"color\": \"#eab308\",\r\n            \"order\": 2\r\n        },\r\n        {\r\n            \"id\": \"col_won\",\r\n            \"title\": \"Đã chốt đơn\",\r\n            \"gmailLabelId\": \"WON\",\r\n            \"color\": \"#22c55e\",\r\n            \"order\": 3\r\n        }\r\n    ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base-path}}/kanban/config",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "kanban",
+                "config"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "kanban/config",
+          "id": "2a26ce81-9c84-4cd3-bf42-6aafe8f68984",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"columns\": [\r\n        {\r\n            \"id\": \"col_todo\",\r\n            \"title\": \"Cần làm gấp\",\r\n            \"gmailLabelId\": \"TODO\",\r\n            \"color\": \"#ff0000\",\r\n            \"order\": 0\r\n        },\r\n        {\r\n            \"id\": \"col_inbox\",\r\n            \"title\": \"Hộp thư đến\",\r\n            \"gmailLabelId\": \"INBOX\",\r\n            \"color\": \"#3b82f6\",\r\n            \"order\": 1\r\n        },\r\n        {\r\n            \"id\": \"col_done\",\r\n            \"title\": \"Hoàn thành\",\r\n            \"gmailLabelId\": \"DONE\",\r\n            \"color\": \"#22c55e\",\r\n            \"order\": 2\r\n        }\r\n    ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base-path}}/kanban/config",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "kanban",
+                "config"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "kanban/config",
+          "id": "c8a6f75f-1e94-41fe-9a21-23a44285590a",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base-path}}/kanban/config",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "kanban",
+                "config"
+              ]
+            }
+          },
+          "response": []
         }
       ],
-      "id": "fdcee3c2-daf2-44b5-ba9c-cf5bd845d61f",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"email\":\"ducnhaat@gmail.com\",\r\n    \"password\":\"\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{base-path}}/auth/login",
-          "host": [
-            "{{base-path}}"
-          ],
-          "path": [
-            "auth",
-            "login"
-          ]
-        },
-        "description": "Endpoint đăng nhập hệ thống"
-      },
-      "response": []
-    },
-    {
-      "name": "auth/refresh",
-      "id": "4f803025-8b3e-4992-ba37-2f87b7d02536",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"refreshToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImR1Y25oYWF0QGdtYWlsLmNvbSIsInN1YiI6IjY5MjNmMzUzZDc1MWQ4OGY1MmZhNjM4NiIsImlhdCI6MTc2NDQ0NjQwNiwiZXhwIjoxNzY1MDUxMjA2fQ.Hjs8L9VMErvuaEDj0nIS8ixmObXQ3PbKIIgjYOlhjv0\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{base-path}}/auth/refresh",
-          "host": [
-            "{{base-path}}"
-          ],
-          "path": [
-            "auth",
-            "refresh"
-          ]
-        },
-        "description": "Refresh access token"
-      },
-      "response": []
-    },
-    {
-      "name": "user/me",
-      "id": "fec39480-503d-48b5-830e-802f194ab98a",
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{access_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base-path}}/user/me",
-          "host": [
-            "{{base-path}}"
-          ],
-          "path": [
-            "user",
-            "me"
-          ]
-        },
-        "description": "Lấy thông tin user đang đăng nhập"
-      },
-      "response": []
-    },
-    {
-      "name": "mail/mailboxes",
-      "id": "e8b6e332-afce-4b5e-bb7e-62f7b05ee359",
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{access_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base-path}}/mail/mailboxes",
-          "host": [
-            "{{base-path}}"
-          ],
-          "path": [
-            "mail",
-            "mailboxes"
-          ]
-        },
-        "description": "Lấy danh sách mailboxes của user đang đăng nhập"
-      },
-      "response": []
-    },
-    {
-      "name": "mail/mailboxes/{{label-id}}/emails",
-      "id": "f6fbeeb6-9e11-41c2-b000-d9eb9dc1a57e",
-      "protocolProfileBehavior": {
-        "disableBodyPruning": true
-      },
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{access_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base-path}}/mail/mailboxes/{{label-id}}/emails?pageToken=01498950159027296820&limit=20",
-          "host": [
-            "{{base-path}}"
-          ],
-          "path": [
-            "mail",
-            "mailboxes",
-            "{{label-id}}",
-            "emails"
-          ],
-          "query": [
-            {
-              "key": "pageToken",
-              "value": "01498950159027296820",
-              "uuid": "15a64a18-6c26-4ed1-af94-ec0508fd8b3a"
-            },
-            {
-              "key": "limit",
-              "value": "20",
-              "uuid": "c1901d46-cb22-4436-b536-b389f325931f"
-            }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "mail/emails/{email-id}",
-      "id": "4a10c69e-d4ae-4493-b06b-9c9fd118a2c7",
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{access_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base-path}}/mail/emails/{{email-id}}",
-          "host": [
-            "{{base-path}}"
-          ],
-          "path": [
-            "mail",
-            "emails",
-            "{{email-id}}"
-          ]
-        },
-        "description": "Lấy chi tiết email có emailId tương ứng"
-      },
-      "response": []
-    },
-    {
-      "name": "mail/attachments/{email-id}/{attachment-id}",
-      "id": "7f29ca82-29f4-47c0-ab04-cee676ab01ca",
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{access_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base-path}}/mail/attachments/{{email-id}}/{{attachment-id}}",
-          "host": [
-            "{{base-path}}"
-          ],
-          "path": [
-            "mail",
-            "attachments",
-            "{{email-id}}",
-            "{{attachment-id}}"
-          ]
-        },
-        "description": "Lấy attachemnt có {attachment-id} nằm trong email có {email-id}"
-      },
-      "response": []
-    },
-    {
-      "name": "mail/emails/{{email-id}}/summary",
-      "id": "5305026b-c64e-4bb0-b256-4278b17eca2b",
-      "protocolProfileBehavior": {
-        "disableBodyPruning": true
-      },
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{access_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base-path}}/mail/emails/{{email-id}}/summary",
-          "host": [
-            "{{base-path}}"
-          ],
-          "path": [
-            "mail",
-            "emails",
-            "{{email-id}}",
-            "summary"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "mail/send",
-      "id": "b19638bd-d19b-4bb0-842b-d1ff000c9ab0",
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{access_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"to\": \"ducnhaat@yopmail.com\",\r\n    \"subject\": \"Hi\",\r\n    \"body\": \"<p>Hello</p>\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{base-path}}/mail/send",
-          "host": [
-            "{{base-path}}"
-          ],
-          "path": [
-            "mail",
-            "send"
-          ]
-        },
-        "description": "Endpoint để gửi email (Gmail)"
-      },
-      "response": []
-    },
-    {
-      "name": "mail/emails/{email-id}/modify",
-      "id": "62b1a4dd-97d6-420e-8b67-09768ca037de",
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{access_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"addLabels\": [\r\n        \"TRASH\"\r\n    ],\r\n    \"removeLabels\": [\r\n        \"INBOX\"\r\n    ]\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{base-path}}/mail/emails/{{email-id}}/modify",
-          "host": [
-            "{{base-path}}"
-          ],
-          "path": [
-            "mail",
-            "emails",
-            "{{email-id}}",
-            "modify"
-          ]
-        },
-        "description": "Endpoint để modify email"
-      },
-      "response": []
-    },
-    {
-      "name": "snooze",
-      "id": "a5a630b6-a324-43a6-8fae-d0a11afb4d4b",
-      "protocolProfileBehavior": {
-        "disableBodyPruning": true
-      },
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{access_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base-path}}/snooze?page=2&limit=20",
-          "host": [
-            "{{base-path}}"
-          ],
-          "path": [
-            "snooze"
-          ],
-          "query": [
-            {
-              "key": "page",
-              "value": "2"
-            },
-            {
-              "key": "limit",
-              "value": "20"
-            }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "snooze",
-      "id": "13a5f9dd-2009-4635-b6e8-ec0cf46c876f",
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{access_token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n    \"messageId\":\"\",\r\n    \"wakeUpTime\":\"\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "{{base-path}}/snooze",
-          "host": [
-            "{{base-path}}"
-          ],
-          "path": [
-            "snooze"
-          ]
-        }
-      },
-      "response": []
+      "id": "66db3be5-8ad5-4a2a-ab9d-fdf516e3c2f4"
     }
   ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
   "variable": [
     {
-      "id": "a53e92f3-c17a-4383-9906-bb9e6507d1f3",
+      "id": "ed93a665-f72d-4ea3-9273-eff4b99df7ed",
       "key": "base-path",
       "value": ""
     },
     {
-      "id": "f3162320-d1ef-4d0c-8ef9-97de2b996984",
+      "id": "86e144ae-1418-4457-8ff2-d20c266af829",
       "key": "access_token",
       "value": "",
       "type": "default"
