@@ -29,6 +29,12 @@ export const updateKanbanConfig = async (
 ): Promise<void> => {
   console.log("Updating Kanban Config:", newConfig);
   try {
+    await http.patch("/kanban/config/column/" + newConfig.data.id, {
+      title: newConfig.data.title,
+      gmailLabelId: newConfig.data.gmailLabelId,
+      color: newConfig.data.color,
+      order: newConfig.data.order,
+    });
   } catch (error) {
     throw catchGlobalAxiosError(error);
   }

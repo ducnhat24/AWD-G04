@@ -5,7 +5,7 @@ export type GetKanbanConfigResponseDto = {
 };
 
 export type UpdateKanbanConfigRequestDto = {
-  columns: KanbanColumnConfig[];
+  data: KanbanColumnConfig;
 };
 
 export type CreateKanbanConfigRequestDto = {

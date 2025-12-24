@@ -65,11 +65,9 @@ export function KanbanColumnContainer({
 
   return (
     <KanbanColumn
-      id={config.id}
-      title={config.title}
+      config={config}
       emails={processedEmails}
       count={processedEmails.length}
-      color={config.color || "bg-gray-500"}
       onLoadMore={fetchNextPage}
       hasMore={!filterUnread && !filterHasAttachments && hasNextPage}
       isLoadingMore={isFetchingNextPage}

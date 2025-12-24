@@ -1,18 +1,18 @@
 // src/features/home/components/KanbanColumn.tsx
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Droppable } from "@hello-pangea/dnd";
 import type { Email } from "@/data/mockData";
 import { KanbanCard } from "./KanbanCard";
 import { cn } from "@/lib/utils";
 import { Loader2, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { KanbanColumnConfig } from "../types/kanban.type";
+import { UpdateColumnDialog } from "./UpdateColumnDialog";
 
 interface KanbanColumnProps {
-  id: string;
-  title: string;
+  config: KanbanColumnConfig;
   emails: Email[];
   count: number;
-  color?: string;
   onLoadMore: () => void;
   hasMore: boolean;
   isLoadingMore: boolean;
@@ -21,11 +21,9 @@ interface KanbanColumnProps {
 }
 
 export function KanbanColumn({
-  id,
-  title,
+  config,
   emails,
   count,
-  color = "bg-gray-500",
   onLoadMore,
   hasMore,
   isLoadingMore,
@@ -33,6 +31,8 @@ export function KanbanColumn({
   onDeleteColumn,
 }: KanbanColumnProps) {
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   useEffect(() => {
     // Logic Infinite Scroll (Giữ nguyên)
@@ -64,11 +64,11 @@ export function KanbanColumn({
           <div
             className={cn("w-1 h-4 rounded-full")}
             style={{
-              backgroundColor: color,
+              backgroundColor: config.color,
             }}
           />
           <h3 className="font-semibold text-sm uppercase tracking-wider text-foreground/80">
-            {title}
+            {config.title}
           </h3>
           <span className="bg-muted text-muted-foreground text-xs font-medium px-2 py-0.5 rounded-full">
             {count}
@@ -88,16 +88,25 @@ export function KanbanColumn({
           <Button
             disabled={isRefetching}
             className="cursor-pointer"
-            onClick={() => onDeleteColumn(id)}
+            onClick={() => onDeleteColumn(config.id)}
             variant="destructive"
           >
             <Trash size={16} />
+          </Button>
+
+          <Button
+            disabled={isRefetching}
+            className="cursor-pointer"
+            onClick={() => setIsUpdateModalOpen(true)}
+            variant="outline"
+          >
+            Edit
           </Button>
         </div>
       </div>
 
       {/* Droppable Area (Giữ nguyên) */}
-      <Droppable droppableId={id}>
+      <Droppable droppableId={config.id}>
         {(provided, snapshot) => (
           <div
             {...provided.droppableProps}
@@ -114,7 +123,7 @@ export function KanbanColumn({
                 key={email.id}
                 email={email}
                 index={index}
-                columnId={id}
+                columnId={config.id}
               />
             ))}
             {provided.placeholder}
@@ -131,6 +140,13 @@ export function KanbanColumn({
           </div>
         )}
       </Droppable>
+
+      {isUpdateModalOpen && (
+        <UpdateColumnDialog
+          config={config}
+          onOpenChange={setIsUpdateModalOpen}
+        />
+      )}
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { LogOut, Search, Plus } from "lucide-react"; // Import Plus icon
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth.store";
-import { AddColumnDialog } from "@/components/common/AddColumnDialog";
+import { AddColumnDialog } from "@/features/home/components/AddColumnDialog";
 
 interface DashboardLayoutProps {
   children: ReactNode;
