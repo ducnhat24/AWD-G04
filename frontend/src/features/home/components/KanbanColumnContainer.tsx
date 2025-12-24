@@ -18,11 +18,17 @@ export function KanbanColumnContainer({
   filterHasAttachments,
   sortBy,
 }: Props) {
-  // 1. Mỗi cột tự fetch data của mình
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-    useKanbanColumnData(config);
+  // 1. Lấy thêm isRefetching
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isRefetching, // <--- THÊM BIẾN NÀY
+  } = useKanbanColumnData(config);
 
-  // 2. Xử lý làm phẳng và filter dữ liệu tại client (giống logic cũ)
+  // 2. Xử lý data (Giữ nguyên)
   const processedEmails = useMemo(() => {
     if (!data) return [];
 
@@ -46,13 +52,14 @@ export function KanbanColumnContainer({
     return processed;
   }, [data, filterUnread, filterHasAttachments, sortBy]);
 
-  if (isLoading) {
-    return (
-      <div className="w-[300px] h-full flex items-center justify-center bg-muted/10 rounded-lg">
-        Loading...
-      </div>
-    );
-  }
+  // // Loading lần đầu (Giữ nguyên)
+  // if (isLoading) {
+  //   return (
+  //     <div className="w-[300px] h-full flex items-center justify-center bg-muted/10 rounded-lg">
+  //       Loading...
+  //     </div>
+  //   );
+  // }
 
   return (
     <KanbanColumn
@@ -60,10 +67,11 @@ export function KanbanColumnContainer({
       title={config.title}
       emails={processedEmails}
       count={processedEmails.length}
-      color={config.color || "bg-gray-500"} // Fallback color
+      color={config.color || "bg-gray-500"}
       onLoadMore={fetchNextPage}
-      hasMore={!filterUnread && !filterHasAttachments && hasNextPage} // Disable load more if filtering locally
+      hasMore={!filterUnread && !filterHasAttachments && hasNextPage}
       isLoadingMore={isFetchingNextPage}
+      isRefetching={isRefetching || isLoading} // <--- TRUYỀN XUỐNG DƯỚI
     />
   );
 }

@@ -1,3 +1,4 @@
+// src/features/home/components/KanbanColumn.tsx
 import { useEffect, useRef } from "react";
 import { Droppable } from "@hello-pangea/dnd";
 import type { Email } from "@/data/mockData";
@@ -14,6 +15,7 @@ interface KanbanColumnProps {
   onLoadMore: () => void;
   hasMore: boolean;
   isLoadingMore: boolean;
+  isRefetching?: boolean; // <--- THÊM PROP MỚI
 }
 
 export function KanbanColumn({
@@ -25,10 +27,12 @@ export function KanbanColumn({
   onLoadMore,
   hasMore,
   isLoadingMore,
+  isRefetching, // <--- Destructure
 }: KanbanColumnProps) {
   const observerTarget = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Logic Infinite Scroll (Giữ nguyên)
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
@@ -52,7 +56,7 @@ export function KanbanColumn({
   return (
     <div className="flex flex-col h-full flex-1 min-w-[250px] bg-muted/10 rounded-xl border border-border/50">
       {/* Column Header */}
-      <div className="p-4 flex items-center justify-between border-b border-border/50 bg-background/50 rounded-t-xl backdrop-blur-sm sticky top-0 z-10">
+      <div className="p-4 flex items-center justify-between border-b border-border/50 bg-background/50 rounded-t-xl backdrop-blur-sm sticky top-0 z-10 h-[60px]">
         <div className="flex items-center gap-2">
           <div className={cn("w-1 h-4 rounded-full", color)} />
           <h3 className="font-semibold text-sm uppercase tracking-wider text-foreground/80">
@@ -62,9 +66,19 @@ export function KanbanColumn({
             {count}
           </span>
         </div>
+
+        {/* --- HIỂN THỊ LOADING KHI REFETCH --- */}
+        {isRefetching && (
+          <div className="flex items-center gap-2 animate-in fade-in duration-300">
+            <span className="text-[10px] text-muted-foreground hidden sm:inline-block">
+              Syncing...
+            </span>
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          </div>
+        )}
       </div>
 
-      {/* Droppable Area */}
+      {/* Droppable Area (Giữ nguyên) */}
       <Droppable droppableId={id}>
         {(provided, snapshot) => (
           <div
@@ -72,7 +86,9 @@ export function KanbanColumn({
             ref={provided.innerRef}
             className={cn(
               "flex-1 p-3 overflow-y-auto transition-colors min-h-[150px]",
-              snapshot.isDraggingOver ? "bg-muted/20" : ""
+              snapshot.isDraggingOver ? "bg-muted/20" : "",
+              // Thêm chút opacity cho nội dung cũ khi đang refetch (Option - có thể bỏ nếu ko thích)
+              isRefetching ? "opacity-70 grayscale-[0.3]" : ""
             )}
           >
             {emails.map((email, index) => (
@@ -88,6 +104,7 @@ export function KanbanColumn({
             {/* Infinite Scroll Trigger */}
             <div ref={observerTarget} className="h-4 w-full" />
 
+            {/* Loading more ở đáy (Giữ nguyên) */}
             {isLoadingMore && (
               <div className="flex justify-center p-2">
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
