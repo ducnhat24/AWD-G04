@@ -1,30 +1,40 @@
-// src/pages/Home.tsx
+// src/features/home/pages/Home.tsx
 import { useState, useEffect } from "react";
+import { ArrowLeft } from "lucide-react";
+
+// Components
 import { EmailList } from "@/features/home/components/EmailList";
 import { EmailDetail } from "@/features/home/components/EmailDetail";
-import { type Email } from "@/data/mockData";
 import { KanbanBoard } from "@/features/home/components/KanbanBoard";
 import { KanbanCard } from "@/features/home/components/KanbanCard";
-import { ArrowLeft } from "lucide-react";
-import { useEmailLogic } from "@/features/home/hooks/useEmailLogic";
+import { DashboardModals } from "@/features/home/components/DashboardModals";
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { DashboardModals } from "@/features/home/components/DashboardModals";
+
+// Contexts & Hooks
 import { KanbanProvider } from "@/contexts/KanbanContext";
+import { type Email } from "@/data/mockData";
+import { useKanbanConfig } from "../hooks/useKanban";
+import { useEmailLogic } from "../hooks/useEmailLogic";
 
 export default function HomePage() {
-  // Dashboard State
+  // --- 1. Dashboard State ---
   const [selectedFolder, setSelectedFolder] = useState<string>("INBOX");
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
+
+  // View Mode
+  const [viewMode, setViewMode] = useState<"list" | "kanban">(
+    () => (localStorage.getItem("viewMode") as "list" | "kanban") || "list"
+  );
+
+  // Modal States
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [composeMode, setComposeMode] = useState<
     "compose" | "reply" | "forward"
   >("compose");
   const [composeOriginalEmail, setComposeOriginalEmail] =
     useState<Email | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "kanban">(
-    () => (localStorage.getItem("viewMode") as "list" | "kanban") || "list"
-  );
+
   const [isKanbanDetailOpen, setIsKanbanDetailOpen] = useState(false);
   const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
   const [snoozeTargetId, setSnoozeTargetId] = useState<string | null>(null);
@@ -43,17 +53,20 @@ export default function HomePage() {
     localStorage.setItem("viewMode", viewMode);
   }, [viewMode]);
 
-  // Custom Hook for Business Logic
+  // --- 2. Custom Hooks & Business Logic ---
+
+  // Lấy cấu hình cột Kanban (Dynamic Configuration)
+  const { columns, isKanbanConfigLoading } = useKanbanConfig();
+
+  // Logic Email chính
   const {
     emails,
     fetchNextList,
     hasNextList,
     isFetchingNextList,
     folders,
-    kanbanData,
     selectedEmail,
     isLoadingList,
-    isLoadingKanban,
     isLoadingDetail,
     moveEmail,
     snoozeEmail,
@@ -66,7 +79,10 @@ export default function HomePage() {
     selectedEmailId,
     viewMode,
     searchQuery: activeSearchQuery,
+    kanbanColumns: columns || [], // Truyền config vào để logic move biết đường map label
   });
+
+  // --- 3. Handlers ---
 
   const handleSearch = () => {
     if (searchInput.trim()) {
@@ -81,7 +97,6 @@ export default function HomePage() {
     setSearchFilter("all");
   };
 
-  // UI Handlers
   const handleSnooze = (emailId: string, date: Date, sourceFolder?: string) => {
     const folder = sourceFolder || snoozeSourceFolder;
     snoozeEmail(emailId, date, folder);
@@ -94,16 +109,9 @@ export default function HomePage() {
     setSelectedEmailId(emailId);
     setIsKanbanDetailOpen(true);
 
-    const allKanbanEmails = [
-      ...kanbanData.inbox.emails,
-      ...kanbanData.todo.emails,
-      ...kanbanData.done.emails,
-      ...kanbanData.snoozed.emails,
-    ];
-    const email = allKanbanEmails.find((e: any) => e.id === emailId);
-    if (email && !email.isRead) {
-      executeEmailAction("markAsRead", { id: emailId, email });
-    }
+    // Lưu ý: Logic đánh dấu đã đọc khi mở mail kanban nên được handle trong useEffect của EmailDetail
+    // hoặc gọi API tại đây nếu có đủ data email object.
+    // Ở đây ta tạm thời chỉ mở modal.
   };
 
   const handleMoveEmail = (
@@ -111,18 +119,20 @@ export default function HomePage() {
     sourceFolder: string,
     destinationFolder: string
   ) => {
+    // Nếu kéo vào cột Snoozed -> Mở Modal Snooze
     if (destinationFolder === "snoozed") {
       setSnoozeTargetId(emailId);
       setSnoozeSourceFolder(sourceFolder);
       setIsSnoozeOpen(true);
       return;
     }
+    // Các trường hợp khác -> Gọi API move
     moveEmail(emailId, destinationFolder, sourceFolder);
   };
 
   const handleSelectEmail = (id: string) => {
     setSelectedEmailId(id);
-    const email = emails.find((e: any) => e.id === id);
+    const email = emails.find((e) => e.id === id);
     if (email && !email.isRead) {
       executeEmailAction("markAsRead", { id, email });
     }
@@ -155,6 +165,8 @@ export default function HomePage() {
     }
   };
 
+  // --- 4. Render ---
+
   return (
     <>
       <DashboardLayout
@@ -175,7 +187,7 @@ export default function HomePage() {
         onSearchInputChange={setSearchInput}
         onSearch={handleSearch}
       >
-        {/* Content */}
+        {/* === SEARCH RESULTS VIEW === */}
         {activeSearchQuery ? (
           <div className="flex-1 p-4 overflow-y-auto bg-muted/10">
             <div className="flex flex-col gap-4 mb-4">
@@ -226,6 +238,7 @@ export default function HomePage() {
                 Error searching emails.
               </div>
             ) : (
+              // Reuse KanbanProvider for Drag & Drop in Search Results (if needed) or just Context
               <KanbanProvider
                 onMoveEmail={handleMoveEmail}
                 onSnooze={handleSnooze}
@@ -246,15 +259,11 @@ export default function HomePage() {
                         key={email.id}
                         email={email}
                         index={index}
-                        isDraggable={false}
+                        columnId="search_results"
+                        isDraggable={false} // Search results usually not draggable directly
                       />
                     ))}
-                  {searchResults.filter((email) => {
-                    if (searchFilter === "unread") return !email.isRead;
-                    if (searchFilter === "has_attachment")
-                      return email.attachments && email.attachments.length > 0;
-                    return true;
-                  }).length === 0 && (
+                  {searchResults.length === 0 && (
                     <div className="col-span-full text-center text-muted-foreground py-8">
                       No results found.
                     </div>
@@ -264,10 +273,11 @@ export default function HomePage() {
             )}
           </div>
         ) : viewMode === "kanban" ? (
+          /* === KANBAN VIEW === */
           <div className="flex-1 p-4 overflow-hidden bg-muted/10">
-            {isLoadingKanban ? (
+            {isKanbanConfigLoading ? (
               <div className="flex items-center justify-center h-full text-muted-foreground">
-                Loading Kanban...
+                Loading Board Configuration...
               </div>
             ) : (
               <KanbanProvider
@@ -282,11 +292,15 @@ export default function HomePage() {
                 }}
                 onOpenMail={handleOpenMail}
               >
-                <KanbanBoard kanbanData={kanbanData} />
+                {/* KanbanBoard mới chỉ cần nhận columns. 
+                    Việc fetch data được xử lý bên trong từng cột (KanbanColumnContainer) 
+                */}
+                <KanbanBoard columns={columns || []} />
               </KanbanProvider>
             )}
           </div>
         ) : (
+          /* === LIST VIEW (Split Pane) === */
           <>
             {/* COLUMN 2: EMAIL LIST */}
             <div
@@ -313,7 +327,7 @@ export default function HomePage() {
             {/* COLUMN 3: EMAIL DETAIL */}
             <main
               className={`flex-1 flex-col bg-background
-                ${!selectedEmailId ? "hidden md:flex" : "flex"}
+               ${!selectedEmailId ? "hidden md:flex" : "flex"}
             `}
             >
               {selectedEmailId && (
@@ -339,6 +353,7 @@ export default function HomePage() {
         )}
       </DashboardLayout>
 
+      {/* === MODALS === */}
       <DashboardModals
         isComposeOpen={isComposeOpen}
         composeMode={composeMode}

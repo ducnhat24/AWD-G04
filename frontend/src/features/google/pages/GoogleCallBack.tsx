@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react"; // Thêm useRef
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth.store";
@@ -9,14 +9,22 @@ const GoogleCallback = () => {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => !!state.accessToken);
 
-  const { isLoginGoogle, handlers } = useGoogleCallBack();
+  // Ref để track xem code đã được xử lý chưa
+  const calledRef = useRef(false);
+
+  const { handlers } = useGoogleCallBack();
 
   useEffect(() => {
     const code = searchParams.get("code");
-    if (code && !isLoginGoogle) {
+
+    // Kiểm tra: Có code VÀ chưa từng gọi xử lý
+    if (code && !calledRef.current) {
+      calledRef.current = true; // Đánh dấu là đã gọi ngay lập tức
       handlers.loginWithGoogle(code);
     }
-  }, [searchParams, isLoginGoogle]);
+
+    // Bỏ isLoginGoogle ra khỏi dependency để tránh chạy lại khi loading xong
+  }, [searchParams, handlers]);
 
   useEffect(() => {
     if (isAuthenticated) {
