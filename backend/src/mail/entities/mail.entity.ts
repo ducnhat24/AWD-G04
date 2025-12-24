@@ -32,7 +32,7 @@ export class Mail {
     // Model text-embedding-004 của Google trả về 768 dimensions
     @Prop({
         type: [Number],
-        select: false // Best Practice: Mặc định KHÔNG select field này khi query list để nhẹ băng thông
+        select: false, // Best Practice: Mặc định KHÔNG select field này khi query list để nhẹ băng thông
     })
     embedding: number[];
 }

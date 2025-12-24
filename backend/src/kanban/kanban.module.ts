@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose'; // Import cái này
 import { KanbanService } from './kanban.service';
 import { KanbanController } from './kanban.controller';
 import { KanbanConfig, KanbanConfigSchema } from './entities/kanban-config.entity'; // Import Entity
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
@@ -10,6 +11,7 @@ import { KanbanConfig, KanbanConfigSchema } from './entities/kanban-config.entit
     MongooseModule.forFeature([
       { name: KanbanConfig.name, schema: KanbanConfigSchema },
     ]),
+    MailModule,
   ],
   controllers: [KanbanController],
   providers: [KanbanService],

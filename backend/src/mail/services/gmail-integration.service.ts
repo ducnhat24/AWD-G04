@@ -450,8 +450,7 @@ export class GmailIntegrationService {
                 const detail = await gmail.users.messages.get({
                     userId: 'me',
                     id: msg.id,
-                    format: 'metadata',
-                    metadataHeaders: ['Subject', 'From', 'Date'],
+                    format: 'full', // Để lấy được payload body
                 });
 
                 const headers = detail.data.payload?.headers || [];
@@ -462,6 +461,16 @@ export class GmailIntegrationService {
                 const dateStr = headers.find((h) => h.name === 'Date')?.value || '';
                 const date = new Date(dateStr);
                 const labelIds = detail.data.labelIds || [];
+                let bodyText = this.getBody(detail.data.payload, 'text/plain');
+                if (!bodyText) {
+                    // Nếu chỉ có HTML, lấy HTML rồi strip tag (hoặc để nguyên tùy model)
+                    const bodyHtml = this.getBody(detail.data.payload, 'text/html') || '';
+                    // Simple strip tags regex
+                    bodyText = bodyHtml.replace(/<[^>]*>?/gm, ' ');
+                }
+
+                // Fallback nếu không lấy được gì thì dùng snippet
+                const finalContent = bodyText ? bodyText : detail.data.snippet;
 
                 return {
                     messageId: msg.id,
@@ -469,6 +478,7 @@ export class GmailIntegrationService {
                     subject,
                     from,
                     snippet: detail.data.snippet,
+                    bodyContent: finalContent,
                     date,
                     isRead: !labelIds.includes('UNREAD'),
                     labelIds: labelIds,
