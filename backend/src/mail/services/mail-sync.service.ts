@@ -86,7 +86,11 @@ export class MailSyncService {
             const operations = await Promise.all(emails.map(async (email) => {
                 // Kết hợp Subject + From + Snippet để tạo context cho vector
                 // Lưu ý: Sync hiện tại chỉ lấy snippet, nếu muốn Body full phải fetch thêm (sẽ chậm)
-                const contentToEmbed = `Subject: ${email.subject}. From: ${email.from}. Content: ${email.snippet}`;
+
+                const cleanBody = (email.bodyContent || '').substring(0, 8000);
+
+                const contentToEmbed = `Subject: ${email.subject}. From: ${email.from}. Content: ${cleanBody}`;
+
                 const embedding = await this.generateEmbedding(contentToEmbed);
 
                 return {
