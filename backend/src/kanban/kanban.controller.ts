@@ -1,9 +1,10 @@
-import { Controller, Get, Body, Put, UseGuards, Request, Post, Delete } from '@nestjs/common';
+import { Controller, Get, Body, Put, UseGuards, Request, Post, Delete, Patch, Param } from '@nestjs/common';
 import { KanbanService } from './kanban.service';
 import { UpdateKanbanConfigDto } from './dto/update-kanban.dto';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateKanbanConfigDto } from './dto/create-kanban.dto';
+import { UpdateColumnDto } from './dto/update-column.dto';
 
 
 @Controller('kanban/config')
@@ -32,6 +33,26 @@ export class KanbanController {
   @Delete()
   async deleteConfig(@Request() req) {
     return this.kanbanService.deleteConfig(req.user.userId);
+  }
+
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('column/:columnId')
+  async updateColumn(
+    @Request() req,
+    @Param('columnId') columnId: string,
+    @Body() updateDto: UpdateColumnDto
+  ) {
+    return this.kanbanService.updateColumn(req.user.userId, columnId, updateDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('column/:columnId')
+  async deleteColumn(
+    @Request() req,
+    @Param('columnId') columnId: string
+  ) {
+    return this.kanbanService.deleteColumn(req.user.userId, columnId);
   }
 
 }

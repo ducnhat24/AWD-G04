@@ -81,7 +81,7 @@ export class GmailIntegrationService {
             let labels = response.data.labels || [];
             const labelNames = labels.map((l) => l.name);
 
-            const requiredLabels = ['TODO', 'DONE'];
+            const requiredLabels = ['TODO', 'DONE', 'SNOOZED'];
             let hasNewLabels = false;
 
             for (const reqLabel of requiredLabels) {
