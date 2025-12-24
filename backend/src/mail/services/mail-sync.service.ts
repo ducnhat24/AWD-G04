@@ -3,6 +3,8 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { GmailIntegrationService } from './gmail-integration.service';
 import { MailRepository } from '../mail.repository';
 import { LinkedAccountRepository } from '../../user/repositories/linked-account.repository';
+import { ConfigService } from '@nestjs/config';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 /**
  * MailSyncService
@@ -14,13 +16,37 @@ import { LinkedAccountRepository } from '../../user/repositories/linked-account.
 @Injectable()
 export class MailSyncService {
     private readonly logger = new Logger(MailSyncService.name);
+    private genAI: GoogleGenerativeAI;
+    private embeddingModel: any;
 
     constructor(
         private mailRepository: MailRepository,
         private gmailIntegrationService: GmailIntegrationService,
         private linkedAccountRepository: LinkedAccountRepository,
-    ) { }
+        private configService: ConfigService,
+    ) {
+        // Khởi tạo Gemini
+        const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+        if (apiKey) {
+            this.genAI = new GoogleGenerativeAI(apiKey);
+            this.embeddingModel = this.genAI.getGenerativeModel({ model: 'text-embedding-004' });
+        }
+    }
 
+    private async generateEmbedding(text: string): Promise<number[]> {
+        if (!this.embeddingModel) return [];
+        try {
+            // Clean text nhẹ
+            const cleanText = text.replace(/\s+/g, ' ').trim().substring(0, 9000); // Giới hạn token
+            if (!cleanText) return [];
+
+            const result = await this.embeddingModel.embedContent(cleanText);
+            return result.embedding.values;
+        } catch (error) {
+            this.logger.error(`Embedding error: ${error.message}`);
+            return [];
+        }
+    }
     /**
      * Sync emails cho một user
      * - Lấy email mới nhất trong DB
@@ -48,7 +74,7 @@ export class MailSyncService {
             const emails = await this.gmailIntegrationService.fetchEmailsWithQuery(
                 userId,
                 gmailQuery,
-                50, // Mỗi lần sync lấy tối đa 50 mail
+                20, // Mỗi lần sync lấy tối đa 50 mail
             );
 
             if (emails.length === 0) {
@@ -56,33 +82,38 @@ export class MailSyncService {
                 return;
             }
 
-            // 3. Chuẩn bị bulk write operations
-            const operations = emails.map((email) => ({
-                updateOne: {
-                    filter: { messageId: email.messageId },
-                    update: {
-                        $set: {
-                            userId,
-                            messageId: email.messageId,
-                            threadId: email.threadId,
-                            subject: email.subject,
-                            from: email.from,
-                            snippet: email.snippet,
-                            date: email.date,
-                            isRead: email.isRead,
-                            labelIds: email.labelIds,
+            // --- XỬ LÝ SONG SONG TẠO EMBEDDING ---
+            const operations = await Promise.all(emails.map(async (email) => {
+                // Kết hợp Subject + From + Snippet để tạo context cho vector
+                // Lưu ý: Sync hiện tại chỉ lấy snippet, nếu muốn Body full phải fetch thêm (sẽ chậm)
+                const contentToEmbed = `Subject: ${email.subject}. From: ${email.from}. Content: ${email.snippet}`;
+                const embedding = await this.generateEmbedding(contentToEmbed);
+
+                return {
+                    updateOne: {
+                        filter: { messageId: email.messageId },
+                        update: {
+                            $set: {
+                                userId,
+                                messageId: email.messageId,
+                                threadId: email.threadId,
+                                subject: email.subject,
+                                from: email.from,
+                                snippet: email.snippet,
+                                date: email.date,
+                                isRead: email.isRead,
+                                labelIds: email.labelIds,
+                                embedding: embedding, // Lưu vector vào DB
+                            },
                         },
+                        upsert: true,
                     },
-                    upsert: true,
-                },
+                };
             }));
 
-            // 4. Lưu xuống DB (Bulk Write cho nhanh)
             if (operations.length > 0) {
                 await this.mailRepository.bulkUpsertEmails(operations);
-                this.logger.log(
-                    `[Sync] Saved ${operations.length} new emails for User ${userId}`,
-                );
+                this.logger.log(`[Sync] Saved & Embedded ${operations.length} emails for User ${userId}`);
             }
         } catch (error) {
             this.logger.error(`[Sync Error] User ${userId}: ${error.message}`, error.stack);
@@ -93,7 +124,7 @@ export class MailSyncService {
      * Cron job tự động sync emails cho tất cả users
      * Chạy mỗi 10 phút
      */
-    @Cron(CronExpression.EVERY_10_MINUTES)
+    @Cron(CronExpression.EVERY_10_SECONDS)
     async handleCronSync() {
         this.logger.log('>>> Starting Cron Job: Sync Emails...');
 
