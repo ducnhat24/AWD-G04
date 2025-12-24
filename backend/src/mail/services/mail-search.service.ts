@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MailRepository } from '../mail.repository';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { InjectModel } from '@nestjs/mongoose';
+import { EmailMetadata } from '../entities/email-metadata.schema';
 const Fuse = require('fuse.js');
 
 /**
@@ -12,10 +15,21 @@ const Fuse = require('fuse.js');
 @Injectable()
 export class MailSearchService {
     private readonly logger = new Logger(MailSearchService.name);
+    private genAI: GoogleGenerativeAI;
+    private embeddingModel: any;
 
     constructor(
         private mailRepository: MailRepository,
-    ) { }
+        private configService: ConfigService,
+        // Inject Model trực tiếp để dùng aggregate
+        @InjectModel(EmailMetadata.name) private emailModel: Model<EmailMetadataDocument>,
+    ) {
+        const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+        if (apiKey) {
+            this.genAI = new GoogleGenerativeAI(apiKey);
+            this.embeddingModel = this.genAI.getGenerativeModel({ model: 'text-embedding-004' });
+        }
+    }
 
     /**
      * Fuzzy search emails trong DB
