@@ -1,11 +1,12 @@
 // src/layouts/DashboardLayout.tsx
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react"; // Thêm useState
 import { Sidebar } from "@/components/common/Sidebar";
 import { cn } from "@/lib/utils";
-import { LogOut, Search } from "lucide-react";
+import { LogOut, Search, Plus } from "lucide-react"; // Import Plus icon
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth.store";
+import { AddColumnDialog } from "@/components/common/AddColumnDialog";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -33,6 +34,9 @@ export function DashboardLayout({
   onSearch,
 }: DashboardLayoutProps) {
   const logout = useAuthStore((state) => state.logout);
+
+  // State để điều khiển modal
+  const [isAddColumnOpen, setIsAddColumnOpen] = useState(false);
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
@@ -67,6 +71,8 @@ export function DashboardLayout({
             <h2 className="font-semibold text-lg shrink-0">
               {viewMode === "list" ? "Search" : "Kanban Board"}
             </h2>
+
+            {/* Search Bar */}
             <div className="flex items-center gap-2 max-w-md w-full">
               <Input
                 placeholder="Search emails..."
@@ -87,7 +93,22 @@ export function DashboardLayout({
               </Button>
             </div>
           </div>
+
           <div className="flex items-center gap-3">
+            {/* --- NÚT ADD COLUMN (CHỈ HIỆN KHI VIEW KANBAN) --- */}
+            {viewMode === "kanban" && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2 text-primary border-primary/20 hover:bg-primary/10"
+                onClick={() => setIsAddColumnOpen(true)}
+              >
+                <Plus className="w-4 h-4" />
+                Add Column
+              </Button>
+            )}
+
+            {/* View Toggle Buttons */}
             <div className="flex items-center border rounded-lg p-1 bg-muted/20">
               <button
                 onClick={() => onViewModeChange("list")}
@@ -128,6 +149,12 @@ export function DashboardLayout({
         {/* Content */}
         <div className="flex-1 flex overflow-hidden">{children}</div>
       </div>
+
+      {/* --- RENDER MODAL --- */}
+      <AddColumnDialog
+        isOpen={isAddColumnOpen}
+        onOpenChange={setIsAddColumnOpen}
+      />
     </div>
   );
 }

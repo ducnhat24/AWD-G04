@@ -7,3 +7,14 @@ export type GetKanbanConfigResponseDto = {
 export type UpdateKanbanConfigRequestDto = {
   columns: KanbanColumnConfig[];
 };
+
+export type CreateKanbanConfigRequestDto = {
+  title: string;
+  gmailLabelId: string;
+  color: string;
+  order: number;
+};
+
+export type DeleteKanbanConfigRequestDto = {
+  columnId: string;
+};
