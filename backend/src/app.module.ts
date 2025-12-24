@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SnoozeLogModule } from './snooze-log/snooze-log.module';
+import { KanbanModule } from './kanban/kanban.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { SnoozeLogModule } from './snooze-log/snooze-log.module';
     AuthModule,
     MailModule,
     SnoozeLogModule,
+    KanbanModule,
   ],
   controllers: [AppController],
   providers: [AppService],

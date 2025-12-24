@@ -35,6 +35,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     const { password, ...result } = user.toObject(); // Đối tượng trả về từ đây sẽ được NestJS đính kèm vào request.user
 
-    return result;
+    return {
+      ...result,
+      userId: result._id.toString() // Quan trọng: chuyển ObjectId sang string
+    };
   }
 }
