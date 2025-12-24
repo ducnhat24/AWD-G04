@@ -130,50 +130,62 @@ export class KanbanService {
     };
   }
 
-  // Cập nhật Default Columns dùng UUID
   private async getDefaultColumns(userId: string) {
-    // Gọi sang Gmail Service. Hàm này bên đó đã có logic: 
-    // Nếu chưa có label TODO/DONE/SNOOZED thì tự tạo, sau đó trả về danh sách đầy đủ kèm ID thật.
+    // 1. Lấy danh sách Label thật từ Gmail
+    // (Hàm này bên GmailService đã đảm bảo: Nếu chưa có TODO/DONE thì tự tạo rồi mới trả về list)
     const mailboxes = await this.gmailService.getMailboxes(userId);
 
-    // Helper tìm ID thật dựa vào tên
+    /**
+     * Helper tìm ID thông minh:
+     * - Tìm chính xác trước.
+     * - Nếu không thấy, tìm không phân biệt hoa thường (VD: tìm 'TODO' nhưng user có 'todo' vẫn nhận).
+     * - Nếu vẫn không thấy, fallback về tên gốc (trường hợp hy hữu).
+     */
     const findLabelId = (name: string) => {
-      const found = mailboxes.find(m => m.name === name);
-      return found ? found.id : name; // Fallback về name nếu không tìm thấy (hiếm khi xảy ra)
+      // 1. Tìm chính xác (Case-sensitive)
+      let found = mailboxes.find(m => m.name === name);
+      
+      // 2. Nếu không thấy, tìm tương đối (Case-insensitive)
+      if (!found) {
+        found = mailboxes.find(m => m.name && m.name.toUpperCase() === name.toUpperCase());
+      }
+
+      // Trả về ID thật (VD: 'Label_5') hoặc tên gốc nếu lỗi
+      return found ? found.id : name;
     };
 
     return [
       {
         id: uuidv4(),
         title: 'Hộp thư đến',
-        gmailLabelId: 'INBOX', // ID hệ thống luôn là INBOX
+        gmailLabelId: 'INBOX', // ID hệ thống luôn cố định
         color: '#3b82f6',
         order: 0
       },
       {
         id: uuidv4(),
         title: 'Cần làm',
-        gmailLabelId: findLabelId('TODO'), // Lấy ID thật (VD: Label_3)
+        // Tìm label TODO, nếu user đã có 'todo' hoặc 'Todo' thì dùng lại ID đó luôn
+        gmailLabelId: findLabelId('TODO'), 
         color: '#eab308',
         order: 1
       },
       {
         id: uuidv4(),
         title: 'Đã xong',
-        gmailLabelId: findLabelId('DONE'), // Lấy ID thật
+        gmailLabelId: findLabelId('DONE'),
         color: '#22c55e',
         order: 2
       },
       {
         id: uuidv4(),
-        title: 'Snoozed',
-        gmailLabelId: findLabelId('SNOOZED'), // Lấy ID thật
-        color: '#a855f7', // Sửa màu tím cho khác DONE
+        title: 'Tạm hoãn',
+        gmailLabelId: findLabelId('SNOOZED'),
+        color: '#a855f7',
         order: 3
       }
     ];
   }
-
   private async createDefaultConfig(userId: string) {
     const columns = await this.getDefaultColumns(userId); // Thêm await
     const defaultConfig = new this.kanbanModel({
