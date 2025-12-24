@@ -2,7 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { MailRepository } from '../mail.repository';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { InjectModel } from '@nestjs/mongoose';
-import { EmailMetadata } from '../entities/email-metadata.schema';
+import { EmailMetadata, EmailMetadataDocument } from '../entities/email-metadata.schema';
+import { ConfigService } from '@nestjs/config';
+import { Model } from 'mongoose';
 const Fuse = require('fuse.js');
 
 /**
@@ -91,6 +93,70 @@ export class MailSearchService {
         });
 
         return mappedResults;
+    }
+
+    async searchSemantic(userId: string, query: string, limit: number = 20) {
+        try {
+            if (!this.embeddingModel) return [];
+
+            // 1. Tạo vector cho query của user
+            const result = await this.embeddingModel.embedContent(query);
+            const queryVector = result.embedding.values;
+
+            this.logger.log(`DEBUG SEARCH - Input userId: ${userId} (Type: ${typeof userId})`);
+            // 2. Thực hiện Vector Search trên MongoDB Atlas
+            const emails = await this.emailModel.aggregate([
+                {
+                    $vectorSearch: {
+                        index: "vector_index", // Tên index bạn đặt trên Atlas
+                        path: "embedding",
+                        queryVector: queryVector,
+                        numCandidates: 100, // Số lượng vector ứng viên để xét
+                        limit: limit,
+                        filter: {
+                            userId: userId
+                        }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        id: "$messageId",
+                        messageId: 1,
+                        threadId: 1,
+                        subject: 1,
+                        snippet: 1,
+                        from: 1,
+                        date: 1,
+                        isRead: 1,
+                        labelIds: 1,
+                        score: { $meta: "vectorSearchScore" } // Lấy điểm tương đồng
+                    }
+                }
+            ]);
+
+            if (emails.length > 0) {
+                this.logger.log(`DEBUG SEARCH - Found email with userId: ${emails[0].userId}`);
+            }
+
+            // 3. Map kết quả
+            return emails.map(email => ({
+                id: email.messageId,
+                threadId: email.threadId,
+                snippet: email.snippet,
+                subject: email.subject,
+                sender: email.from,
+                date: email.date ? email.date.toString() : '',
+                isRead: email.isRead,
+                isStarred: email.labelIds ? email.labelIds.includes('STARRED') : false,
+                score: email.score
+            }));
+
+        } catch (error) {
+            this.logger.error(`Semantic search error: ${error.message}`);
+            // Fallback về fuzzy search nếu lỗi vector search
+            return this.searchEmailsFuzzy(userId, query, undefined, limit);
+        }
     }
 
     /**
