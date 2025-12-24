@@ -61,7 +61,12 @@ export function KanbanColumn({
       {/* Column Header */}
       <div className="p-4 flex items-center justify-between border-b border-border/50 bg-background/50 rounded-t-xl backdrop-blur-sm sticky top-0 z-10 h-[60px]">
         <div className="flex items-center gap-2">
-          <div className={cn("w-1 h-4 rounded-full", color)} />
+          <div
+            className={cn("w-1 h-4 rounded-full")}
+            style={{
+              backgroundColor: color,
+            }}
+          />
           <h3 className="font-semibold text-sm uppercase tracking-wider text-foreground/80">
             {title}
           </h3>

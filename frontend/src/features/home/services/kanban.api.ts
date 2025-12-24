@@ -5,14 +5,19 @@ import type {
   GetKanbanConfigResponseDto,
   UpdateKanbanConfigRequestDto,
 } from "./kanban.dto";
-import { INITIAL_KANBAN_CONFIG } from "@/data/mockData";
+// import { INITIAL_KANBAN_CONFIG } from "@/data/mockData";
+import { http } from "@/services/http.client";
 
 export const getKanbanConfig =
   async (): Promise<GetKanbanConfigResponseDto> => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const res = await http.get("/kanban/config");
+      // return {
+      //   columns: INITIAL_KANBAN_CONFIG,
+      // };
+      console.log("Fetched Kanban Config:", res.data);
       return {
-        columns: INITIAL_KANBAN_CONFIG,
+        columns: res.data.columns,
       };
     } catch (error) {
       throw catchGlobalAxiosError(error);
@@ -24,7 +29,6 @@ export const updateKanbanConfig = async (
 ): Promise<void> => {
   console.log("Updating Kanban Config:", newConfig);
   try {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
   } catch (error) {
     throw catchGlobalAxiosError(error);
   }
@@ -35,7 +39,9 @@ export const createKanbanColumn = async (
 ): Promise<void> => {
   console.log("Creating Kanban Column:", values);
   try {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await http.post("/kanban/config", {
+      columns: [values],
+    });
   } catch (error) {
     throw catchGlobalAxiosError(error);
   }
@@ -46,7 +52,7 @@ export const deleteKanbanColumn = async (
 ): Promise<void> => {
   console.log("Deleting Kanban Column ID:", params.columnId);
   try {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await http.delete("/kanban/config/column/" + params.columnId);
   } catch (error) {
     throw catchGlobalAxiosError(error);
   }

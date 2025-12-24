@@ -29,15 +29,15 @@ import {
 import { useMailboxesQuery } from "@/features/emails/services/email.query";
 import { useKanbanAddition } from "@/features/home/hooks/useKanbanAddition";
 
-const COLOR_OPTIONS = [
-  { label: "Gray", value: "bg-gray-500" },
-  { label: "Blue", value: "bg-blue-500" },
-  { label: "Green", value: "bg-green-500" },
-  { label: "Yellow", value: "bg-yellow-500" },
-  { label: "Red", value: "bg-red-500" },
-  { label: "Purple", value: "bg-purple-500" },
-  { label: "Pink", value: "bg-pink-500" },
-  { label: "Orange", value: "bg-orange-500" },
+export const COLOR_OPTIONS = [
+  { label: "Gray", value: "#6b7280" }, // gray-500
+  { label: "Blue", value: "#3b82f6" }, // blue-500
+  { label: "Green", value: "#22c55e" }, // green-500
+  { label: "Yellow", value: "#eab308" }, // yellow-500
+  { label: "Red", value: "#ef4444" }, // red-500
+  { label: "Purple", value: "#a855f7" }, // purple-500
+  { label: "Pink", value: "#ec4899" }, // pink-500
+  { label: "Orange", value: "#f97316" }, // orange-500
 ];
 
 interface AddColumnDialogProps {
@@ -137,7 +137,8 @@ export function AddColumnDialog({
                         <SelectItem key={color.value} value={color.value}>
                           <div className="flex items-center gap-2">
                             <div
-                              className={`w-4 h-4 rounded-full ${color.value} border`}
+                              className={`w-4 h-4 rounded-full  border`}
+                              style={{ backgroundColor: color.value }}
                             />
                             {color.label}
                           </div>

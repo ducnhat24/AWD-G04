@@ -1,9 +1,5 @@
 import { toast } from "sonner";
-import {
-  useCreateKanbanColumnMutation,
-  useDeleteKanbanColumnMutation,
-  useUpdateKanbanConfigMutation,
-} from "../services/kanban.mutation";
+import { useUpdateKanbanConfigMutation } from "../services/kanban.mutation";
 import { useGetKanbanConfigQuery } from "../services/kanban.query";
 import { handleErrorUi } from "@/services/global-exception";
 
