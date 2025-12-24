@@ -97,7 +97,12 @@ export class MailSearchService {
 
     async searchSemantic(userId: string, query: string, limit: number = 20) {
         try {
-            if (!this.embeddingModel) return [];
+            if (!this.embeddingModel) {
+                this.logger.error("❌ Embedding Model chưa khởi tạo. Kiểm tra GEMINI_API_KEY.");
+                return [];
+            }
+
+            this.logger.log(`🔍 Bắt đầu Semantic Search cho User: ${userId} - Query: ${query}`);
 
             // 1. Tạo vector cho query của user
             const result = await this.embeddingModel.embedContent(query);
@@ -130,7 +135,13 @@ export class MailSearchService {
                         date: 1,
                         isRead: 1,
                         labelIds: 1,
+                        userId: 1, // <--- THÊM DÒNG NÀY
                         score: { $meta: "vectorSearchScore" } // Lấy điểm tương đồng
+                    },
+                },
+                {
+                    $match: {
+                        score: { $gte: 0.65 }
                     }
                 }
             ]);
@@ -139,6 +150,7 @@ export class MailSearchService {
                 this.logger.log(`DEBUG SEARCH - Found email with userId: ${emails[0].userId}`);
             }
 
+            this.logger.log(`✅ Kết quả tìm thấy: ${emails.length} emails`);
             // 3. Map kết quả
             return emails.map(email => ({
                 id: email.messageId,
@@ -154,6 +166,7 @@ export class MailSearchService {
 
         } catch (error) {
             this.logger.error(`Semantic search error: ${error.message}`);
+            this.logger.error(`❌ LỖI SEMANTIC SEARCH: ${JSON.stringify(error)}`);
             // Fallback về fuzzy search nếu lỗi vector search
             return this.searchEmailsFuzzy(userId, query, undefined, limit);
         }
