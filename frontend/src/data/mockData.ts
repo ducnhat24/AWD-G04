@@ -120,4 +120,11 @@ export const INITIAL_KANBAN_CONFIG: KanbanColumnConfig[] = [
     color: "bg-green-500",
     order: 3,
   },
+  {
+    id: "trash",
+    title: "Trash",
+    gmailLabelId: "TRASH",
+    color: "bg-red-500",
+    order: 4,
+  },
 ];

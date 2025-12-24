@@ -16,6 +16,7 @@ import { KanbanProvider } from "@/contexts/KanbanContext";
 import { type Email } from "@/data/mockData";
 import { useKanbanConfig } from "../hooks/useKanban";
 import { useEmailLogic } from "../hooks/useEmailLogic";
+import { LoadingOverlay } from "@/components/common/LoadingOverlay";
 
 export default function HomePage() {
   // --- 1. Dashboard State ---
@@ -63,6 +64,8 @@ export default function HomePage() {
     emails,
     fetchNextList,
     hasNextList,
+    isSnoozing,
+    isModifyingEmail,
     isFetchingNextList,
     folders,
     selectedEmail,
@@ -73,6 +76,7 @@ export default function HomePage() {
     executeEmailAction,
     searchResults,
     isLoadingSearch,
+
     searchError,
   } = useEmailLogic({
     selectedFolder,
@@ -169,6 +173,7 @@ export default function HomePage() {
 
   return (
     <>
+      <LoadingOverlay visible={isSnoozing || isModifyingEmail} />
       <DashboardLayout
         folders={folders}
         selectedFolder={selectedFolder}
