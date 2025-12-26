@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth.store";
 import { AddColumnDialog } from "@/features/home/components/AddColumnDialog";
+import { SearchBar } from "@/features/home/components/SearchBar";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -18,7 +19,7 @@ interface DashboardLayoutProps {
   onViewModeChange: (mode: "list" | "kanban") => void;
   searchInput: string;
   onSearchInputChange: (value: string) => void;
-  onSearch: () => void;
+  onSearch: (overrideValue?: string) => void;
 }
 
 export function DashboardLayout({
@@ -73,7 +74,7 @@ export function DashboardLayout({
             </h2>
 
             {/* Search Bar */}
-            <div className="flex items-center gap-2 max-w-md w-full">
+            {/* <div className="flex items-center gap-2 max-w-md w-full">
               <Input
                 placeholder="Search emails..."
                 value={searchInput}
@@ -91,6 +92,17 @@ export function DashboardLayout({
               >
                 <Search className="w-4 h-4" />
               </Button>
+            </div> */}
+            <div className="flex items-center gap-2 max-w-md w-full">
+              <SearchBar
+                initialValue={searchInput}
+                onSearch={(query) => {
+                  // 1. Cập nhật UI (Input state)
+                  onSearchInputChange(query);
+                  // 2. Gọi hàm tìm kiếm NGAY LẬP TỨC với giá trị query mới (bỏ qua độ trễ của state)
+                  onSearch(query);
+                }}
+              />
             </div>
           </div>
 
