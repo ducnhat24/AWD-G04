@@ -88,12 +88,21 @@ export default function HomePage() {
 
   // --- 3. Handlers ---
 
-  const handleSearch = () => {
-    if (searchInput.trim()) {
-      setActiveSearchQuery(searchInput);
-      setSearchFilter("all");
-    }
-  };
+  const handleSearch = (overrideQuery?: string) => {
+    // Ưu tiên sử dụng giá trị overrideQuery (được truyền trực tiếp từ SearchBar/Dropdown)
+    // Nếu không có thì mới dùng searchInput (state hiện tại)
+    const queryToUse = typeof overrideQuery === "string" ? overrideQuery : searchInput;
+
+    if (queryToUse.trim()) {
+      setActiveSearchQuery(queryToUse);
+      setSearchFilter("all");
+      
+      // Đồng bộ ngược lại vào ô input nếu cần (để đảm bảo UI khớp với nội dung vừa search)
+      if (typeof overrideQuery === "string" && overrideQuery !== searchInput) {
+        setSearchInput(overrideQuery);
+      }
+    }
+  };
 
   const handleClearSearch = () => {
     setSearchInput("");
