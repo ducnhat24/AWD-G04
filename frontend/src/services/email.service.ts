@@ -145,3 +145,15 @@ export const fetchAttachment = async (
   );
   return response.data as Blob;
 };
+
+export const getSuggestions = async (query: string): Promise<string[]> => {
+  try {
+    const { data } = await http.get<string[]>("/mail/suggestions", {
+      params: { q: query },
+    });
+    return data;
+  } catch (error) {
+    console.error("Error fetching suggestions:", error);
+    return [];
+  }
+};

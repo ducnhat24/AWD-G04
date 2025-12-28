@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getSuggestions } from "@/services/email.service";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -19,11 +20,17 @@ export const SearchBar = ({ onSearch, initialValue = "" }: SearchBarProps) => {
 
   // MOCK DATA
   const fetchSuggestions = async (q: string) => {
-    if (!q || q.length < 2) return [];
-    const mockData = ["Anh Nguyen", "An Tran", "Alice Pham", "Andrew", "Bình Lê", "Báo cáo doanh thu"];
-    return mockData.filter((item) =>
-      item.toLowerCase().includes(q.toLowerCase())
-    ).slice(0, 5);
+    // Chỉ gọi API nếu từ khóa dài hơn 1 ký tự để tiết kiệm request
+    if (!q || q.trim().length < 2) return [];
+    
+    try {
+      // Gọi API thật từ Backend thông qua service
+      const results = await getSuggestions(q);
+      return results;
+    } catch (error) {
+      console.error("Lỗi khi tải gợi ý:", error);
+      return [];
+    }
   };
 
   useEffect(() => {
