@@ -197,6 +197,10 @@ export class MailService {
     return this.mailSearchService.searchSemantic(userId, query);
   }
 
+  async getSuggestions(userId: string, query: string) {
+    return this.mailSearchService.getSuggestions(userId, query);
+  }
+
   // ==================== PRIVATE HELPERS ====================
 
   private stripHtml(html: string): string {

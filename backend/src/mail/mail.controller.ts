@@ -152,4 +152,11 @@ export class MailController {
     console.log('User ID from Token:', req.user.userId);
     return this.mailService.searchSemantic(req.user.userId, query);
   }
+
+  @Get('suggestions')
+  async getSuggestions(@Req() req, @Query('q') query: string) {
+    // Gọi hàm mới update bên search service
+    // Lưu ý: hàm getSuggestions ở MailService cần gọi sang MailSearchService
+    return this.mailService.getSuggestions(req.user._id, query);
+  }
 }
