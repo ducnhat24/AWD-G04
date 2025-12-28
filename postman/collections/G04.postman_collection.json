@@ -684,7 +684,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"query\": \"hóa đơn tiền điện\"\r\n}",
+              "raw": "{\r\n  \"query\": \"spotlights builders\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -700,6 +700,41 @@
                 "mail",
                 "search",
                 "semantic"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "mail/suggestions",
+          "id": "af082271-de15-4558-a2d9-45ae9e6cde99",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base-path}}/mail/suggestions?q=Hồ sơ",
+              "host": [
+                "{{base-path}}"
+              ],
+              "path": [
+                "mail",
+                "suggestions"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Hồ sơ",
+                  "uuid": "265146de-6c1f-41c7-a356-7a44b07fef53"
+                }
               ]
             }
           },

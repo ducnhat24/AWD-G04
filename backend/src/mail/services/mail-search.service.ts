@@ -172,6 +172,88 @@ export class MailSearchService {
         }
     }
 
+    async getSuggestions(userId: string, query: string): Promise<string[]> {
+        // 1. Validate đầu vào
+        if (!query || query.trim().length < 2) return [];
+
+        // Xử lý ký tự đặc biệt để không lỗi Regex
+        const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(safeQuery, 'i');
+
+        // 2. Query DB (Song song)
+        const [senders, subjects] = await Promise.all([
+            // Tìm Sender (Distinct)
+            this.emailModel
+                .find({ userId: userId, from: regex })
+                .distinct('from')
+                .exec(),
+
+            // Tìm Subject (Lấy 20 kết quả gần nhất để gợi ý)
+            this.emailModel
+                .find({ userId: userId, subject: regex })
+                .select('subject')
+                .sort({ date: -1 }) // Ưu tiên email mới nhất
+                .limit(20)
+                .exec(),
+        ]);
+
+        const suggestions = new Set<string>();
+
+        // --- A. XỬ LÝ SENDER (Giữ nguyên) ---
+        senders.slice(0, 5).forEach((sender: string) => {
+            const nameMatch = sender.match(/^([^<]+)/);
+            const cleanName = nameMatch ? nameMatch[1].trim() : sender;
+            if (cleanName.toLowerCase().includes(query.toLowerCase())) {
+                suggestions.add(cleanName);
+            }
+        });
+
+        // --- B. XỬ LÝ SUBJECT (Logic mới: Smart Display) ---
+        subjects.forEach((item) => {
+            if (!item.subject) return;
+
+            const subject = item.subject.trim();
+
+            // CASE 1: Tiêu đề ngắn (< 70 ký tự) -> Lấy luôn cả câu cho có nghĩa
+            // Ví dụ: "Yêu cầu quyền truy cập" -> Lấy hết.
+            if (subject.length < 70) {
+                suggestions.add(subject);
+                return;
+            }
+
+            // CASE 2: Tiêu đề dài -> Cắt tỉa thông minh
+            const lowerSubject = subject.toLowerCase();
+            const lowerQuery = query.toLowerCase();
+            const index = lowerSubject.indexOf(lowerQuery);
+
+            if (index !== -1) {
+                // Lấy từ vị trí khớp lùi lại một chút (để thấy ngữ cảnh trước đó)
+                // Ví dụ query "truy cập", subject "...báo cáo về việc truy cập server..."
+                // start lấy lùi lại 10 ký tự để user hiểu ngữ cảnh
+                let start = Math.max(0, index - 10);
+
+                // Nếu không phải bắt đầu từ đầu dòng, thêm dấu "..."
+                let prefix = start > 0 ? '...' : '';
+
+                // Cắt lấy tối đa 60 ký tự từ điểm start
+                let cutStr = subject.substring(start, start + 60);
+
+                // Xử lý cắt gọn từ cuối cùng để không bị đứt chữ (ví dụ "truy cậ")
+                const lastSpaceIndex = cutStr.lastIndexOf(' ');
+                if (lastSpaceIndex > index - start + query.length) {
+                    cutStr = cutStr.substring(0, lastSpaceIndex);
+                }
+
+                suggestions.add(`${prefix}${cutStr}...`);
+            }
+        });
+
+        // C. Sắp xếp: Ưu tiên chuỗi ngắn hơn (thường là kết quả chính xác hơn)
+        return Array.from(suggestions)
+            .sort((a, b) => a.length - b.length)
+            .slice(0, 5);
+    }
+
     /**
      * Filter emails theo các tiêu chí
      * (Có thể mở rộng thêm các filter khác: date range, has attachment, etc.)
