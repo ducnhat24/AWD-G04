@@ -8,6 +8,10 @@ export type UpdateKanbanConfigRequestDto = {
   data: KanbanColumnConfig;
 };
 
+export type UpdateKanbanListRequestDto = {
+  columns: KanbanColumnConfig[];
+};
+
 export type CreateKanbanConfigRequestDto = {
   title: string;
   gmailLabelId: string;

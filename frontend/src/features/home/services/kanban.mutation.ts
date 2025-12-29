@@ -3,6 +3,7 @@ import {
   createKanbanColumn,
   deleteKanbanColumn,
   updateKanbanConfig,
+  updateKanbanList,
 } from "./kanban.api";
 import { KANBAN_KEYS } from "./kanban.query";
 
@@ -11,6 +12,17 @@ export const useUpdateKanbanConfigMutation = () => {
 
   return useMutation({
     mutationFn: updateKanbanConfig,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [KANBAN_KEYS.CONFIG] });
+    },
+  });
+};
+
+export const useUpdateKanbanListMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateKanbanList, // Sử dụng hàm API mới
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [KANBAN_KEYS.CONFIG] });
     },
