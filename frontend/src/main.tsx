@@ -6,17 +6,16 @@ import "./index.css";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
-import { AuthProvider } from "./contexts/AuthContext";
 
 // Hàm khởi tạo Mocking
 async function enableMocking() {
   // Chỉ chạy ở môi trường development
   const { worker } = await import("./mocks/browser");
-  
+
   // Khởi động worker
   // onUnhandledRequest: "bypass" -> Để các request Auth (Login/Register) đi qua backend thật
   return worker.start({
-    onUnhandledRequest: "bypass", 
+    onUnhandledRequest: "bypass",
   });
 }
 
@@ -27,10 +26,8 @@ enableMocking().then(() => {
     <React.StrictMode>
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <App />
-            <Toaster />
-          </AuthProvider>
+          <App />
+          <Toaster />
         </QueryClientProvider>
       </BrowserRouter>
     </React.StrictMode>

@@ -1,19 +1,20 @@
-import { useAuth } from "@/contexts/AuthContext";
+// src/components/ProtectRoute.tsx
+import { useAuthStore } from "@/stores/auth.store";
 import { Navigate, Outlet } from "react-router-dom";
 
 const ProtectedRoute = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const isAuthenticated = useAuthStore((state) => !!state.accessToken);
 
-  // 1. Nếu đang kiểm tra (loading), hiển thị 1 cái gì đó
+  const isLoading = useAuthStore((state) => state.isLoading);
+
   if (isLoading) {
-    return <div>Đang tải...</div>; // Hoặc một spinner
+    return <div>Loading...</div>;
   }
 
   if (!isAuthenticated) {
     return <Navigate to="/signin" replace />;
   }
 
-  // 3. Nếu đã đăng nhập, hiển thị nội dung trang
   return <Outlet />;
 };
 

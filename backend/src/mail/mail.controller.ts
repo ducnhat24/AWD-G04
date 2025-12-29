@@ -18,7 +18,7 @@ import { Response } from 'express';
 @Controller('mail')
 @UseGuards(JwtAuthGuard) // Bảo vệ toàn bộ endpoint, bắt buộc phải login
 export class MailController {
-  constructor(private readonly mailService: MailService) {}
+  constructor(private readonly mailService: MailService) { }
 
   // Tìm kiếm Email (Fuzzy Search)
   @Get('search')
@@ -144,5 +144,19 @@ export class MailController {
       id: messageId,
       summary: summary,
     };
+  }
+
+  @Post('search/semantic')
+  async searchSemantic(@Req() req, @Body('query') query: string) {
+    // 👇 Hãy chắc chắn bạn dùng .userId (String) thay vì ._id
+    console.log('User ID from Token:', req.user.userId);
+    return this.mailService.searchSemantic(req.user.userId, query);
+  }
+
+  @Get('suggestions')
+  async getSuggestions(@Req() req, @Query('q') query: string) {
+    // Gọi hàm mới update bên search service
+    // Lưu ý: hàm getSuggestions ở MailService cần gọi sang MailSearchService
+    return this.mailService.getSuggestions(req.user._id, query);
   }
 }
