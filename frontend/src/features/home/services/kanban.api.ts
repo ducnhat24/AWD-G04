@@ -4,6 +4,7 @@ import type {
   DeleteKanbanConfigRequestDto,
   GetKanbanConfigResponseDto,
   UpdateKanbanConfigRequestDto,
+  UpdateKanbanListRequestDto,
 } from "./kanban.dto";
 // import { INITIAL_KANBAN_CONFIG } from "@/data/mockData";
 import { http } from "@/services/http.client";
@@ -35,6 +36,30 @@ export const updateKanbanConfig = async (
       color: newConfig.data.color,
       order: newConfig.data.order,
     });
+  } catch (error) {
+    throw catchGlobalAxiosError(error);
+  }
+};
+
+export const updateKanbanList = async (
+  payload: UpdateKanbanListRequestDto
+): Promise<void> => {
+  console.log("Updating Kanban List:", payload.columns);
+  try {
+    // Cách 1: Nếu Backend hỗ trợ update list (KHUYÊN DÙNG nếu có)
+    // await http.patch("/kanban/config", { columns: payload.columns });
+
+    // Cách 2: Nếu Backend chỉ cho update từng cái (Dùng Promise.all như đã bàn)
+    const updateRequests = payload.columns.map((col) =>
+      http.patch("/kanban/config/column/" + col.id, {
+        title: col.title,
+        gmailLabelId: col.gmailLabelId,
+        color: col.color,
+        order: col.order,
+      })
+    );
+    await Promise.all(updateRequests);
+    
   } catch (error) {
     throw catchGlobalAxiosError(error);
   }
