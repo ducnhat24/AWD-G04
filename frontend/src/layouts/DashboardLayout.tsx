@@ -2,8 +2,7 @@
 import { useState, type ReactNode } from "react"; // Thêm useState
 import { Sidebar } from "@/components/common/Sidebar";
 import { cn } from "@/lib/utils";
-import { LogOut, Search, Plus } from "lucide-react"; // Import Plus icon
-import { Input } from "@/components/ui/input";
+import { LogOut, Plus } from "lucide-react"; // Import Plus icon
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth.store";
 import { AddColumnDialog } from "@/features/home/components/AddColumnDialog";

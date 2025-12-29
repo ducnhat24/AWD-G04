@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { useUpdateKanbanConfigMutation } from "../services/kanban.mutation";
+import { useUpdateKanbanListMutation } from "../services/kanban.mutation";
 import { useGetKanbanConfigQuery } from "../services/kanban.query";
 import { handleErrorUi } from "@/services/global-exception";
 
@@ -46,7 +46,7 @@ export function useKanbanConfig() {
   } = useGetKanbanConfigQuery();
 
   const { mutateAsync: updateColumns, isPending: isUpdatingKanbanConfig } =
-    useUpdateKanbanConfigMutation();
+    useUpdateKanbanListMutation();
 
   const onUpdateColumns = async (newColumns: typeof columns) => {
     try {
