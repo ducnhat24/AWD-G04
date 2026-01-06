@@ -8,13 +8,31 @@ import PublicRoute from "./components/PublicRoute";
 import NotFoundRedirect from "./components/NotFoundRoute";
 import GoogleCallback from "./features/google/pages/GoogleCallBack";
 import { useAuthStore } from "./stores/auth.store";
+import { useThemeStore } from "./stores/theme.store";
 
 function App() {
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
+  const theme = useThemeStore((state) => state.theme);
 
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light";
+      root.classList.add(systemTheme);
+      return;
+    }
+
+    root.classList.add(theme);
+  }, [theme]);
 
   return (
     <Routes>
