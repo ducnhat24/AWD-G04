@@ -30,6 +30,7 @@ export const useKanbanColumnData = (column: KanbanColumnConfig) => {
     queryFn: async ({ pageParam = 1 }) => {
       // Logic riêng cho cột Snoozed (nếu backend xử lý riêng)
       if (column.gmailLabelId === "SNOOZED") {
+        console.log("Fetching snoozed emails, pageParam:", pageParam);
         return fetchSnoozedEmails(pageParam as number, limit);
       }
 

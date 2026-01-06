@@ -117,8 +117,11 @@ export default function HomePage() {
     sourceFolder: string,
     destinationFolder: string
   ) => {
-    // Nếu kéo vào cột Snoozed -> Mở Modal Snooze
-    // Lưu ý: Kiểm tra ID cột snooze trả về từ backend (thường là lowercase hoặc uppercase tùy config)
+    console.log("handleMoveEmail called with:", {
+      emailId,
+      sourceFolder,
+      destinationFolder,
+    });
     if (destinationFolder.toUpperCase() === FOLDER_IDS.SNOOZED) {
       modals.openSnooze(emailId, sourceFolder);
       return;

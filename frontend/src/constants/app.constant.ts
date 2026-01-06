@@ -3,7 +3,7 @@
 // Định nghĩa các Folder ID (Giữ nguyên giá trị như code cũ)
 export const FOLDER_IDS = {
   INBOX: "INBOX",
-  SNOOZED: "snoozed",
+  SNOOZED: "SNOOZED",
   TRASH: "TRASH",
   SENT: "SENT",
   DRAFT: "DRAFT",
