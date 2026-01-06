@@ -118,3 +118,36 @@
     @apply bg-background text-foreground;
   }
 }
+
+::-webkit-scrollbar {
+  width: 8px; /* Chiều rộng dọc */
+  height: 8px; /* Chiều cao ngang */
+}
+
+/* 1. Track (Rãnh trượt) */
+::-webkit-scrollbar-track {
+  /* Dùng màu secondary (xám rất nhạt) để làm nền, hòa hợp cả 2 mode */
+  background: var(--secondary);
+  /* Hoặc để background: transparent; nếu muốn rãnh trong suốt */
+}
+
+/* 2. Thumb (Tay cầm) */
+::-webkit-scrollbar-thumb {
+  /* Dùng màu border hoặc ring để tạo độ tương phản vừa đủ */
+  background: var(--ring);
+  border-radius: 4px;
+  border: 2px solid var(--background); /* Tạo viền trắng/đen quanh tay cầm giúp tách biệt */
+}
+
+/* 3. Hover (Khi di chuột vào) */
+::-webkit-scrollbar-thumb:hover {
+  /* Khi hover thì dùng màu đậm hơn (muted-foreground) để user dễ nhận biết */
+  background: var(--muted-foreground);
+}
+
+/* 4. Cho Firefox */
+* {
+  scrollbar-width: thin;
+  /* Cú pháp: <màu-tay-cầm> <màu-rãnh> */
+  scrollbar-color: var(--ring) var(--secondary);
+}
