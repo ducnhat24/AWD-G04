@@ -104,10 +104,10 @@ export function Sidebar({
               key={folder.id}
               onClick={() => onSelectFolder(folder.id)}
               className={cn(
-                "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-r-full transition-colors",
+                "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-r-full transition-all duration-200 ease-in-out outline-none", // update transition
                 isSelected
-                  ? "bg-[#d3e3fd] text-[#001d35]"
-                  : "text-gray-700 hover:bg-gray-200"
+                  ? "bg-primary/15 text-primary font-semibold" // Dùng biến theme thay vì màu cứng #d3e3fd
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground" // Dùng biến theme
               )}
             >
               <Icon className="size-4" />
