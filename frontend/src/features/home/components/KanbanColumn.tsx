@@ -1,5 +1,5 @@
 // src/features/home/components/KanbanColumn.tsx
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Droppable } from "@hello-pangea/dnd";
 import type { Email } from "@/data/mockData";
 import { KanbanCard } from "./KanbanCard";
@@ -8,6 +8,7 @@ import { Loader2, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { KanbanColumnConfig } from "../types/kanban.type";
 import { UpdateColumnDialog } from "./UpdateColumnDialog";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 interface KanbanColumnProps {
   config: KanbanColumnConfig;
@@ -30,31 +31,13 @@ export function KanbanColumn({
   isRefetching, // <--- Destructure
   onDeleteColumn,
 }: KanbanColumnProps) {
-  const observerTarget = useRef<HTMLDivElement>(null);
-
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
-  useEffect(() => {
-    // Logic Infinite Scroll (Giữ nguyên)
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
-          onLoadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
-    }
-
-    return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
-      }
-    };
-  }, [hasMore, isLoadingMore, onLoadMore]);
+  const observerTarget = useInfiniteScroll({
+    hasMore,
+    isLoading: isLoadingMore,
+    onLoadMore,
+  });
 
   return (
     <div className="flex flex-col h-full flex-1 min-w-[250px] bg-muted/10 rounded-xl border border-border/50">
