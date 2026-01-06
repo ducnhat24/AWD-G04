@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth.store";
 import { AddColumnDialog } from "@/features/home/components/AddColumnDialog";
 import { SearchBar } from "@/features/home/components/SearchBar";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -106,6 +107,8 @@ export function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-3">
+            <ThemeToggle />
+
             {/* --- NÚT ADD COLUMN (CHỈ HIỆN KHI VIEW KANBAN) --- */}
             {viewMode === "kanban" && (
               <Button
