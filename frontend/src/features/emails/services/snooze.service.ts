@@ -1,6 +1,6 @@
 // src/services/snooze.service.ts
 import { http } from "../../../services/http.client";
-import { type Email } from "@/data/mockData";
+import type { Email } from "../types/email.type";
 
 export interface SnoozeResponse {
   userId: string;

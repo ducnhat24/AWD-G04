@@ -1,12 +1,12 @@
 import { useState, memo } from "react";
 import { Draggable } from "@hello-pangea/dnd";
 import { cva } from "class-variance-authority";
-import type { Email } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Clock, GripVertical, Maximize2 } from "lucide-react";
 import { SnoozeDialog } from "../../../components/common/SnoozeDialog";
 import { AISummaryWidget } from "../../../components/common/AISummaryWidget";
 import { useKanban } from "@/contexts/KanbanContext";
+import type { Email } from "@/features/emails/types/email.type";
 
 const cardVariants = cva(
   "rounded-lg border shadow-sm p-4 mb-3 select-none transition-all cursor-pointer bg-card text-card-foreground",
