@@ -4,7 +4,7 @@ import {
   fetchMailboxes,
   fetchEmailDetail,
   searchEmails,
-} from "@/services/email.service";
+} from "@/features/emails/services/email.api";
 
 export const EMAIL_KEYS = {
   LIST: ["emails"] as const,

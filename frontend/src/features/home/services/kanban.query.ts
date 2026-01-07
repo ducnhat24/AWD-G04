@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getKanbanConfig } from "./kanban.api";
-import { fetchSnoozedEmails } from "@/services/snooze.service";
-import { fetchEmails } from "@/services/email.service";
+import { fetchSnoozedEmails } from "@/features/emails/services/snooze.service";
+import { fetchEmails } from "@/features/emails/services/email.api";
 import type { KanbanColumnConfig } from "../types/kanban.type";
 
 export const KANBAN_KEYS = {

@@ -12,7 +12,7 @@ import {
   Forward,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchAttachment } from "@/services/email.service";
+import { fetchAttachment } from "@/features/emails/services/email.api";
 import { toast } from "sonner";
 import { SafeHTML } from "@/components/ui/SafeHTML";
 import { useAuthStore } from "@/stores/auth.store";

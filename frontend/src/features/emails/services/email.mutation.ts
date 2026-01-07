@@ -4,8 +4,8 @@ import {
   type InfiniteData,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { modifyEmail } from "@/services/email.service";
-import { snoozeEmail as apiSnoozeEmail } from "@/services/snooze.service";
+import { modifyEmail } from "@/features/emails/services/email.api";
+import { snoozeEmail as apiSnoozeEmail } from "@/features/emails/services/snooze.service";
 // Giả sử bạn đã có file này từ phần Kanban trước đó
 import type { Email } from "@/data/mockData";
 import type { KanbanColumnConfig } from "@/features/home/types/kanban.type";
