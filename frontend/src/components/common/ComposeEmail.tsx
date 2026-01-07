@@ -1,8 +1,23 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Minus, Maximize2, Minimize2, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
+import {
+  X,
+  Minus,
+  Maximize2,
+  Minimize2,
+  Bold,
+  Italic,
+  Underline,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { sendEmail, replyEmail, forwardEmail } from "@/services/email.service";
+import {
+  sendEmail,
+  replyEmail,
+  forwardEmail,
+} from "@/features/emails/services/email.api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { type Email } from "@/data/mockData";
@@ -13,7 +28,11 @@ interface ComposeEmailProps {
   originalEmail?: Email | null;
 }
 
-export function ComposeEmail({ onClose, mode = "compose", originalEmail }: ComposeEmailProps) {
+export function ComposeEmail({
+  onClose,
+  mode = "compose",
+  originalEmail,
+}: ComposeEmailProps) {
   const [to, setTo] = useState(() => {
     if (mode === "reply" && originalEmail) {
       return originalEmail.senderEmail;
@@ -22,16 +41,26 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
   });
   const [subject, setSubject] = useState(() => {
     if (mode === "reply" && originalEmail) {
-      return originalEmail.subject.startsWith("Re:") ? originalEmail.subject : `Re: ${originalEmail.subject}`;
+      return originalEmail.subject.startsWith("Re:")
+        ? originalEmail.subject
+        : `Re: ${originalEmail.subject}`;
     }
     if (mode === "forward" && originalEmail) {
-      return originalEmail.subject.startsWith("Fwd:") ? originalEmail.subject : `Fwd: ${originalEmail.subject}`;
+      return originalEmail.subject.startsWith("Fwd:")
+        ? originalEmail.subject
+        : `Fwd: ${originalEmail.subject}`;
     }
     return "";
   });
   const [body, setBody] = useState(() => {
     if (mode === "forward" && originalEmail) {
-      return `<br><br><div class="gmail_quote"><div dir="ltr" class="gmail_attr">---------- Forwarded message ---------<br>From: <strong>${originalEmail.sender}</strong> &lt;${originalEmail.senderEmail}&gt;<br>Date: ${originalEmail.timestamp}<br>Subject: ${originalEmail.subject}<br>To: ${originalEmail.recipient || "Me"}<br></div><br>${originalEmail.body}</div>`;
+      return `<br><br><div class="gmail_quote"><div dir="ltr" class="gmail_attr">---------- Forwarded message ---------<br>From: <strong>${
+        originalEmail.sender
+      }</strong> &lt;${originalEmail.senderEmail}&gt;<br>Date: ${
+        originalEmail.timestamp
+      }<br>Subject: ${originalEmail.subject}<br>To: ${
+        originalEmail.recipient || "Me"
+      }<br></div><br>${originalEmail.body}</div>`;
     }
     return "";
   });
@@ -54,14 +83,14 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
 
   const checkFormats = () => {
     setFormats({
-      bold: document.queryCommandState('bold'),
-      italic: document.queryCommandState('italic'),
-      underline: document.queryCommandState('underline'),
-      justifyLeft: document.queryCommandState('justifyLeft'),
-      justifyCenter: document.queryCommandState('justifyCenter'),
-      justifyRight: document.queryCommandState('justifyRight'),
-      insertUnorderedList: document.queryCommandState('insertUnorderedList'),
-      insertOrderedList: document.queryCommandState('insertOrderedList'),
+      bold: document.queryCommandState("bold"),
+      italic: document.queryCommandState("italic"),
+      underline: document.queryCommandState("underline"),
+      justifyLeft: document.queryCommandState("justifyLeft"),
+      justifyCenter: document.queryCommandState("justifyCenter"),
+      justifyRight: document.queryCommandState("justifyRight"),
+      insertUnorderedList: document.queryCommandState("insertUnorderedList"),
+      insertOrderedList: document.queryCommandState("insertOrderedList"),
     });
   };
 
@@ -73,7 +102,10 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
     }
   }, []);
 
-  const execFormat = (command: string, value: string | undefined = undefined) => {
+  const execFormat = (
+    command: string,
+    value: string | undefined = undefined
+  ) => {
     document.execCommand(command, false, value);
     if (editorRef.current) {
       setBody(editorRef.current.innerHTML);
@@ -114,11 +146,30 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
 
   if (isMinimized) {
     return (
-      <div className="fixed bottom-0 right-20 w-64 bg-white border border-gray-300 rounded-t-lg shadow-lg z-[100] flex justify-between items-center p-3 cursor-pointer" onClick={() => setIsMinimized(false)}>
+      <div
+        className="fixed bottom-0 right-20 w-64 bg-white border border-gray-300 rounded-t-lg shadow-lg z-[100] flex justify-between items-center p-3 cursor-pointer"
+        onClick={() => setIsMinimized(false)}
+      >
         <span className="font-medium truncate text-sm">New Message</span>
         <div className="flex gap-2">
-          <button onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }} className="hover:bg-gray-100 p-1 rounded"><Minus size={14} /></button>
-          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="hover:bg-gray-100 p-1 rounded"><X size={14} /></button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMinimized(false);
+            }}
+            className="hover:bg-gray-100 p-1 rounded"
+          >
+            <Minus size={14} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="hover:bg-gray-100 p-1 rounded"
+          >
+            <X size={14} />
+          </button>
         </div>
       </div>
     );
@@ -148,19 +199,28 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
           <span className="font-medium text-sm text-gray-700">New Message</span>
           <div className="flex gap-2 text-gray-600">
             <button
-              onClick={(e) => { e.stopPropagation(); setIsMinimized(true); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMinimized(true);
+              }}
               className="hover:bg-gray-200 p-1 rounded"
             >
               <Minus size={16} />
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); setIsMaximized(!isMaximized); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMaximized(!isMaximized);
+              }}
               className="hover:bg-gray-200 p-1 rounded"
             >
               {isMaximized ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); onClose(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
               className="hover:bg-gray-200 p-1 rounded"
             >
               <X size={16} />
@@ -169,7 +229,10 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSend} className="flex flex-col flex-1 overflow-hidden">
+        <form
+          onSubmit={handleSend}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
           <div className="border-b border-gray-200 shrink-0">
             <Input
               placeholder="To"
@@ -201,13 +264,91 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
           {/* Formatting Toolbar */}
           {showFormatting && (
             <div className="flex items-center gap-1 px-4 py-2 border-t border-gray-100 bg-gray-50">
-              <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('bold'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.bold && "bg-gray-300 text-black")} title="Bold"><Bold size={16} /></button>
-              <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('italic'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.italic && "bg-gray-300 text-black")} title="Italic"><Italic size={16} /></button>
-              <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('underline'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.underline && "bg-gray-300 text-black")} title="Underline"><Underline size={16} /></button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execFormat("bold");
+                }}
+                className={cn(
+                  "p-1 hover:bg-gray-200 rounded text-gray-600",
+                  formats.bold && "bg-gray-300 text-black"
+                )}
+                title="Bold"
+              >
+                <Bold size={16} />
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execFormat("italic");
+                }}
+                className={cn(
+                  "p-1 hover:bg-gray-200 rounded text-gray-600",
+                  formats.italic && "bg-gray-300 text-black"
+                )}
+                title="Italic"
+              >
+                <Italic size={16} />
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execFormat("underline");
+                }}
+                className={cn(
+                  "p-1 hover:bg-gray-200 rounded text-gray-600",
+                  formats.underline && "bg-gray-300 text-black"
+                )}
+                title="Underline"
+              >
+                <Underline size={16} />
+              </button>
               <div className="w-px h-4 bg-gray-300 mx-1" />
-              <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('justifyLeft'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.justifyLeft && "bg-gray-300 text-black")} title="Align Left"><AlignLeft size={16} /></button>
-              <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('justifyCenter'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.justifyCenter && "bg-gray-300 text-black")} title="Align Center"><AlignCenter size={16} /></button>
-              <button type="button" onMouseDown={(e) => { e.preventDefault(); execFormat('justifyRight'); }} className={cn("p-1 hover:bg-gray-200 rounded text-gray-600", formats.justifyRight && "bg-gray-300 text-black")} title="Align Right"><AlignRight size={16} /></button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execFormat("justifyLeft");
+                }}
+                className={cn(
+                  "p-1 hover:bg-gray-200 rounded text-gray-600",
+                  formats.justifyLeft && "bg-gray-300 text-black"
+                )}
+                title="Align Left"
+              >
+                <AlignLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execFormat("justifyCenter");
+                }}
+                className={cn(
+                  "p-1 hover:bg-gray-200 rounded text-gray-600",
+                  formats.justifyCenter && "bg-gray-300 text-black"
+                )}
+                title="Align Center"
+              >
+                <AlignCenter size={16} />
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execFormat("justifyRight");
+                }}
+                className={cn(
+                  "p-1 hover:bg-gray-200 rounded text-gray-600",
+                  formats.justifyRight && "bg-gray-300 text-black"
+                )}
+                title="Align Right"
+              >
+                <AlignRight size={16} />
+              </button>
             </div>
           )}
 
@@ -224,7 +365,10 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
               {/* Formatting options placeholders */}
               <div className="flex items-center gap-1 text-gray-500 ml-2">
                 <span
-                  className={cn("p-2 hover:bg-gray-100 rounded cursor-pointer font-bold text-gray-600", showFormatting && "bg-gray-200")}
+                  className={cn(
+                    "p-2 hover:bg-gray-100 rounded cursor-pointer font-bold text-gray-600",
+                    showFormatting && "bg-gray-200"
+                  )}
                   onClick={() => setShowFormatting(!showFormatting)}
                   title="Formatting options"
                 >
@@ -233,7 +377,11 @@ export function ComposeEmail({ onClose, mode = "compose", originalEmail }: Compo
               </div>
             </div>
             <div className="text-gray-500">
-              <button type="button" onClick={onClose} className="p-2 hover:bg-gray-100 rounded">
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded"
+              >
                 <X size={18} className="text-gray-500" />
               </button>
             </div>

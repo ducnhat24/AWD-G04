@@ -252,6 +252,7 @@ export default function HomePage() {
                     })
                     .map((email, index) => (
                       <KanbanCard
+                        draggableId={`${email.id}::search_results`}
                         key={email.id}
                         email={email}
                         index={index}

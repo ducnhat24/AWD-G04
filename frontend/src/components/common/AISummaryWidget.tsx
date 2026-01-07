@@ -1,14 +1,17 @@
 import { useState, useRef, useEffect, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
-import { fetchEmailSummary } from "@/services/email.service";
+import { fetchEmailSummary } from "@/features/emails/services/email.api";
 
 interface AISummaryWidgetProps {
   emailId: string;
   preview: string;
 }
 
-export const AISummaryWidget = memo(function AISummaryWidget({ emailId, preview }: AISummaryWidgetProps) {
+export const AISummaryWidget = memo(function AISummaryWidget({
+  emailId,
+  preview,
+}: AISummaryWidgetProps) {
   const [isVisible, setIsVisible] = useState(false);
   const summaryRef = useRef<HTMLDivElement>(null);
 
