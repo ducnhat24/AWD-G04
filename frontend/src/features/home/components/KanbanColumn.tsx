@@ -101,14 +101,20 @@ export function KanbanColumn({
               isRefetching ? "opacity-70 grayscale-[0.3]" : ""
             )}
           >
-            {emails.map((email, index) => (
-              <KanbanCard
-                key={email.id}
-                email={email}
-                index={index}
-                columnId={config.id}
-              />
-            ))}
+            {emails.map((email, index) => {
+              // TẠO UNIQUE ID Ở ĐÂY
+              const uniqueDraggableId = `${email.id}::${config.id}`;
+
+              return (
+                <KanbanCard
+                  key={uniqueDraggableId} // Key phải duy nhất
+                  draggableId={uniqueDraggableId} // DraggableId phải duy nhất
+                  email={email}
+                  index={index}
+                  columnId={config.id}
+                />
+              );
+            })}
             {provided.placeholder}
 
             {/* Infinite Scroll Trigger */}

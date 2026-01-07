@@ -32,6 +32,7 @@ interface KanbanCardProps {
   email: Email;
   index: number;
   columnId?: string;
+  draggableId: string;
   isDraggable?: boolean;
 }
 
@@ -39,6 +40,7 @@ export const KanbanCard = memo(function KanbanCard({
   email,
   index,
   columnId,
+  draggableId,
   isDraggable = true,
 }: KanbanCardProps) {
   const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
@@ -164,7 +166,7 @@ export const KanbanCard = memo(function KanbanCard({
         onSnooze={(date) => onSnooze(email.id, date, columnId)}
       />
       {isDraggable ? (
-        <Draggable draggableId={email.id} index={index}>
+        <Draggable draggableId={draggableId} index={index}>
           {(provided, snapshot) => renderCard(provided, snapshot)}
         </Draggable>
       ) : (
