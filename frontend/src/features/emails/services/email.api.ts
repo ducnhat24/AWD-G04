@@ -1,7 +1,7 @@
 // src/services/email.service.ts
 import { http } from "../../../services/http.client";
-import { type Email } from "@/data/mockData";
 import { transformEmail, transformMailbox } from "@/utils/mapper";
+import type { Email } from "../types/email.type";
 
 export const findLabelId = (
   mailboxes: { id: string; label: string }[],

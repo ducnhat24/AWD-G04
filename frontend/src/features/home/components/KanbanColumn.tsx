@@ -1,7 +1,6 @@
 // src/features/home/components/KanbanColumn.tsx
 import { useState } from "react";
 import { Droppable } from "@hello-pangea/dnd";
-import type { Email } from "@/data/mockData";
 import { KanbanCard } from "./KanbanCard";
 import { cn } from "@/lib/utils";
 import { Loader2, Trash } from "lucide-react";
@@ -9,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import type { KanbanColumnConfig } from "../types/kanban.type";
 import { UpdateColumnDialog } from "./UpdateColumnDialog";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import type { Email } from "@/features/emails/types/email.type";
 
 interface KanbanColumnProps {
   config: KanbanColumnConfig;

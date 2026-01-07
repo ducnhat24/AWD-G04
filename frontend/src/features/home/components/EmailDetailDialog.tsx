@@ -1,7 +1,7 @@
 import { X, Loader2 } from "lucide-react";
 import { EmailDetail } from "./EmailDetail";
-import type { Email } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
+import type { Email } from "@/features/emails/types/email.type";
 
 interface EmailDetailDialogProps {
   isOpen: boolean;
