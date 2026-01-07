@@ -1,4 +1,3 @@
-import type { Email, Attachment } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import {
   Reply,
@@ -16,6 +15,7 @@ import { fetchAttachment } from "@/features/emails/services/email.api";
 import { toast } from "sonner";
 import { SafeHTML } from "@/components/ui/SafeHTML";
 import { useAuthStore } from "@/stores/auth.store";
+import type { Attachment, Email } from "@/features/emails/types/email.type";
 
 interface EmailDetailProps {
   email: Email | null;

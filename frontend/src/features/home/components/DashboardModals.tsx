@@ -1,8 +1,8 @@
 // src/components/dashboard/DashboardModals.tsx
 import { ComposeEmail } from "@/components/common/ComposeEmail";
 import { SnoozeDialog } from "@/components/common/SnoozeDialog";
+import type { Email } from "@/features/emails/types/email.type";
 import { EmailDetailDialog } from "@/features/home/components/EmailDetailDialog";
-import { type Email } from "@/data/mockData";
 
 interface DashboardModalsProps {
   // Compose Modal

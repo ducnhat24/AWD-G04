@@ -20,7 +20,7 @@ import {
 } from "@/features/emails/services/email.api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { type Email } from "@/data/mockData";
+import type { Email } from "@/features/emails/types/email.type";
 
 interface ComposeEmailProps {
   onClose: () => void;

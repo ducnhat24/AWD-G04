@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
-import type { Email } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
 import { useAuthStore } from "@/stores/auth.store";
+import type { Email } from "@/features/emails/types/email.type";
 
 interface EmailListProps {
   emails: Email[];

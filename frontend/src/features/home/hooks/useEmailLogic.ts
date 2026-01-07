@@ -1,5 +1,4 @@
 import { toast } from "sonner";
-import type { Email } from "@/data/mockData";
 import type { KanbanColumnConfig } from "../types/kanban.type";
 import {
   useEmailDetailQuery,
@@ -11,6 +10,7 @@ import {
   useModifyEmailMutation,
   useSnoozeEmailMutation,
 } from "@/features/emails/services/email.mutation";
+import type { Email } from "@/features/emails/types/email.type";
 
 interface UseEmailLogicProps {
   selectedFolder: string;

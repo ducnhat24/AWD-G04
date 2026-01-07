@@ -7,10 +7,10 @@ import { toast } from "sonner";
 import { modifyEmail } from "@/features/emails/services/email.api";
 import { snoozeEmail as apiSnoozeEmail } from "@/features/emails/services/snooze.service";
 // Giả sử bạn đã có file này từ phần Kanban trước đó
-import type { Email } from "@/data/mockData";
 import type { KanbanColumnConfig } from "@/features/home/types/kanban.type";
 import { EMAIL_KEYS } from "./email.query";
 import { KANBAN_KEYS } from "@/features/home/services/kanban.query";
+import type { Email } from "../types/email.type";
 
 // Hook Modify Email (Move, Star, Read, Delete...)
 export const useModifyEmailMutation = (

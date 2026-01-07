@@ -1,5 +1,5 @@
+import type { Email } from "@/features/emails/types/email.type";
 import { useState } from "react";
-import type { Email } from "@/data/mockData";
 
 export function useDashboardModals() {
   // Compose Modal

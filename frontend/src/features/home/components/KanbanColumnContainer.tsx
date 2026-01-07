@@ -1,9 +1,9 @@
 // src/features/home/components/KanbanColumnContainer.tsx
 import { KanbanColumn } from "./KanbanColumn";
 import { useMemo } from "react";
-import type { Email } from "@/data/mockData";
 import { useKanbanColumnData } from "../services/kanban.query";
 import type { KanbanColumnConfig } from "../types/kanban.type";
+import type { Email } from "@/features/emails/types/email.type";
 
 interface Props {
   config: KanbanColumnConfig;
