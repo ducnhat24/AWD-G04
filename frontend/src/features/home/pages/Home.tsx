@@ -3,8 +3,8 @@ import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 
 // Components
-import { EmailList } from "@/features/home/components/EmailList";
-import { EmailDetail } from "@/features/home/components/EmailDetail";
+import { EmailList } from "@/features/emails/components/EmailList";
+import { EmailDetail } from "@/features/emails/components/EmailDetail";
 import { KanbanBoard } from "@/features/home/components/KanbanBoard";
 import { KanbanCard } from "@/features/home/components/KanbanCard";
 import { DashboardModals } from "@/features/home/components/DashboardModals";
