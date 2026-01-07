@@ -1,31 +1,7 @@
 // src/data/mockData.ts
 
+import type { Email } from "@/features/emails/types/email.type";
 import type { KanbanColumnConfig } from "@/features/home/types/kanban.type";
-
-export interface Attachment {
-  id: string;
-  filename: string;
-  mimeType: string;
-  size: number;
-}
-
-export interface Email {
-  id: string;
-  sender: string;
-  senderEmail: string;
-  recipient?: string;
-  recipientEmail?: string;
-  subject: string;
-  preview: string;
-  body: string;
-  timestamp: string;
-  isRead: boolean;
-  isStarred: boolean;
-  folder: string; // e.g., "inbox", "sent", "trash"
-  avatarColor?: string;
-  attachments?: Attachment[];
-  snoozeUntil?: string; // ISO Date string
-}
 
 export const FOLDERS = [
   { id: "inbox", label: "Inbox", icon: "inbox" },
