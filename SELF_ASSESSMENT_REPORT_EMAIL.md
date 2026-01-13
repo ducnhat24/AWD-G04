@@ -145,12 +145,12 @@ Students must input minus points to every uncompleted feature in the SE column.
 - **Architecture:** React SPA + Backend API (Node.js)
 - **Frontend:** React, react-window (virtualization), drag-and-drop library
 - **Backend:** Node.js with Express
-- **Database:** PostgreSQL with pgvector for embeddings
+- **Database:** MongoDB with MongoDB Vector Search for embeddings
 - **Authentication:** Google OAuth2 (Authorization Code flow)
 - **AI/ML:** OpenAI API or Gemini API for summarization and embeddings
 - **Email:** Gmail REST API
 - **Vector Search:** pgvector or similar vector database
-- **Deployment:** Frontend (Netlify/Vercel), Backend (Render/Railway/Cloud Run)
+- **Deployment:** Frontend (Vercel), Backend(Vercel)
 
 ## API Endpoints
 | Endpoint | Description |

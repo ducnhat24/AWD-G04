@@ -63,9 +63,12 @@ export const fetchEmails = async (
 
 export const searchEmails = async (query: string): Promise<Email[]> => {
   try {
-    const { data } = await http.get(`/mail/search`, { params: { q: query } });
+    const { data } = await http.post(`/mail/search/semantic`, {
+      query: query
+    });
 
     let emails: Email[] = [];
+
     if (Array.isArray(data)) {
       emails = data.map((e) => transformEmail(e));
     } else if (data && typeof data === "object") {
