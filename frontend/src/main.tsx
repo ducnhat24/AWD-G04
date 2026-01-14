@@ -22,11 +22,29 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 1, // 1 phút
+      networkMode: "online", // Chỉ fetch khi online
 
-      gcTime: 1000 * 60 * 60 * 24,
+      retry: (failureCount, error: any) => {
+        if (
+          error?.message?.includes("fetch") ||
+          error?.message?.includes("network")
+        ) {
+          return false;
+        }
+        return failureCount < 2;
+      },
 
-      networkMode: "offlineFirst",
+      staleTime: 1000 * 60 * 5, // 5 phút
+      gcTime: 1000 * 60 * 60 * 24, // 24 giờ
+
+      refetchOnWindowFocus: false,
+      refetchOnMount: false, // Dùng cache trước
+      refetchOnReconnect: true, // Refetch khi online lại
+    },
+
+    mutations: {
+      networkMode: "online", // Mutations chỉ chạy khi online
+      retry: false,
     },
   },
 });

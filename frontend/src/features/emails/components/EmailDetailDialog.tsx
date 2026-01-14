@@ -47,7 +47,11 @@ export function EmailDetailDialog({
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : email ? (
-            <EmailDetail email={email} onAction={onAction} />
+            <EmailDetail
+              emailId={email.id}
+              onAction={onAction}
+              onClose={onClose}
+            />
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground">
               Select an email to view details

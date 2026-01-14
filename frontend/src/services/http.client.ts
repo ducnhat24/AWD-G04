@@ -9,6 +9,7 @@ export const http = axios.create({
     "Content-Type": "application/json",
   },
   withCredentials: true, // Quan trọng nếu backend dùng cookie
+  timeout: 10000,
 });
 
 // =================================================================
@@ -62,15 +63,15 @@ http.interceptors.response.use(
     // [QUAN TRỌNG] XỬ LÝ OFFLINE / MẤT MẠNG
     // ----------------------------------------------------------------
     // Nếu không có response (server không trả về) hoặc mã lỗi là ERR_NETWORK
-    const isNetworkError = !error.response || error.code === "ERR_NETWORK";
+    const isNetworkError =
+      !error.response ||
+      error.code === "ERR_NETWORK" ||
+      error.message === "Network Error" || // Message chuẩn của Axios
+      error.message?.includes("Network Error"); // Đôi khi nó nằm trong chuỗi dài;
 
     if (isNetworkError) {
       console.warn("Network connection lost. Switching to offline mode.");
 
-      console.log("HTTP Network Error:", {
-        message: error.message,
-        url: originalRequest.url,
-      });
       return Promise.reject(error);
     }
 
