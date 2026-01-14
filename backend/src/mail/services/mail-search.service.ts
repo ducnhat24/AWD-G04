@@ -98,29 +98,26 @@ export class MailSearchService {
     async searchSemantic(userId: string, query: string, limit: number = 20) {
         try {
             if (!this.embeddingModel) {
-                this.logger.error("❌ Embedding Model chưa khởi tạo. Kiểm tra GEMINI_API_KEY.");
-                return [];
+                this.logger.error("Embedding Model chưa khởi tạo. Kiểm tra GEMINI_API_KEY.");
+                return this.searchEmailsFuzzy(userId, query, undefined, limit);
             }
 
-            this.logger.log(`🔍 Bắt đầu Semantic Search cho User: ${userId} - Query: ${query}`);
+            this.logger.log(`Bắt đầu Semantic Search cho User: ${userId} - Query: ${query}`);
 
-            // 1. Tạo vector cho query của user
+            // 1. Tạo vector cho query
             const result = await this.embeddingModel.embedContent(query);
             const queryVector = result.embedding.values;
 
-            this.logger.log(`DEBUG SEARCH - Input userId: ${userId} (Type: ${typeof userId})`);
-            // 2. Thực hiện Vector Search trên MongoDB Atlas
+            // 2. Thực hiện Vector Search
             const emails = await this.emailModel.aggregate([
                 {
                     $vectorSearch: {
-                        index: "vector_index", // Tên index bạn đặt trên Atlas
+                        index: "vector_index",
                         path: "embedding",
                         queryVector: queryVector,
-                        numCandidates: 100, // Số lượng vector ứng viên để xét
+                        numCandidates: 100,
                         limit: limit,
-                        filter: {
-                            userId: userId
-                        }
+                        filter: { userId: userId }
                     }
                 },
                 {
@@ -135,23 +132,32 @@ export class MailSearchService {
                         date: 1,
                         isRead: 1,
                         labelIds: 1,
-                        userId: 1, // <--- THÊM DÒNG NÀY
-                        score: { $meta: "vectorSearchScore" } // Lấy điểm tương đồng
+                        userId: 1,
+                        score: { $meta: "vectorSearchScore" }
                     },
                 },
                 {
+                    // Lọc những kết quả có độ tương đồng thấp
+                    // Nếu chỉnh số này càng cao (ví dụ 0.8) thì càng khó khớp Semantic -> càng dễ nhảy vào Fuzzy
                     $match: {
                         score: { $gte: 0.65 }
                     }
                 }
             ]);
 
-            if (emails.length > 0) {
-                this.logger.log(`DEBUG SEARCH - Found email with userId: ${emails[0].userId}`);
+            // --- ĐOẠN CODE SỬA ĐỔI QUAN TRỌNG Ở ĐÂY ---
+
+            // 3. Logic Fallback: Nếu không tìm thấy kết quả Semantic nào tốt (length == 0)
+            if (!emails || emails.length === 0) {
+                this.logger.warn(`⚠️ Semantic Score thấp hoặc không tìm thấy. Chuyển sang Fuzzy Search cho query: "${query}"`);
+
+                // Gọi ngay hàm Fuzzy Search
+                return this.searchEmailsFuzzy(userId, query, undefined, limit);
             }
 
-            this.logger.log(`✅ Kết quả tìm thấy: ${emails.length} emails`);
-            // 3. Map kết quả
+            // 4. Nếu tìm thấy kết quả Semantic tốt -> Trả về luôn
+            this.logger.log(`✅ Kết quả Semantic tìm thấy: ${emails.length} emails (Score >= 0.65)`);
+
             return emails.map(email => ({
                 id: email.messageId,
                 threadId: email.threadId,
@@ -166,8 +172,7 @@ export class MailSearchService {
 
         } catch (error) {
             this.logger.error(`Semantic search error: ${error.message}`);
-            this.logger.error(`❌ LỖI SEMANTIC SEARCH: ${JSON.stringify(error)}`);
-            // Fallback về fuzzy search nếu lỗi vector search
+            // Fallback về fuzzy search nếu có lỗi (ví dụ lỗi gọi API Gemini, lỗi DB)
             return this.searchEmailsFuzzy(userId, query, undefined, limit);
         }
     }

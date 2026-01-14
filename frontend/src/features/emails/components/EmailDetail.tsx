@@ -1,4 +1,3 @@
-import type { Email, Attachment } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import {
   Reply,
@@ -10,22 +9,31 @@ import {
   Paperclip,
   Download,
   Forward,
+  WifiOff,
+  X,
+  ExternalLink, // Import ExternalLink icon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchAttachment } from "@/services/email.service";
+import { fetchAttachment } from "@/features/emails/services/email.api";
 import { toast } from "sonner";
 import { SafeHTML } from "@/components/ui/SafeHTML";
 import { useAuthStore } from "@/stores/auth.store";
+import type { Attachment } from "@/features/emails/types/email.type";
+import { useEmailDetailQuery } from "../services/email.query";
 
 interface EmailDetailProps {
-  email: Email | null;
+  emailId: string | null;
+  onClose: () => void;
   onAction: (
     action: "toggleRead" | "delete" | "star" | "reply" | "forward"
   ) => void;
 }
 
-export function EmailDetail({ email, onAction }: EmailDetailProps) {
+export function EmailDetail({ emailId, onClose, onAction }: EmailDetailProps) {
   const user = useAuthStore((state) => state.user);
+
+  // 1. Hook to fetch data
+  const { data: email, isLoading, isError } = useEmailDetailQuery(emailId);
 
   const handleDownloadAttachment = async (attachment: Attachment) => {
     if (!email) return;
@@ -46,11 +54,12 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
       toast.success(`Downloaded ${attachment.filename}`);
     } catch (error) {
       console.error("Failed to download attachment", error);
-      toast.error("Failed to download attachment");
+      toast.error("Failed to download attachment. Check your connection.");
     }
   };
 
-  if (!email) {
+  // --- CASE 1: No Email Selected ---
+  if (!emailId) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center text-muted-foreground">
         <div className="rounded-full bg-muted p-4 mb-4">
@@ -62,11 +71,63 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
     );
   }
 
+  // --- CASE 2: Loading ---
+  if (isLoading) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-8 text-muted-foreground">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+        <p>Loading email content...</p>
+      </div>
+    );
+  }
+
+  // --- CASE 3: Error (Offline & No Cache) ---
+  if (isError || !email) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-6 text-center space-y-4 relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute right-4 top-4"
+          onClick={onClose}
+        >
+          <X className="size-5" />
+        </Button>
+
+        <div className="bg-red-100 p-4 rounded-full dark:bg-red-900/30">
+          <WifiOff className="w-10 h-10 text-red-500" />
+        </div>
+
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          Connection Failed
+        </h3>
+
+        <p className="text-gray-500 max-w-xs dark:text-gray-400">
+          Email details not available offline. Please connect to the internet to
+          view this email.
+        </p>
+
+        <Button onClick={onClose} variant="outline" className="mt-4">
+          Back to list
+        </Button>
+      </div>
+    );
+  }
+
+  // --- CASE 4: Success ---
   return (
     <div className="flex h-full flex-col">
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={onClose}
+          >
+            <X className="size-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -104,6 +165,20 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
           >
             <Forward className="size-4" />
           </Button>
+          {/* New: Open in Gmail Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Open in Gmail"
+            onClick={() =>
+              window.open(
+                `https://mail.google.com/mail/u/0/#all/${email.id}`,
+                "_blank"
+              )
+            }
+          >
+            <ExternalLink className="size-4" />
+          </Button>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => onAction("star")}>
@@ -117,21 +192,20 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      {/* Content Scrollable Area */}
+      <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-start gap-4">
-            {/* Avatar Placeholder */}
             <div
-              className={`flex items-center justify-center size-10 rounded-full text-white font-bold ${
+              className={`flex items-center justify-center size-10 rounded-full text-white font-bold shrink-0 ${
                 email.avatarColor || "bg-gray-500"
               }`}
             >
-              {email.sender[0]}
+              {email.sender[0]?.toUpperCase()}
             </div>
             <div className="grid gap-1">
               <div className="font-semibold">{email.sender}</div>
-              <div className="line-clamp-1 text-xs text-muted-foreground">
+              <div className="line-clamp-1 text-xs text-muted-foreground break-all">
                 {email.senderEmail}
               </div>
               <div className="line-clamp-1 text-xs text-muted-foreground">
@@ -146,18 +220,18 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
               </div>
             </div>
           </div>
-          <div className="text-xs text-muted-foreground">{email.timestamp}</div>
+          <div className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+            {email.timestamp}
+          </div>
         </div>
 
-        <h1 className="text-2xl font-bold mb-4">{email.subject}</h1>
+        <h1 className="text-2xl font-bold mb-4 break-words">{email.subject}</h1>
 
-        {/* Email Body */}
         <SafeHTML
           html={email.body}
-          className="text-sm text-foreground max-w-none"
+          className="text-sm text-foreground max-w-none prose dark:prose-invert"
         />
 
-        {/* Attachments */}
         {email.attachments && email.attachments.length > 0 && (
           <div className="mt-6 border-t pt-4">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -202,7 +276,6 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
         )}
       </div>
 
-      {/* Reply Area Mockup */}
       <div className="p-4 border-t bg-background">
         <div className="text-sm text-muted-foreground">
           Click here to{" "}

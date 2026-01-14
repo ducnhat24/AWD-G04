@@ -46,3 +46,12 @@ export const KANBAN_COLUMN_COLORS: Record<KanbanColumnId, string> = {
   snoozed: "bg-purple-500",
   done: "bg-green-500",
 } as const;
+
+export const SNOOZED_COLUMN_CONFIG = {
+  id: "snoozed",
+  title: "Snoozed",
+  gmailLabelId: "SNOOZED", // Hoặc null nếu là logic riêng
+  color: "#a855f7", // Màu tím (purple-500)
+  order: 999, // Để nó nằm cuối hoặc vị trí bạn muốn
+  isSystem: true, // Flag để phân biệt (optional)
+};

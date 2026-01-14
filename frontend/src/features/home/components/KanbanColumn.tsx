@@ -1,13 +1,14 @@
 // src/features/home/components/KanbanColumn.tsx
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Droppable } from "@hello-pangea/dnd";
-import type { Email } from "@/data/mockData";
 import { KanbanCard } from "./KanbanCard";
 import { cn } from "@/lib/utils";
 import { Loader2, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { KanbanColumnConfig } from "../types/kanban.type";
 import { UpdateColumnDialog } from "./UpdateColumnDialog";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import type { Email } from "@/features/emails/types/email.type";
 
 interface KanbanColumnProps {
   config: KanbanColumnConfig;
@@ -30,31 +31,13 @@ export function KanbanColumn({
   isRefetching, // <--- Destructure
   onDeleteColumn,
 }: KanbanColumnProps) {
-  const observerTarget = useRef<HTMLDivElement>(null);
-
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
-  useEffect(() => {
-    // Logic Infinite Scroll (Giữ nguyên)
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
-          onLoadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
-    }
-
-    return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
-      }
-    };
-  }, [hasMore, isLoadingMore, onLoadMore]);
+  const observerTarget = useInfiniteScroll({
+    hasMore,
+    isLoading: isLoadingMore,
+    onLoadMore,
+  });
 
   return (
     <div className="flex flex-col h-full flex-1 min-w-[250px] bg-muted/10 rounded-xl border border-border/50">
@@ -118,14 +101,20 @@ export function KanbanColumn({
               isRefetching ? "opacity-70 grayscale-[0.3]" : ""
             )}
           >
-            {emails.map((email, index) => (
-              <KanbanCard
-                key={email.id}
-                email={email}
-                index={index}
-                columnId={config.id}
-              />
-            ))}
+            {emails.map((email, index) => {
+              // TẠO UNIQUE ID Ở ĐÂY
+              const uniqueDraggableId = `${email.id}::${config.id}`;
+
+              return (
+                <KanbanCard
+                  key={uniqueDraggableId} // Key phải duy nhất
+                  draggableId={uniqueDraggableId} // DraggableId phải duy nhất
+                  email={email}
+                  index={index}
+                  columnId={config.id}
+                />
+              );
+            })}
             {provided.placeholder}
 
             {/* Infinite Scroll Trigger */}

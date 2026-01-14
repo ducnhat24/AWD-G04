@@ -1,6 +1,7 @@
 // src/mocks/handlers.ts
+import { INITIAL_KANBAN_CONFIG } from "@/data/mockData";
+import { FOLDERS, MOCK_EMAILS } from "@/features/emails/mocks/email.mock";
 import { http, HttpResponse, passthrough } from "msw";
-import { MOCK_EMAILS, FOLDERS, INITIAL_KANBAN_CONFIG } from "@/data/mockData";
 
 // Lấy Base URL từ biến môi trường để khớp với Axios
 const BASE_URL = import.meta.env.VITE_API_URL;

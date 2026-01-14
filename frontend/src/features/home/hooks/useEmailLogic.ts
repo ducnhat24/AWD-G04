@@ -1,5 +1,4 @@
 import { toast } from "sonner";
-import type { Email } from "@/data/mockData";
 import type { KanbanColumnConfig } from "../types/kanban.type";
 import {
   useEmailDetailQuery,
@@ -11,6 +10,7 @@ import {
   useModifyEmailMutation,
   useSnoozeEmailMutation,
 } from "@/features/emails/services/email.mutation";
+import type { Email } from "@/features/emails/types/email.type";
 
 interface UseEmailLogicProps {
   selectedFolder: string;
@@ -34,6 +34,9 @@ export const useEmailLogic = ({
     fetchNextPage: fetchNextList,
     hasNextPage: hasNextList,
     isFetchingNextPage: isFetchingNextList,
+    isFetching, // Để biết có đang chạy ngầm không
+    refetch, // Hàm để force reload
+    isError,
   } = useEmailListQuery(selectedFolder, searchQuery, viewMode === "list");
 
   const emails = emailsInfiniteData?.pages.flatMap((page) => page.emails) || [];
@@ -170,6 +173,9 @@ export const useEmailLogic = ({
     snoozeEmail,
     executeEmailAction,
     searchResults,
+    isFetching,
+    refetchList: refetch, // Đổi tên cho rõ nghĩa
+    isListError: isError,
     isLoadingSearch,
     searchError,
   };

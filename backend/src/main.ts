@@ -6,9 +6,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: process.env.FRONTEND_URL,
+    origin: process.env.FRONTEND_URL || 'http://localhost:4173',
+    credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
   });
-
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // Loại bỏ các thuộc tính không có trong DTO
@@ -16,6 +18,8 @@ async function bootstrap() {
       transform: true, // Tự động chuyển đổi kiểu dữ liệu
     }),
   );
-  await app.listen(process.env.PORT ?? 3000);
+  const port = process.env.BACKEND_PORT || process.env.PORT || 3000;
+
+  await app.listen(port);
 }
 bootstrap();

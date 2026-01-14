@@ -1,14 +1,13 @@
-// src/components/ProtectRoute.tsx
 import { useAuthStore } from "@/stores/auth.store";
 import { Navigate, Outlet } from "react-router-dom";
+import { LoadingOverlay } from "./common/LoadingOverlay";
 
 const ProtectedRoute = () => {
-  const isAuthenticated = useAuthStore((state) => !!state.accessToken);
-
-  const isLoading = useAuthStore((state) => state.isLoading);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const isAuthenticated = useAuthStore((s) => !!s.accessToken);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingOverlay visible={true} />;
   }
 
   if (!isAuthenticated) {

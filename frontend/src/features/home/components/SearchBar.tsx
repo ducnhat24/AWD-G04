@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getSuggestions } from "@/services/email.service";
+import { getSuggestions } from "@/features/emails/services/email.api";
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
@@ -22,7 +22,7 @@ export const SearchBar = ({ onSearch, initialValue = "" }: SearchBarProps) => {
   const fetchSuggestions = async (q: string) => {
     // Chỉ gọi API nếu từ khóa dài hơn 1 ký tự để tiết kiệm request
     if (!q || q.trim().length < 2) return [];
-    
+
     try {
       // Gọi API thật từ Backend thông qua service
       const results = await getSuggestions(q);
@@ -38,7 +38,10 @@ export const SearchBar = ({ onSearch, initialValue = "" }: SearchBarProps) => {
       if (debouncedQuery) {
         const results = await fetchSuggestions(debouncedQuery);
         setSuggestions(results);
-        if (results.length > 0 && document.activeElement === wrapperRef.current?.querySelector('input')) {
+        if (
+          results.length > 0 &&
+          document.activeElement === wrapperRef.current?.querySelector("input")
+        ) {
           setIsOpen(true);
         }
       } else {
@@ -51,7 +54,10 @@ export const SearchBar = ({ onSearch, initialValue = "" }: SearchBarProps) => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -61,11 +67,11 @@ export const SearchBar = ({ onSearch, initialValue = "" }: SearchBarProps) => {
 
   // Hàm xử lý tìm kiếm trung tâm
   const triggerSearch = (value: string) => {
-    setQuery(value); 
+    setQuery(value);
     setIsOpen(false);
     setSelectedIndex(-1);
     // Quan trọng: Gọi onSearch với giá trị MỚI NHẤT, không phụ thuộc state query cũ
-    onSearch(value); 
+    onSearch(value);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -74,17 +80,20 @@ export const SearchBar = ({ onSearch, initialValue = "" }: SearchBarProps) => {
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelectedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : prev));
+      setSelectedIndex((prev) =>
+        prev < suggestions.length - 1 ? prev + 1 : prev
+      );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
     } else if (e.key === "Enter") {
       e.preventDefault();
       // Nếu đang chọn dropdown thì lấy giá trị dropdown, ngược lại lấy giá trị trong input
-      const valToSearch = (isOpen && selectedIndex >= 0) 
-        ? suggestions[selectedIndex] 
-        : e.currentTarget.value; // Lấy value trực tiếp từ DOM element
-      
+      const valToSearch =
+        isOpen && selectedIndex >= 0
+          ? suggestions[selectedIndex]
+          : e.currentTarget.value; // Lấy value trực tiếp từ DOM element
+
       triggerSearch(valToSearch);
     } else if (e.key === "Escape") {
       setIsOpen(false);
@@ -113,7 +122,9 @@ export const SearchBar = ({ onSearch, initialValue = "" }: SearchBarProps) => {
               <li
                 key={item}
                 className={`px-4 py-2 text-sm cursor-pointer transition-colors ${
-                  index === selectedIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted"
+                  index === selectedIndex
+                    ? "bg-accent text-accent-foreground"
+                    : "hover:bg-muted"
                 }`}
                 // QUAN TRỌNG: Dùng onMouseDown thay vì onClick để tránh bị mất focus input trước khi click ăn
                 onMouseDown={(e) => {
@@ -128,7 +139,7 @@ export const SearchBar = ({ onSearch, initialValue = "" }: SearchBarProps) => {
           </ul>
         )}
       </div>
-      
+
       <Button
         size="icon"
         variant="ghost"

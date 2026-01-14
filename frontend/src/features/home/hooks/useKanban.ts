@@ -2,6 +2,9 @@ import { toast } from "sonner";
 import { useUpdateKanbanListMutation } from "../services/kanban.mutation";
 import { useGetKanbanConfigQuery } from "../services/kanban.query";
 import { handleErrorUi } from "@/services/global-exception";
+import { useMemo } from "react";
+import type { KanbanColumnConfig } from "../types/kanban.type";
+import { SNOOZED_COLUMN_CONFIG } from "../constants/kanban";
 
 export function useKanbanConfig() {
   //   const [columns, setColumns] = useState<KanbanColumnConfig[]>([]);
@@ -39,11 +42,35 @@ export function useKanbanConfig() {
   //   };
 
   const {
-    data: columns,
+    data: apiColumns, // Đổi tên biến này thành apiColumns để tránh nhầm lẫn
     isLoading: isKanbanConfigLoading,
     refetch: refetchKanbanConfig,
     isRefetching: isKanbanConfigRefetching,
   } = useGetKanbanConfigQuery();
+
+  // --- LOGIC FIX Ở ĐÂY ---
+  const columns = useMemo(() => {
+    if (!apiColumns) return [];
+
+    // Clone mảng để không mutate trực tiếp
+    const mergedColumns: KanbanColumnConfig[] = [...apiColumns];
+
+    // Kiểm tra xem backend đã trả về snoozed chưa (đề phòng backend update sau này)
+    const hasSnoozed = mergedColumns.some(
+      (col) => col.id === "snoozed" || col.title === "Snoozed"
+    );
+
+    if (!hasSnoozed) {
+      // Nếu chưa có, chèn cột Snoozed vào.
+      // Ví dụ: Muốn chèn vào vị trí số 3 (index 2) hoặc cuối cùng
+      mergedColumns.push(SNOOZED_COLUMN_CONFIG as any);
+
+      // Hoặc nếu muốn sort lại theo order:
+      // mergedColumns.sort((a, b) => a.order - b.order);
+    }
+
+    return mergedColumns;
+  }, [apiColumns]);
 
   const { mutateAsync: updateColumns, isPending: isUpdatingKanbanConfig } =
     useUpdateKanbanListMutation();
