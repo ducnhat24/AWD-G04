@@ -28,6 +28,12 @@ interface JwtPayload {
   email: string;
 }
 
+interface GoogleTokenResponse {
+  access_token: string;
+  refresh_token?: string;
+  id_token: string;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -114,7 +120,7 @@ export class AuthService {
         },
       );
 
-      const { access_token, refresh_token, id_token } = googleRes.data;
+      const { access_token, refresh_token, id_token } = googleRes.data as GoogleTokenResponse;
 
       // Decode id_token để lấy info user
       const googleUser = jwtDecode<GoogleUser>(id_token);
@@ -129,10 +135,11 @@ export class AuthService {
 
       if (linkedAccount) {
         // Case A: Đã link trước đó -> Lấy user ra
-        user = await this.userService.findById(linkedAccount.user.toString());
+        const userId = linkedAccount.user as any;
+        user = await this.userService.findById(userId.toString());
 
         await this.linkedAccountRepository.updateTokens(
-          (linkedAccount as any)._id,
+          linkedAccount._id as Types.ObjectId,
           access_token,
           refresh_token,
         );
@@ -169,7 +176,7 @@ export class AuthService {
         .catch((err) => console.error(`[Initial Sync] Error:`, err));
 
       return this.generateTokens(user);
-    } catch (error) {
+    } catch (error: any) {
       console.error('============ GOOGLE ERROR LOG ============');
       console.error('Status:', error.response?.status);
       console.error('Data:', JSON.stringify(error.response?.data));
