@@ -32,9 +32,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('User không tồn tại.');
     } // Best practice: Trả về thông tin user nhưng loại bỏ mật khẩu
 
-    const userObj = user.toObject();
+    const userObj: any = user.toObject();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _password, ...result } = userObj; // Đối tượng trả về từ đây sẽ được NestJS đính kèm vào request.user
+    const { password: _password, ...result }: { password: string;[key: string]: any } = userObj; // Đối tượng trả về từ đây sẽ được NestJS đính kèm vào request.user
 
     return {
       ...result,

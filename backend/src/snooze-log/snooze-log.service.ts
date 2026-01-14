@@ -31,7 +31,7 @@ export class SnoozeLogService {
       };
     }
 
-    const messageIds = logs.map(log => log.messageId);
+    const messageIds: string[] = logs.map(log => log.messageId as string);
 
     const emailDetails = await this.mailService.getBasicEmailsDetails(userId, messageIds);
 
@@ -70,8 +70,8 @@ export class SnoozeLogService {
 
     for (const log of dueEmails) {
       try {
-        await this.mailService.modifyEmail(log.userId, log.messageId, ['INBOX'], []);
-        await this.snoozeLogRepository.markProcessed(log._id);
+        await this.mailService.modifyEmail(log.userId as string, log.messageId as string, ['INBOX'], []);
+        await this.snoozeLogRepository.markProcessed(log._id as any);
 
         this.logger.log(`Woke up email ${log.messageId} for user ${log.userId}`);
       } catch (error) {

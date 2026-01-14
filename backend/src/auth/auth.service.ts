@@ -120,8 +120,10 @@ export class AuthService {
         },
       );
 
-      const googleData = googleRes.data as GoogleTokenResponse;
-      const { access_token, refresh_token, id_token } = googleData;
+      const googleData: GoogleTokenResponse = googleRes.data as GoogleTokenResponse;
+      const access_token: string = googleData.access_token;
+      const refresh_token: string | undefined = googleData.refresh_token;
+      const id_token: string = googleData.id_token;
 
       // Decode id_token để lấy info user
       const googleUser = jwtDecode<GoogleUser>(id_token);
@@ -178,10 +180,12 @@ export class AuthService {
 
       return this.generateTokens(user);
     } catch (error: any) {
-      const errorResponse = error?.response;
+      const errorResponse: any = error?.response ?? {};
+      const errorStatus: any = errorResponse?.status;
+      const errorData: any = errorResponse?.data;
       console.error('============ GOOGLE ERROR LOG ============');
-      console.error('Status:', errorResponse?.status);
-      console.error('Data:', JSON.stringify(errorResponse?.data));
+      console.error('Status:', errorStatus);
+      console.error('Data:', JSON.stringify(errorData));
       console.error(
         'Config Redirect URI:',
         this.configService.get('GOOGLE_REDIRECT_URI'),
