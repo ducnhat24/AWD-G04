@@ -51,7 +51,6 @@ const processQueue = (
 
 http.interceptors.response.use(
   (response) => {
-    // Trả về data trực tiếp để đỡ phải gọi .data ở component (Tuỳ chọn, nếu code cũ đang dùng .data thì giữ nguyên response)
     return response;
   },
   async (error: AxiosError) => {
@@ -59,7 +58,25 @@ http.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // --- CASE 1: Lỗi 401 (Unauthorized) -> Thử Refresh Token ---
+    // ----------------------------------------------------------------
+    // [QUAN TRỌNG] XỬ LÝ OFFLINE / MẤT MẠNG
+    // ----------------------------------------------------------------
+    // Nếu không có response (server không trả về) hoặc mã lỗi là ERR_NETWORK
+    const isNetworkError = !error.response || error.code === "ERR_NETWORK";
+
+    if (isNetworkError) {
+      console.warn("Network connection lost. Switching to offline mode.");
+
+      console.log("HTTP Network Error:", {
+        message: error.message,
+        url: originalRequest.url,
+      });
+      return Promise.reject(error);
+    }
+
+    // ----------------------------------------------------------------
+    // CASE 1: Lỗi 401 (Unauthorized) -> Thử Refresh Token
+    // ----------------------------------------------------------------
     if (
       error.response?.status === 401 &&
       originalRequest &&
@@ -83,11 +100,10 @@ http.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem("refreshToken");
-        // Lưu ý: Nếu backend dùng Cookie httpOnly để lưu refresh token thì không cần dòng trên
 
         if (!refreshToken) throw new Error("No refresh token available");
 
-        // Gọi API Refresh (Dùng axios gốc để tránh lặp vô tận)
+        // Gọi API Refresh
         const { data } = await axios.post(
           `${import.meta.env.VITE_API_URL}/auth/refresh`,
           { refreshToken }
@@ -107,6 +123,8 @@ http.interceptors.response.use(
         return http(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError as AxiosError, null);
+
+        // Chỉ Logout nếu Refresh Token thực sự hết hạn (Server trả về lỗi), không phải do mất mạng
         useAuthStore.getState().logout();
         toast.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
         return Promise.reject(refreshError);
@@ -115,8 +133,9 @@ http.interceptors.response.use(
       }
     }
 
-    // --- CASE 2: Các lỗi khác (403, 500, Network Error) ---
-    // Chỉ hiển thị toast nếu không phải lỗi 401 (vì 401 đã xử lý ở trên hoặc logout rồi)
+    // ----------------------------------------------------------------
+    // CASE 2: Các lỗi khác (403, 500...)
+    // ----------------------------------------------------------------
     if (error.response?.status !== 401) {
       const message =
         (error.response?.data as any)?.message || "Đã có lỗi xảy ra";
@@ -131,10 +150,8 @@ http.interceptors.response.use(
         toast.error("Bạn không có quyền thực hiện hành động này.");
       } else if (error.response?.status && error.response.status >= 500) {
         toast.error("Lỗi hệ thống (Server Error). Vui lòng thử lại sau.");
-      } else {
-        // Lỗi 400, 404...
-        //  toast.error(message); // Có thể bật cái này nếu muốn hiện mọi lỗi
       }
+      // Các lỗi 4xx khác có thể handle tùy ý
     }
 
     return Promise.reject(error);

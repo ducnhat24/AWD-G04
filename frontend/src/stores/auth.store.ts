@@ -92,9 +92,30 @@ export const useAuthStore = create<AuthState>()(
           newRefreshToken,
           storedProvider || "local"
         );
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to restore session", error);
-        get().logout(); // Logout sẽ set isLoading: false
+
+        const isNetworkError = !error.response || error.code === "ERR_NETWORK";
+
+        if (isNetworkError) {
+          console.warn("Offline mode detected. Restoring session explicitly.");
+
+          // "Fake" trạng thái đăng nhập để qua mặt ProtectedRoute
+          // Token này không dùng được để gọi API (vì offline), nhưng đủ để render UI
+          set({
+            accessToken: "OFFLINE_ACCESS_TOKEN",
+            authProvider: storedProvider || "local",
+            isLoading: false,
+          });
+
+          // (Tuỳ chọn) Nếu bạn có lưu user info vào localStorage thì load lại ở đây
+          // set({ user: JSON.parse(localStorage.getItem("user") || "null") })
+
+          return; // Dừng hàm, KHÔNG gọi logout()
+        }
+
+        // Chỉ logout nếu lỗi từ server (Token sai/hết hạn)
+        get().logout();
       } finally {
         set({ isLoading: false });
       }
