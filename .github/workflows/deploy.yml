@@ -43,9 +43,9 @@ jobs:
           tags: ghcr.io/${{ github.repository_owner }}/awd-g04-frontend:latest
           # 👇 Bơm IP VPS vào lúc build để React gọi đúng API
           build-args: |
-            VITE_API_URL=http://${{ secrets.VPS_IP }}:3000
+            VITE_API_URL=https://${{ secrets.VPS_IP }}.nip.io/api
             VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-            VITE_GOOGLE_REDIRECT_URI=http://${{ secrets.VPS_IP }}/login/oauth/google/callback
+            VITE_GOOGLE_REDIRECT_URI=https://${{ secrets.VPS_IP }}.nip.io/login/oauth/google/callback
 
       # 4. Copy file docker-compose lên VPS
       - name: Copy docker-compose to VPS
