@@ -7,13 +7,13 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-and-test:
+  # JOB 1: Kiểm tra chất lượng Code (Chạy nhanh trên máy ảo)
+  code-check:
     runs-on: ubuntu-latest
-    
     steps:
     - uses: actions/checkout@v4
     
-    # Setup Backend & Test
+    # --- BACKEND CHECK ---
     - name: Setup Node.js for Backend
       uses: actions/setup-node@v4
       with:
@@ -22,12 +22,12 @@ jobs:
         cache-dependency-path: backend/package-lock.json
 
     - name: Install Backend Dependencies
-      run:cd backend && npm ci
+      run: cd backend && npm ci
 
-    - name: Run Backend Linter (hoặc Test nếu có)
-      run: cd backend && npm run lint # Hoặc npm run test
+    - name: Lint/Test Backend
+      run: cd backend && npm run lint 
 
-    # Setup Frontend & Build Test
+    # --- FRONTEND CHECK ---
     - name: Setup Node.js for Frontend
       uses: actions/setup-node@v4
       with:
@@ -38,5 +38,31 @@ jobs:
     - name: Install Frontend Dependencies
       run: cd frontend && npm ci
 
-    - name: Build Frontend (Check for build errors)
+    - name: Build Frontend (Test Build)
+      # 👇 QUAN TRỌNG: Truyền biến môi trường giả vào đây để Build không bị lỗi
+      env:
+        VITE_API_URL: "http://localhost:3000" # Giá trị dummy để test build
+        VITE_GOOGLE_CLIENT_ID: "798389879626-bdarak3828hag1bhqgcvigd2rg5iomoq.apps.googleusercontent.com"
+        VITE_GOOGLE_REDIRECT_URI: "http://localhost:5173/login/oauth/google/callback"
       run: cd frontend && npm run build
+
+  # JOB 2: Kiểm tra xem Dockerfile có build được không (Quan trọng vì bạn deploy bằng Docker)
+  docker-build-check:
+    runs-on: ubuntu-latest
+    needs: code-check # Chỉ chạy nếu Job trên đã Pass
+    steps:
+      - uses: actions/checkout@v4
+
+      # Test build Backend Docker Image
+      - name: Build Backend Docker Image
+        run: docker build ./backend --file backend/Dockerfile --tag my-backend:test
+
+      # Test build Frontend Docker Image
+      - name: Build Frontend Docker Image
+        run: |
+          docker build ./frontend \
+            --file frontend/Dockerfile \
+            --tag my-frontend:test \
+            --build-arg VITE_API_URL="http://localhost:3000" \
+            --build-arg VITE_GOOGLE_CLIENT_ID="798389879626-bdarak3828hag1bhqgcvigd2rg5iomoq.apps.googleusercontent.com" \
+            --build-arg VITE_GOOGLE_REDIRECT_URI="http://localhost:5173/login/oauth/google/callback"
