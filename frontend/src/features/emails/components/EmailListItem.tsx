@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import type { Email } from "@/features/emails/types/email.type";
 
@@ -17,6 +17,16 @@ export const EmailListItem = memo(function EmailListItem({
 }: EmailListItemProps) {
   // Logic hiển thị tên người gửi/nhận đã được tách ra khỏi JSX cho gọn
   const isSentFolder = email.folder.toLowerCase() === "sent";
+  const itemRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (isSelected && itemRef.current) {
+      itemRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest", // Giúp danh sách không bị nhảy loạn xạ
+      });
+    }
+  }, [isSelected]);
 
   const getDisplayName = () => {
     if (isSentFolder && email.recipient) {
@@ -36,6 +46,7 @@ export const EmailListItem = memo(function EmailListItem({
 
   return (
     <button
+      ref={itemRef}
       onClick={() => onClick(email.id)}
       className={cn(
         "flex flex-col items-start gap-2 p-4 text-left border-b transition-colors hover:bg-muted/50 w-full",
