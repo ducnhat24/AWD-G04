@@ -1,0 +1,42 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    # Setup Backend & Test
+    - name: Setup Node.js for Backend
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Install Backend Dependencies
+      run:cd backend && npm ci
+
+    - name: Run Backend Linter (hoặc Test nếu có)
+      run: cd backend && npm run lint # Hoặc npm run test
+
+    # Setup Frontend & Build Test
+    - name: Setup Node.js for Frontend
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install Frontend Dependencies
+      run: cd frontend && npm ci
+
+    - name: Build Frontend (Check for build errors)
+      run: cd frontend && npm run build

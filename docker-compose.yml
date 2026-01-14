@@ -1,0 +1,42 @@
+services:
+  # ----------------------------
+  # BACKEND SERVICE (Runtime Env)
+  # ----------------------------
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=${BACKEND_PORT:-3000}
+      
+      - DATABASE_URI=${DATABASE_URI} 
+      
+      - FRONTEND_URL=${FRONTEND_URL}
+      
+      # JWT Secrets
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - ACCESS_TOKEN_EXPIRATION=${ACCESS_TOKEN_EXPIRATION}
+      - REFRESH_TOKEN_EXPIRATION=${REFRESH_TOKEN_EXPIRATION}
+      
+      # Google OAuth
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
+
+      # AI
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+
+
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - VITE_API_URL=${VITE_API_URL}
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+        - VITE_GOOGLE_REDIRECT_URI=${VITE_GOOGLE_REDIRECT_URI}
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend

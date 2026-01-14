@@ -18,6 +18,8 @@ async function bootstrap() {
       transform: true, // Tự động chuyển đổi kiểu dữ liệu
     }),
   );
-  await app.listen(process.env.PORT ?? 3000);
+  const port = process.env.BACKEND_PORT || process.env.PORT || 3000;
+
+  await app.listen(port);
 }
 bootstrap();
