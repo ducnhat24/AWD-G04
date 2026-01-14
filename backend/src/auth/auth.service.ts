@@ -120,7 +120,8 @@ export class AuthService {
         },
       );
 
-      const { access_token, refresh_token, id_token } = googleRes.data as GoogleTokenResponse;
+      const googleData = googleRes.data as GoogleTokenResponse;
+      const { access_token, refresh_token, id_token } = googleData;
 
       // Decode id_token để lấy info user
       const googleUser = jwtDecode<GoogleUser>(id_token);
@@ -135,7 +136,7 @@ export class AuthService {
 
       if (linkedAccount) {
         // Case A: Đã link trước đó -> Lấy user ra
-        const userId = linkedAccount.user as any;
+        const userId = linkedAccount.user as unknown as Types.ObjectId;
         user = await this.userService.findById(userId.toString());
 
         await this.linkedAccountRepository.updateTokens(
