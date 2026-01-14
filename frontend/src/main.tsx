@@ -8,6 +8,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { createIDBPersister } from "./lib/persister";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { NetworkStatus } from "./components/common/NetworkStatus";
 
 // Hàm khởi tạo Mocking
 // async function enableMocking() {
@@ -59,6 +60,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         client={queryClient}
         persistOptions={{ persister }}
       >
+        <NetworkStatus />
         <App />
         <Toaster />
       </PersistQueryClientProvider>
