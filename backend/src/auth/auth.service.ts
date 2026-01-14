@@ -120,10 +120,10 @@ export class AuthService {
         },
       );
 
-      const googleData: GoogleTokenResponse = googleRes.data as GoogleTokenResponse;
-      const access_token: string = googleData.access_token;
-      const refresh_token: string | undefined = googleData.refresh_token;
-      const id_token: string = googleData.id_token;
+      const googleData = googleRes.data as GoogleTokenResponse;
+      const access_token = googleData.access_token as string;
+      const refresh_token = googleData.refresh_token as string | undefined;
+      const id_token = googleData.id_token as string;
 
       // Decode id_token để lấy info user
       const googleUser = jwtDecode<GoogleUser>(id_token);
@@ -179,10 +179,11 @@ export class AuthService {
         .catch((err) => console.error(`[Initial Sync] Error:`, err));
 
       return this.generateTokens(user);
-    } catch (error: any) {
-      const errorResponse = (error?.response ?? {}) as { status?: any; data?: any };
-      const errorStatus = errorResponse.status as number | undefined;
-      const errorData = errorResponse.data as any;
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number; data?: any } };
+      const errorResponse = err.response;
+      const errorStatus = errorResponse?.status;
+      const errorData = errorResponse?.data;
       console.error('============ GOOGLE ERROR LOG ============');
       console.error('Status:', errorStatus);
       console.error('Data:', JSON.stringify(errorData));
