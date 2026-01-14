@@ -412,7 +412,7 @@ export class GmailIntegrationService {
       `;
             const fullBody = `${body}${forwardedHeader}${originalMsg.body}`;
 
-            const rawMessage = this.createRawMessage(to, subject, fullBody as string);
+            const rawMessage = this.createRawMessage(to, subject, fullBody);
 
             const response = await gmail.users.messages.send({
                 userId: 'me',

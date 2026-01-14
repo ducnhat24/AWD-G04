@@ -180,9 +180,9 @@ export class AuthService {
 
       return this.generateTokens(user);
     } catch (error: any) {
-      const errorResponse: any = error?.response ?? {};
-      const errorStatus: any = errorResponse?.status;
-      const errorData: any = errorResponse?.data;
+      const errorResponse = (error?.response ?? {}) as { status?: any; data?: any };
+      const errorStatus = errorResponse.status as number | undefined;
+      const errorData = errorResponse.data as any;
       console.error('============ GOOGLE ERROR LOG ============');
       console.error('Status:', errorStatus);
       console.error('Data:', JSON.stringify(errorData));

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MailService } from '../mail/mail.service';
 import { SnoozeLogRepository } from './snooze-log.repository';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class SnoozeLogService {
@@ -71,7 +72,7 @@ export class SnoozeLogService {
     for (const log of dueEmails) {
       try {
         await this.mailService.modifyEmail(log.userId as string, log.messageId as string, ['INBOX'], []);
-        await this.snoozeLogRepository.markProcessed(log._id as any);
+        await this.snoozeLogRepository.markProcessed(log._id as Types.ObjectId);
 
         this.logger.log(`Woke up email ${log.messageId} for user ${log.userId}`);
       } catch (error) {
