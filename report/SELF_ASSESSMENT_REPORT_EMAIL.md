@@ -8,9 +8,9 @@ GitHub repo URL: https://github.com/ducnhat24/AWD-G04
 
 | Student ID | Full name | Git account | Contribution | Contribution percentage (100% total) | Expected total points | Final total points |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
-| 22120252 | Giang Đức Nhật | ducnhat24 | BE:<br>- Google OAuth 2.0 integration <br>- Email Synchronization <br>- Snooze Mechanism<br>- AI Features<br>- Search Features<br> -  Filtering & Sorting <br> - Email Actions| 33% | 10 |  |
-| 22120427 | Nguyễn Mạnh Văn | nmvan | FE:<br> - Email Display <br> - Kanban Board Interface <br>- Snooze Mechanism <br> -  Search & Sort & Filter Email UI <br> - Email Action <br> - UI AI summary <br> - Mockdata Email | 33% | 10 |  |
-| 22120450 | Bùi Đình Gia Vỹ | VyBui13 | BE: <br>- Authentication & Token Management<br> FE:<br>- Concurrency handling<br>- Login Page <br>- Signup Page <br>- Dynamic Kanban Configuration  | 34% | 10 |  |
+| 22120252 | Giang Đức Nhật | ducnhat24 | **BE:**<br>- Google OAuth 2.0 integration <br>- Email Synchronization <br>- Snooze Mechanism<br>- AI Features<br>- Search Features<br> -  Filtering & Sorting <br> - Email Actions| 33.3% | 10 |  |
+| 22120427 | Nguyễn Mạnh Văn | nmvan | **FE:**<br> - Email Display <br> - Kanban Board Interface <br>- Snooze Mechanism <br> -  Search & Sort & Filter Email UI <br> - Email Action <br> - UI AI summary <br> - Mockdata Email | 33.3% | 10 |  |
+| 22120450 | Bùi Đình Gia Vỹ | VyBui13 | **BE:** <br>- Authentication & Token Management<br> **FE:**<br>- Concurrency handling<br>- Login Page <br>- Signup Page <br>- Dynamic Kanban Configuration  | 33.4% | 10 |  |
 
 # **FEATURE LIST**
 
@@ -72,21 +72,21 @@ Students must input minus points to every uncompleted feature in the SE column.
 |  | › Vector database storage | \-0.5 | 0 |  | Store embeddings in MongoDB Atlas Vector Search with vector index for similarity search |
 | **7** | **Search Features** |  |  |  |  |
 |  | Fuzzy Search (Backend) **chưa integrate đúng cách**|  |  |  |  |
-|  | › Typo tolerance | \-0.5 |  |  | "marketng" finds "marketing" |
-|  | › Partial matches | \-0.5 |  |  | "Nguy" finds "Nguyen Van A" |
-|  | › Relevance ranking | \-0.25 |  |  | Best matches ranked first |
+|  | › Typo tolerance | \-0.5 | 0 |  | "marketng" finds "marketing" |
+|  | › Partial matches | \-0.5 | 0 |  | "Nguy" finds "Nguyen Van A" |
+|  | › Relevance ranking | \-0.25 | 0 |  | Best matches ranked first |
 |  | Fuzzy Search UI (Frontend) |  |  |  |  |
-|  | › Search bar integration | \-0.25 |  |  | Search bar in header/main UI |
-|  | › Search results as cards | \-0.25 |  |  | Results displayed as email cards with sender, subject, snippet |
-|  | › Loading/empty/error states | \-0.25 |  |  | Handle UX states properly |
-|  | › Navigation back to main view | \-0.25 |  |  | Clear way to return to Kanban view |
+|  | › Search bar integration | \-0.25 | 0 |  | Search bar in header/main UI |
+|  | › Search results as cards | \-0.25 | 0 |  | Results displayed as email cards with sender, subject, snippet |
+|  | › Loading/empty/error states | \-0.25 | 0 |  | Handle UX states properly |
+|  | › Navigation back to main view | \-0.25 | 0 |  | Clear way to return to Kanban view |
 |  | Semantic Search |  |  |  |  |
-|  | › Conceptual relevance search | \-0.5 |  |  | Query "money" finds "invoice", "price", "salary" |
-|  | › Semantic search API endpoint | \-0.25 |  |  | POST /api/search/semantic endpoint |
+|  | › Conceptual relevance search | \-0.5 | 0 |  | Query "money" finds "invoice", "price", "salary" |
+|  | › Semantic search API endpoint | \-0.25 | 0 |  | POST /api/search/semantic endpoint |
 |  | Search Auto-Suggestion |  |  |  |  |
-|  | › Type-ahead dropdown | \-0.25 |  |  | Dropdown appears while typing with 3-5 suggestions |
-|  | › Suggestions from contacts/keywords | \-0.25 |  |  | Suggestions populated from sender names, subject keywords |
-|  | › Trigger search on selection | \-0.25 |  |  | Clicking suggestion triggers semantic search |
+|  | › Type-ahead dropdown | \-0.25 |  |  | Dropdown appears while typing with **3-5 suggestions** <br>Note: **Type-ahead suggestion khác Suggestion từ keyword / sender nha ae** |
+|  | › Suggestions from contacts/keywords | \-0.25 |  |  | Suggestions populated from **sender names**, subject keywords |
+|  | › Trigger search on selection | \-0.25 | 0 |  | Clicking suggestion triggers semantic search |
 | **8** | **Filtering & Sorting** |  |  |  |  |
 |  | Sort by date (newest/oldest) | \-0.25 |  |  | At least two sorting options **(chưa có ở Email dạng list)**|
 |  | Filter by unread | \-0.25 |  |  | Show only unread emails **(chưa có ở Email dạng list)**|
@@ -114,9 +114,9 @@ Students must input minus points to every uncompleted feature in the SE column.
 
 | Avatar | Username | Commits | Additions | Deletions |
 | :---- | :---- | :---- | :---- | :---- |
-|  | ducnhat24 | 39 | 27267 | 2636 |
-|  | nmvan | 43 | 4721 | 2200 |
-|  | VyBui13 | 15 | 8015 | 4887 |
+| ![center](./assets/ducnhat24.JPG) | ducnhat24 | 39 | 27267 | 2636 |
+| ![center](./assets/nmvan.png) | nmvan | 43 | 4721 | 2200 |
+| ![center](./assets/VyBui13.JPG) | VyBui13 | 15 | 8015 | 4887 |
 
 ## **Commits**
 
@@ -155,20 +155,30 @@ Students must input minus points to every uncompleted feature in the SE column.
 ## API Endpoints
 | Endpoint | Description |
 | :---- | :---- |
-| POST /api/auth/google/callback | Exchange Google auth code for tokens |
-| POST /api/auth/logout | Clear all tokens and logout |
-| GET /api/mailboxes | List Gmail labels/folders |
-| GET /api/mailboxes/:id/emails | List emails in mailbox with pagination |
-| GET /api/emails/:id | Get email detail |
-| POST /api/emails/send | Send new email |
-| POST /api/emails/:id/reply | Reply to email |
-| POST /api/emails/:id/modify | Mark read/unread, star, delete |
-| GET /api/attachments/:id | Stream attachment |
-| POST /api/search/fuzzy | Fuzzy search emails |
-| POST /api/search/semantic | Semantic search with embeddings |
-| GET /api/kanban/columns | Get Kanban column configuration |
-| POST /api/kanban/columns | Create/update columns |
-| POST /api/emails/:id/snooze | Snooze email |
+| **Auth** | |
+| POST /auth/login | Đăng nhập hệ thống (trả về Access Token & User Info). |
+| **Search Features** | |
+| GET /mail/search | Fuzzy Search: Tìm kiếm email theo từ khóa (Subject, Sender) dùng Fuse.js. |
+| POST /mail/search/semantic | Semantic Search: Tìm kiếm email theo ngữ nghĩa dùng Vector Search (Gemini embedding). |
+| GET /mail/suggestions | Auto-suggestion: Gợi ý từ khóa/người gửi khi user đang nhập liệu. |
+| **Mail Operations** | |
+| GET /mail/mailboxes | Lấy danh sách các hộp thư (Inbox, Sent, Drafts, Trash...). |
+| GET /mail/mailboxes/:labelId/emails | Lấy danh sách email trong một hộp thư cụ thể (có phân trang). |
+| GET /mail/emails/:id | Lấy chi tiết nội dung của một email. |
+| GET /mail/emails/:id/summary | AI Summary: Lấy tóm tắt nội dung email do AI tạo ra. |
+| POST /mail/send | Gửi email mới. |
+| POST /mail/emails/:id/reply | Trả lời (Reply) một email. |
+| POST /mail/emails/:id/forward | Chuyển tiếp (Forward) một email. |
+| POST /mail/emails/:id/modify | Thay đổi trạng thái email (Đánh dấu đã đọc, Xóa, Gán nhãn...). |
+| GET /mail/attachments/:msgId/:attId | Tải xuống file đính kèm của email. |
+| **Kanban Configuration** | |
+| GET /kanban/config | Lấy cấu hình bảng Kanban cá nhân của user (danh sách cột, màu sắc, label mapping). |
+| POST /kanban/config | Khởi tạo cấu hình Kanban mới (thường gọi khi user lần đầu vào Dashboard). |
+| PUT /kanban/config | Cập nhật toàn bộ cấu hình Kanban (ví dụ: thay đổi thứ tự các cột, đổi tên nhiều cột cùng lúc). |
+| DELETE /kanban/config | Xóa cấu hình Kanban hiện tại (Reset về mặc định). |
+| PATCH /kanban/config/column/:id | Cập nhật thông tin chi tiết của một cột cụ thể (đổi tên cột, đổi màu, đổi Gmail Label liên kết). |
+| DELETE /kanban/config/column/:id | Xóa một cột cụ thể khỏi bảng Kanban. |
+
 
 ## Key User Flows
 1. **Authentication:** Google Sign-In → Backend token exchange → Session created → Redirect to Kanban
