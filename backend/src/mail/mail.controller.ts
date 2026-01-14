@@ -155,7 +155,7 @@ export class MailController {
   }
 
   @Post('search/semantic')
-  async searchSemantic(@Req() req: AuthRequest, @Body('query') query: string) {
+  async searchSemantic(@Req() req: AuthRequest, @Body('query') query: string): Promise<any[]> {
     // 👇 Hãy chắc chắn bạn dùng .userId (String) thay vì ._id
     const userId = req.user.userId || req.user._id;
     console.log('User ID from Token:', userId);

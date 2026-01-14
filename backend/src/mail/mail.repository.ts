@@ -1,7 +1,7 @@
 // backend/src/mail/mail.repository.ts
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, FilterQuery, AnyBulkWriteOperation } from 'mongoose';
 import { EmailMetadata, EmailMetadataDocument } from './entities/email-metadata.schema';
 import { EmailSummary, EmailSummaryDocument } from './entities/email-summary.schema';
 
@@ -29,9 +29,9 @@ export class MailRepository {
     /**
      * Lưu hàng loạt email (Bulk upsert)
      */
-    async bulkUpsertEmails(operations: any[]) {
+    async bulkUpsertEmails(operations: AnyBulkWriteOperation<EmailMetadataDocument>[]) {
         if (operations.length === 0) return;
-        return this.emailMetadataModel.bulkWrite(operations as any);
+        return this.emailMetadataModel.bulkWrite(operations);
     }
 
     /**
@@ -59,8 +59,8 @@ export class MailRepository {
             dateTo?: Date;
         },
         limit: number = 20,
-    ): Promise<any[]> {
-        const query: any = { userId };
+    ): Promise<EmailMetadataDocument[]> {
+        const query: FilterQuery<EmailMetadataDocument> = { userId };
 
         if (filters.labelId) {
             query.labelIds = filters.labelId;
@@ -89,7 +89,7 @@ export class MailRepository {
             .sort({ date: -1 })
             .limit(limit)
             .lean()
-            .exec();
+            .exec() as Promise<EmailMetadataDocument[]>;
     }
 
     // ==================== EMAIL SUMMARY ====================
@@ -98,7 +98,7 @@ export class MailRepository {
      * Tìm summary đã cache
      */
     async findSummaryByMessageId(messageId: string): Promise<EmailSummaryDocument | null> {
-        return this.emailSummaryModel.findOne({ messageId: messageId as any }).exec();
+        return this.emailSummaryModel.findOne({ messageId }).exec();
     }
 
     /**

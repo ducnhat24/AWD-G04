@@ -31,10 +31,10 @@ export class KanbanService {
     let config = await this.kanbanModel.findOne({ userId });
 
     // Helper sinh cột có UUID
-    const processColumns = (cols: any[]): any[] => {
+    const processColumns = (cols: { id?: string;[key: string]: any }[]) => {
       return cols.map((col: any) => ({
         ...col,
-        id: String(col.id || uuidv4()) // Nếu Frontend không gửi ID, Backend tự sinh
+        id: col.id || uuidv4() // Nếu Frontend không gửi ID, Backend tự sinh
       }));
     };
 
@@ -77,10 +77,13 @@ export class KanbanService {
     // Update chính xác phần tử đó trong mảng
 
     // Tạo object update dynamic (chỉ update những field gửi lên)
-    const updateFields = {};
+    const updateFields: Record<string, any> = {};
     for (const key in updateDto) {
-      if (updateDto[key] !== undefined) {
-        updateFields[`columns.$.${key}`] = updateDto[key];
+      if (Object.prototype.hasOwnProperty.call(updateDto, key)) {
+        const typedKey = key as keyof UpdateColumnDto;
+        if (updateDto[typedKey] !== undefined) {
+          updateFields[`columns.$.${key}`] = updateDto[typedKey];
+        }
       }
     }
 
