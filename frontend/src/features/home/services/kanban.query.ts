@@ -13,10 +13,12 @@ export const useGetKanbanConfigQuery = () => {
   return useQuery({
     queryKey: [KANBAN_KEYS.CONFIG],
     queryFn: async () => {
-      // Simulate API call delay
       const res = await getKanbanConfig();
       return res.columns;
     },
+    // [THÊM] Cache config khi offline
+    networkMode: "offlineFirst",
+    staleTime: 1000 * 60 * 60, // Config ít thay đổi, để cache lâu chút
   });
 };
 
@@ -28,7 +30,7 @@ export const useKanbanColumnData = (column: KanbanColumnConfig) => {
     queryKey: [KANBAN_KEYS.DETAIL, column.id, column.gmailLabelId],
 
     queryFn: async ({ pageParam = 1 }) => {
-      // Logic riêng cho cột Snoozed (nếu backend xử lý riêng)
+      // Logic riêng cho cột Snoozed
       if (column.gmailLabelId === "SNOOZED") {
         console.log("Fetching snoozed emails, pageParam:", pageParam);
         return fetchSnoozedEmails(pageParam as number, limit);
@@ -44,5 +46,10 @@ export const useKanbanColumnData = (column: KanbanColumnConfig) => {
     initialPageParam: 1 as string | number,
     refetchInterval: 60000,
     refetchOnWindowFocus: false,
+
+    // [THÊM QUAN TRỌNG] Hỗ trợ Offline
+    networkMode: "offlineFirst", // Ưu tiên cache, không báo lỗi ngay khi mất mạng
+    refetchOnReconnect: true, // Tự động fetch lại khi có mạng
+    staleTime: 1000 * 60 * 5, // Giữ cache trong 5 phút
   });
 };

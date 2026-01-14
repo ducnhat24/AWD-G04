@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { ArrowUpDown } from "lucide-react";
 import { useKanban } from "@/contexts/KanbanContext";
@@ -7,7 +7,11 @@ import type { KanbanColumnConfig } from "../types/kanban.type";
 import { useKanbanDelete } from "../hooks/useKanbanDelete";
 import { LoadingOverlay } from "@/components/common/LoadingOverlay";
 
-// Props mới: Board chỉ quan tâm đến Cấu hình
+// [THÊM] Import QueryClient
+import { useQueryClient } from "@tanstack/react-query";
+import { KANBAN_KEYS } from "../services/kanban.query";
+import { toast } from "sonner";
+
 interface KanbanBoardProps {
   columns: KanbanColumnConfig[];
 }
@@ -20,6 +24,23 @@ export function KanbanBoard({ columns }: KanbanBoardProps) {
 
   const { isDeletingColumn, handlers } = useKanbanDelete();
 
+  // [THÊM] Setup QueryClient để reload khi có mạng
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const handleOnline = () => {
+      console.log("🔌 Kanban: Network back! Refreshing board...");
+      toast.success("Đã kết nối lại. Đang cập nhật bảng...");
+
+      // Invalidate toàn bộ dữ liệu chi tiết của các cột (kanban_detail)
+      // Không cần invalidate config vì config ít khi thay đổi
+      queryClient.invalidateQueries({ queryKey: [KANBAN_KEYS.DETAIL] });
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, [queryClient]);
+
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
     if (!destination) return;
@@ -29,8 +50,12 @@ export function KanbanBoard({ columns }: KanbanBoardProps) {
     ) {
       return;
     }
-    // destination.droppableId chính là column.id
-    onMoveEmail(draggableId, source.droppableId, destination.droppableId);
+
+    // draggableId có thể là "emailId" hoặc "emailId::columnId" tùy cách bạn render Card
+    // Cần đảm bảo lấy đúng ID
+    const emailId = draggableId.split("::")[0];
+
+    onMoveEmail(emailId, source.droppableId, destination.droppableId);
   };
 
   return (
@@ -74,7 +99,6 @@ export function KanbanBoard({ columns }: KanbanBoardProps) {
 
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex h-full gap-6 p-6 overflow-x-auto bg-background/50 items-start">
-          {/* Render các cột dựa trên Config từ Server */}
           {columns.map((col) => (
             <KanbanColumnContainer
               key={col.id}
