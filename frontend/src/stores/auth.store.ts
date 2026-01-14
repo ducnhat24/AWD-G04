@@ -4,6 +4,8 @@ import { devtools } from "zustand/middleware";
 import { fetchUserProfile, type UserProfile } from "@/services/user.service";
 import { refreshAccessToken } from "@/features/auth/services/auth.api";
 
+export const authChannel = new BroadcastChannel("auth_sync_channel");
+
 interface AuthState {
   // State
   accessToken: string | null;
@@ -17,7 +19,7 @@ interface AuthState {
     refreshToken: string,
     provider: "local" | "google"
   ) => Promise<void>; // Chuyển thành async để component có thể await
-  logout: () => void;
+  logout: (fromRemote?: boolean) => void;
   initializeAuth: () => Promise<void>;
   fetchUser: () => Promise<void>;
 }
@@ -43,7 +45,7 @@ export const useAuthStore = create<AuthState>()(
       await get().fetchUser();
     },
 
-    logout: () => {
+    logout: (fromRemote = false) => {
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("authProvider");
 
@@ -51,8 +53,13 @@ export const useAuthStore = create<AuthState>()(
         accessToken: null,
         user: null,
         authProvider: null,
-        isLoading: false, // Logout xong thì chắc chắn không còn loading
+        isLoading: false,
       });
+
+      // Chỉ gửi tín hiệu nếu logout chủ động (không phải do nhận tín hiệu từ tab khác)
+      if (!fromRemote) {
+        authChannel.postMessage("LOGOUT");
+      }
     },
 
     fetchUser: async () => {

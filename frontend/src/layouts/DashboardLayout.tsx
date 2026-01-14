@@ -57,7 +57,7 @@ export function DashboardLayout({
         />
         <div className="p-4 border-t bg-muted/20">
           <button
-            onClick={logout}
+            onClick={() => logout()}
             className="text-sm font-medium text-red-600 hover:underline cursor-pointer"
           >
             Sign out
