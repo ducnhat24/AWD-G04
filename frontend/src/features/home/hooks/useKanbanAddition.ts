@@ -15,7 +15,7 @@ const formSchema = z.object({
 
 export const useKanbanAddition = () => {
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema) as any,
+    resolver: zodResolver(formSchema),
     mode: "onChange",
     defaultValues: {
       title: "",

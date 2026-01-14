@@ -26,7 +26,7 @@ interface AuthRequest {
 @Controller('mail')
 @UseGuards(JwtAuthGuard) // Bảo vệ toàn bộ endpoint, bắt buộc phải login
 export class MailController {
-  constructor(private readonly mailService: MailService) { }
+  constructor(private readonly mailService: MailService) {}
 
   // Tìm kiếm Email (Fuzzy Search)
   @Get('search')
@@ -143,7 +143,10 @@ export class MailController {
   }
 
   @Get('emails/:id/summary')
-  async getEmailSummary(@Req() req: AuthRequest, @Param('id') messageId: string) {
+  async getEmailSummary(
+    @Req() req: AuthRequest,
+    @Param('id') messageId: string,
+  ) {
     const summary = await this.mailService.summarizeEmail(
       req.user._id,
       messageId,
@@ -155,7 +158,10 @@ export class MailController {
   }
 
   @Post('search/semantic')
-  async searchSemantic(@Req() req: AuthRequest, @Body('query') query: string): Promise<any[]> {
+  async searchSemantic(
+    @Req() req: AuthRequest,
+    @Body('query') query: string,
+  ): Promise<any[]> {
     // 👇 Hãy chắc chắn bạn dùng .userId (String) thay vì ._id
     const userId = req.user.userId || req.user._id;
     console.log('User ID from Token:', userId);

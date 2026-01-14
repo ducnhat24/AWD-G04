@@ -8,10 +8,12 @@ import { SnoozeLogRepository } from './snooze-log.repository';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: SnoozeLog.name, schema: SnoozeLogSchema }]),
+    MongooseModule.forFeature([
+      { name: SnoozeLog.name, schema: SnoozeLogSchema },
+    ]),
     MailModule,
   ],
   controllers: [SnoozeLogController],
   providers: [SnoozeLogService, SnoozeLogRepository],
 })
-export class SnoozeLogModule { }
+export class SnoozeLogModule {}

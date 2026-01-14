@@ -2,8 +2,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, FilterQuery, AnyBulkWriteOperation } from 'mongoose';
-import { EmailMetadata, EmailMetadataDocument } from './entities/email-metadata.schema';
-import { EmailSummary, EmailSummaryDocument } from './entities/email-summary.schema';
+import {
+    EmailMetadata,
+    EmailMetadataDocument,
+} from './entities/email-metadata.schema';
+import {
+    EmailSummary,
+    EmailSummaryDocument,
+} from './entities/email-summary.schema';
 
 @Injectable()
 export class MailRepository {
@@ -29,7 +35,9 @@ export class MailRepository {
     /**
      * Lưu hàng loạt email (Bulk upsert)
      */
-    async bulkUpsertEmails(operations: AnyBulkWriteOperation<EmailMetadataDocument>[]) {
+    async bulkUpsertEmails(
+        operations: AnyBulkWriteOperation<EmailMetadataDocument>[],
+    ) {
         if (operations.length === 0) return;
         return this.emailMetadataModel.bulkWrite(operations);
     }
@@ -77,9 +85,11 @@ export class MailRepository {
         if (filters.dateFrom || filters.dateTo) {
             query.date = {};
             if (filters.dateFrom) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 query.date.$gte = filters.dateFrom;
             }
             if (filters.dateTo) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 query.date.$lte = filters.dateTo;
             }
         }
@@ -97,14 +107,20 @@ export class MailRepository {
     /**
      * Tìm summary đã cache
      */
-    async findSummaryByMessageId(messageId: string): Promise<EmailSummaryDocument | null> {
+    async findSummaryByMessageId(
+        messageId: string,
+    ): Promise<EmailSummaryDocument | null> {
         return this.emailSummaryModel.findOne({ messageId }).exec();
     }
 
     /**
      * Tạo summary mới
      */
-    async createSummary(messageId: string, summary: string, originalContentShort: string) {
+    async createSummary(
+        messageId: string,
+        summary: string,
+        originalContentShort: string,
+    ) {
         return this.emailSummaryModel.create({
             messageId,
             summary,

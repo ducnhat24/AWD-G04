@@ -36,23 +36,26 @@ export const fetchSnoozedEmails = async (
     const rawEmails = response.data || [];
     const meta = response.meta || {};
 
-    const emails: Email[] = rawEmails.map((item: any) => ({
-      id: item.id || item.messageId,
-      sender: item.sender || "Unknown",
-      senderEmail: item.sender || "",
-      recipient: "Me",
-      recipientEmail: "me@example.com",
-      subject: item.subject || "(No Subject)",
-      preview: item.snippet || "",
-      body: item.snippet || "",
-      timestamp: item.date || new Date().toISOString(),
-      isRead: true,
-      isStarred: false,
-      folder: "snoozed",
-      avatarColor: "bg-yellow-500",
-      attachments: [],
-      snoozeUntil: item.snoozeInfo?.wakeUpTime,
-    }));
+    const emails: Email[] = (rawEmails as unknown[]).map((item) => {
+      const emailItem = item as Record<string, unknown>;
+      return {
+        id: (emailItem.id || emailItem.messageId) as string,
+        sender: (emailItem.sender as string) || "Unknown",
+        senderEmail: (emailItem.sender as string) || "",
+        recipient: "Me",
+        recipientEmail: "me@example.com",
+        subject: (emailItem.subject as string) || "(No Subject)",
+        preview: (emailItem.snippet as string) || "",
+        body: (emailItem.snippet as string) || "",
+        timestamp: (emailItem.date as string) || new Date().toISOString(),
+        isRead: true,
+        isStarred: false,
+        folder: "snoozed",
+        avatarColor: "bg-yellow-500",
+        attachments: [],
+        snoozeUntil: (emailItem.snoozeInfo as Record<string, unknown> | undefined)?.wakeUpTime as string | undefined,
+      };
+    });
 
     const nextPageToken =
       rawEmails.length === limit

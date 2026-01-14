@@ -11,7 +11,7 @@ const getPersistedConfig = () => {
   return saved ? JSON.parse(saved) : INITIAL_KANBAN_CONFIG;
 };
 
-const saveConfig = (config: any) => {
+const saveConfig = (config: Record<string, unknown>) => {
   localStorage.setItem("kanban_config", JSON.stringify(config));
 };
 
@@ -62,7 +62,7 @@ export const handlers = [
   }),
 
   // 4. GET /mail/attachments/:emailId/:attachmentId
-  http.get(`${BASE_URL}/mail/attachments/:emailId/:attachmentId`, ({}) => {
+  http.get(`${BASE_URL}/mail/attachments/:emailId/:attachmentId`, () => {
     const authProvider = localStorage.getItem("authProvider");
     if (authProvider === "google") {
       return passthrough();

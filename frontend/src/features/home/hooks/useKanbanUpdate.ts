@@ -16,7 +16,7 @@ const formSchema = z.object({
 
 export const useKanbanUpdate = (config?: KanbanColumnConfig) => {
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema) as any,
+    resolver: zodResolver(formSchema),
     mode: "onChange",
     defaultValues: {
       title: config?.title,

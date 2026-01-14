@@ -26,7 +26,7 @@ export const fetchEmails = async (
   searchQuery?: string
 ): Promise<{ emails: Email[]; nextPageToken?: string }> => {
   const mappedLabel = folderId;
-  const params: any = { limit };
+  const params: Record<string, string | number> = { limit };
 
   if (typeof pageParam === "string") {
     params.pageToken = pageParam;
@@ -47,11 +47,12 @@ export const fetchEmails = async (
     if (Array.isArray(data)) {
       emails = data.map((e) => transformEmail(e, folderId));
     } else if (data && typeof data === "object") {
-      const rawEmails = (data as any).messages || (data as any).emails || [];
+      const dataObj = data as Record<string, unknown>;
+      const rawEmails = (dataObj.messages || dataObj.emails || []) as unknown[];
       if (Array.isArray(rawEmails)) {
-        emails = rawEmails.map((e: any) => transformEmail(e, folderId));
+        emails = rawEmails.map((e) => transformEmail(e, folderId));
       }
-      nextPageToken = (data as any).nextPageToken;
+      nextPageToken = dataObj.nextPageToken as string | undefined;
     }
 
     return { emails, nextPageToken };
@@ -72,9 +73,10 @@ export const searchEmails = async (query: string): Promise<Email[]> => {
     if (Array.isArray(data)) {
       emails = data.map((e) => transformEmail(e));
     } else if (data && typeof data === "object") {
-      const rawEmails = (data as any).messages || (data as any).emails || [];
+      const dataObj = data as Record<string, unknown>;
+      const rawEmails = (dataObj.messages || dataObj.emails || []) as unknown[];
       if (Array.isArray(rawEmails)) {
-        emails = rawEmails.map((e: any) => transformEmail(e));
+        emails = rawEmails.map((e) => transformEmail(e));
       }
     }
 

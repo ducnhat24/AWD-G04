@@ -32,7 +32,11 @@ export class GmailIntegrationService {
      * Tự động refresh token khi hết hạn
      */
     async getAuthenticatedClient(userId: string) {
-        const linkedAccount = await this.linkedAccountRepository.findByUserIdAndProvider(userId, 'google');
+        const linkedAccount =
+            await this.linkedAccountRepository.findByUserIdAndProvider(
+                userId,
+                'google',
+            );
 
         if (!linkedAccount) {
             throw new NotFoundException('Google account not linked');
@@ -89,6 +93,12 @@ export class GmailIntegrationService {
                     await this.createLabel(gmail, reqLabel);
                     hasNewLabels = true;
                 }
+            }
+
+            // Refresh labels if new ones were created
+            if (hasNewLabels) {
+                response = await gmail.users.labels.list({ userId: 'me' });
+                labels = response.data.labels || [];
             }
 
             if (hasNewLabels) {
@@ -167,7 +177,7 @@ export class GmailIntegrationService {
                         isStarred: labelIds.includes('STARRED'),
                         attachments: this.getAttachments(detail.data.payload),
                     };
-                } catch (err) {
+                } catch {
                     return null;
                 }
             });
@@ -358,7 +368,7 @@ export class GmailIntegrationService {
                 : inReplyTo;
 
             const fromValue = fromObj?.value || '';
-            const to = this.extractEmail(fromValue);
+            const to = this.extractEmail(String(fromValue));
 
             const rawMessage = this.createRawMessage(to, subject, body, {
                 'In-Reply-To': inReplyTo,
@@ -431,7 +441,11 @@ export class GmailIntegrationService {
     /**
      * Fetch emails từ Gmail với query string (dùng cho sync)
      */
-    async fetchEmailsWithQuery(userId: string, query: string, maxResults: number = 50) {
+    async fetchEmailsWithQuery(
+        userId: string,
+        query: string,
+        maxResults: number = 50,
+    ) {
         const auth = await this.getAuthenticatedClient(userId);
         const gmail = google.gmail({ version: 'v1', auth });
 
@@ -456,8 +470,7 @@ export class GmailIntegrationService {
                 const headers = detail.data.payload?.headers || [];
                 const subject =
                     headers.find((h) => h.name === 'Subject')?.value || '(No Subject)';
-                const from =
-                    headers.find((h) => h.name === 'From')?.value || 'Unknown';
+                const from = headers.find((h) => h.name === 'From')?.value || 'Unknown';
                 const dateStr = headers.find((h) => h.name === 'Date')?.value || '';
                 const date = new Date(dateStr);
                 const labelIds = detail.data.labelIds || [];
@@ -483,7 +496,7 @@ export class GmailIntegrationService {
                     isRead: !labelIds.includes('UNREAD'),
                     labelIds: labelIds,
                 };
-            } catch (e) {
+            } catch {
                 return null;
             }
         });
@@ -524,7 +537,7 @@ export class GmailIntegrationService {
                     sender: from,
                     date,
                 };
-            } catch (error) {
+            } catch {
                 this.logger.warn(`Email ${id} not found on Gmail (might be deleted)`);
                 return null;
             }
@@ -603,7 +616,7 @@ export class GmailIntegrationService {
     ): string {
         const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
 
-        let messageParts = [
+        const messageParts = [
             `To: ${to}`,
             `Subject: ${utf8Subject}`,
             'MIME-Version: 1.0',

@@ -6,7 +6,7 @@ import { GoogleLoginDto } from './dto/google-login.dto';
 
 @Controller('auth') // Endpoint sẽ là /auth
 export class AuthController {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
   @HttpCode(HttpStatus.OK) // Mặc định POST trả về 201, ta đổi về 200
   @Post('login')

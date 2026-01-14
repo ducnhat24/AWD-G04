@@ -1,4 +1,14 @@
-import { Controller, Post, Body, UseGuards, Req, Get, Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Req,
+  Get,
+  Query,
+  DefaultValuePipe,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { SnoozeLogService } from './snooze-log.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -12,7 +22,7 @@ interface AuthRequest {
 @Controller('snooze')
 @UseGuards(JwtAuthGuard)
 export class SnoozeLogController {
-  constructor(private readonly snoozeLogService: SnoozeLogService) { }
+  constructor(private readonly snoozeLogService: SnoozeLogService) {}
 
   @Post()
   async snooze(

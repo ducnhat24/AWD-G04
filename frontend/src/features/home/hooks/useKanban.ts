@@ -63,7 +63,7 @@ export function useKanbanConfig() {
     if (!hasSnoozed) {
       // Nếu chưa có, chèn cột Snoozed vào.
       // Ví dụ: Muốn chèn vào vị trí số 3 (index 2) hoặc cuối cùng
-      mergedColumns.push(SNOOZED_COLUMN_CONFIG as any);
+      mergedColumns.push(SNOOZED_COLUMN_CONFIG as KanbanColumnConfig);
 
       // Hoặc nếu muốn sort lại theo order:
       // mergedColumns.sort((a, b) => a.order - b.order);

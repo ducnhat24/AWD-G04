@@ -11,19 +11,24 @@ export class SnoozeLogService {
   constructor(
     private readonly snoozeLogRepository: SnoozeLogRepository,
     private readonly mailService: MailService,
-  ) { }
+  ) {}
 
   async snoozeEmail(userId: string, messageId: string, wakeUpTime: Date) {
     await this.mailService.modifyEmail(userId, messageId, [], ['INBOX']);
-    return this.snoozeLogRepository.createSnoozeLog(userId, messageId, wakeUpTime);
+    return this.snoozeLogRepository.createSnoozeLog(
+      userId,
+      messageId,
+      wakeUpTime,
+    );
   }
 
   async getSnoozedEmails(userId: string, page: number, limit: number) {
-    const { logs, total } = await this.snoozeLogRepository.findActiveByUserPaginated(
-      userId,
-      page,
-      limit,
-    );
+    const { logs, total } =
+      await this.snoozeLogRepository.findActiveByUserPaginated(
+        userId,
+        page,
+        limit,
+      );
 
     if (!logs.length) {
       return {
@@ -32,18 +37,21 @@ export class SnoozeLogService {
       };
     }
 
-    const messageIds: string[] = logs.map(log => log.messageId as string);
+    const messageIds: string[] = logs.map((log) => log.messageId as string);
 
-    const emailDetails = await this.mailService.getBasicEmailsDetails(userId, messageIds);
+    const emailDetails = await this.mailService.getBasicEmailsDetails(
+      userId,
+      messageIds,
+    );
 
-    const result = emailDetails.map(email => {
-      const log = logs.find(l => l.messageId === email.id);
+    const result = emailDetails.map((email) => {
+      const log = logs.find((l) => l.messageId === email.id);
       return {
         ...email,
         snoozeInfo: {
           wakeUpTime: log ? log.wakeUpTime : null,
           snoozeId: log ? log._id : null,
-        }
+        },
       };
     });
 
@@ -71,10 +79,17 @@ export class SnoozeLogService {
 
     for (const log of dueEmails) {
       try {
-        await this.mailService.modifyEmail(log.userId as string, log.messageId as string, ['INBOX'], []);
+        await this.mailService.modifyEmail(
+          log.userId as string,
+          log.messageId as string,
+          ['INBOX'],
+          [],
+        );
         await this.snoozeLogRepository.markProcessed(log._id as Types.ObjectId);
 
-        this.logger.log(`Woke up email ${log.messageId} for user ${log.userId}`);
+        this.logger.log(
+          `Woke up email ${log.messageId} for user ${log.userId}`,
+        );
       } catch (error) {
         this.logger.error(`Failed to wake up email ${log.messageId}`, error);
         // Có thể thêm logic retry hoặc đánh dấu ERROR tùy bạn

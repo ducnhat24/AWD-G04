@@ -25,7 +25,7 @@ const queryClient = new QueryClient({
     queries: {
       networkMode: "online", // Chỉ fetch khi online
 
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: Error) => {
         if (
           error?.message?.includes("fetch") ||
           error?.message?.includes("network")

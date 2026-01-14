@@ -30,6 +30,7 @@ import { useMailboxesQuery } from "@/features/emails/services/email.query";
 import { useKanbanUpdate } from "../hooks/useKanbanUpdate";
 import type { KanbanColumnConfig } from "../types/kanban.type";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const COLOR_OPTIONS = [
   { label: "Gray", value: "#6b7280" }, // gray-500
   { label: "Blue", value: "#3b82f6" }, // blue-500
@@ -55,7 +56,7 @@ export function UpdateColumnDialog({
 
   const { form, isUpdatingKanbanColumn, handlers } = useKanbanUpdate(config);
 
-  const onSubmit = async (values: any) => {
+  const onSubmit = async (values: { title: string; gmailLabelId: string; color: string; order: number }) => {
     await handlers.onSubmit(values);
     onOpenChange(false);
   };
@@ -105,7 +106,7 @@ export function UpdateColumnDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {mailboxesData.map((box: any) => {
+                      {mailboxesData.map((box: { id: string; label: string }) => {
                         console.log("Mailbox:", box);
                         return (
                           <SelectItem key={box.id} value={box.id}>

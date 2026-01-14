@@ -55,7 +55,10 @@ export const KanbanCard = memo(function KanbanCard({
     }).format(date);
   };
 
-  const renderCard = (provided?: any, snapshot?: any) => (
+  const renderCard = (
+    provided?: { innerRef: React.Ref<HTMLDivElement>; draggableProps: Record<string, unknown>; dragHandleProps: Record<string, unknown> },
+    snapshot?: { isDragging: boolean }
+  ) => (
     <div
       ref={provided?.innerRef}
       {...(provided?.draggableProps || {})}

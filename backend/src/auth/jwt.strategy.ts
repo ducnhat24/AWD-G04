@@ -38,7 +38,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     return {
       ...result,
-      userId: String((result._id as any)) // Quan trọng: chuyển ObjectId sang string
+      userId: String(result._id), // Quan trọng: chuyển ObjectId sang string
     };
   }
 }

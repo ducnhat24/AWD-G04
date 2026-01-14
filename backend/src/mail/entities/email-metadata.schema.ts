@@ -37,7 +37,7 @@ export class EmailMetadata {
   // Lưu vector 768 chiều (text-embedding-004)
   @Prop({
     type: [Number],
-    select: false // Không load mặc định để nhẹ query thường; index vector tạo trên Atlas
+    select: false, // Không load mặc định để nhẹ query thường; index vector tạo trên Atlas
   })
   embedding: number[];
 }

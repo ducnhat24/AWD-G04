@@ -23,13 +23,6 @@ interface GoogleUser {
   picture?: string;
 }
 
-interface GoogleJwtPayload {
-  sub: string;
-  email: string;
-  name: string;
-  picture: string;
-}
-
 interface JwtPayload {
   sub: string;
   email: string;
@@ -90,7 +83,10 @@ export class AuthService {
   }
 
   private async generateTokens(user: UserDocument) {
-    const payload = { email: user.email, sub: (user._id as Types.ObjectId).toString() };
+    const payload = {
+      email: user.email,
+      sub: (user._id as Types.ObjectId).toString(),
+    };
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload),
@@ -130,16 +126,20 @@ export class AuthService {
       const googleData = googleRes.data as GoogleTokenResponse;
 
       // Decode id_token để lấy info user
-      const googleUser = jwtDecode<GoogleJwtPayload>(googleData.id_token);
+      const googleUser = jwtDecode<GoogleUser>(googleData.id_token);
       const { sub: googleId, email, name, picture } = googleUser;
 
       const access_token = String(googleData.access_token);
-      const refresh_token = googleData.refresh_token ? String(googleData.refresh_token) : undefined;
 
-      let linkedAccount = await this.linkedAccountRepository.findByProviderAndId(
-        'google',
-        googleId,
-      );
+      const refresh_token = googleData.refresh_token
+        ? String(googleData.refresh_token)
+        : undefined;
+
+      const linkedAccount =
+        await this.linkedAccountRepository.findByProviderAndId(
+          'google',
+          googleId,
+        );
 
       let user: UserDocument | null = null;
 
@@ -158,7 +158,11 @@ export class AuthService {
         user = await this.userService.findByEmail(email);
 
         if (!user) {
-          user = await this.userService.createByGoogle(email, name, picture ?? '');
+          user = await this.userService.createByGoogle(
+            email,
+            name,
+            picture ?? '',
+          );
         }
 
         if (!user) {
@@ -166,7 +170,7 @@ export class AuthService {
         }
 
         await this.linkedAccountRepository.create({
-          user: user._id as any,
+          user: user._id as any, // Mongoose accepts ObjectId even though type says User
           provider: 'google',
           providerId: googleId,
           accessToken: access_token,
