@@ -178,9 +178,10 @@ export class AuthService {
 
       return this.generateTokens(user);
     } catch (error: any) {
+      const errorResponse = error?.response;
       console.error('============ GOOGLE ERROR LOG ============');
-      console.error('Status:', error.response?.status);
-      console.error('Data:', JSON.stringify(error.response?.data));
+      console.error('Status:', errorResponse?.status);
+      console.error('Data:', JSON.stringify(errorResponse?.data));
       console.error(
         'Config Redirect URI:',
         this.configService.get('GOOGLE_REDIRECT_URI'),

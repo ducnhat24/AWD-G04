@@ -130,7 +130,7 @@ export class MailService {
       originalMessageId,
       to,
       body,
-      this.getEmailDetail.bind(this),
+      this.getEmailDetail.bind(this) as any,
     );
   }
 

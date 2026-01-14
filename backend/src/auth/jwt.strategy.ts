@@ -31,14 +31,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       // Nếu không tìm thấy user (ví dụ: user đã bị xóa)
       throw new UnauthorizedException('User không tồn tại.');
     } // Best practice: Trả về thông tin user nhưng loại bỏ mật khẩu
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
     const userObj = user.toObject();
-    const { password, ...result } = userObj; // Đối tượng trả về từ đây sẽ được NestJS đính kèm vào request.user
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _password, ...result } = userObj; // Đối tượng trả về từ đây sẽ được NestJS đính kèm vào request.user
 
     return {
       ...result,
       userId: (result._id as any).toString() // Quan trọng: chuyển ObjectId sang string
-    };
+    } as any;
   }
 }

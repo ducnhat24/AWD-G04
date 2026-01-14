@@ -12,7 +12,7 @@ export class MailRepository {
         private readonly emailMetadataModel: Model<EmailMetadataDocument>,
         @InjectModel(EmailSummary.name)
         private readonly emailSummaryModel: Model<EmailSummaryDocument>,
-    ) {}
+    ) { }
 
     // ==================== EMAIL METADATA ====================
 
@@ -31,7 +31,7 @@ export class MailRepository {
      */
     async bulkUpsertEmails(operations: any[]) {
         if (operations.length === 0) return;
-        return this.emailMetadataModel.bulkWrite(operations);
+        return this.emailMetadataModel.bulkWrite(operations as any);
     }
 
     /**
@@ -98,7 +98,7 @@ export class MailRepository {
      * Tìm summary đã cache
      */
     async findSummaryByMessageId(messageId: string): Promise<EmailSummaryDocument | null> {
-        return this.emailSummaryModel.findOne({ messageId }).exec();
+        return this.emailSummaryModel.findOne({ messageId: messageId as any }).exec();
     }
 
     /**

@@ -52,7 +52,7 @@ export class GmailIntegrationService {
         // Auto-refresh tokens
         oauth2Client.on('tokens', async (tokens) => {
             if (tokens.access_token || tokens.refresh_token) {
-                const id = (linkedAccount as any)._id;
+                const id = (linkedAccount as any)._id as string;
                 await this.linkedAccountRepository.updateTokens(
                     id,
                     tokens.access_token || linkedAccount.accessToken,
@@ -557,7 +557,7 @@ export class GmailIntegrationService {
 
     private getBody(payload: any, mimeType: string): string | null {
         if (payload.mimeType === mimeType && payload.body?.data) {
-            return this.decodeBase64(payload.body.data);
+            return this.decodeBase64(payload.body.data as string);
         }
         if (payload.parts) {
             for (const part of payload.parts) {
