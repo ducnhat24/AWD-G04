@@ -33,7 +33,8 @@ export const useEmailListQuery = (
     initialPageParam: 1 as string | number,
     refetchOnWindowFocus: false,
     enabled: isEnabled,
-    refetchInterval: 60000,
+    staleTime: 1000 * 60 * 5,
+    networkMode: "offlineFirst",
   });
 };
 
@@ -43,6 +44,8 @@ export const useMailboxesQuery = () => {
     queryKey: EMAIL_KEYS.FOLDERS,
     queryFn: fetchMailboxes,
     refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 24 * 60, // 24 hours
+    networkMode: "offlineFirst",
   });
 };
 
@@ -53,6 +56,10 @@ export const useEmailDetailQuery = (emailId: string | null) => {
     queryFn: () => fetchEmailDetail(emailId!),
     enabled: !!emailId,
     refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 60 * 24,
+    networkMode: "offlineFirst",
+    retry: 0,
   });
 };
 
@@ -63,5 +70,6 @@ export const useSearchEmailsQuery = (searchQuery: string) => {
     queryFn: () => searchEmails(searchQuery),
     enabled: !!searchQuery,
     refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 60,
   });
 };
