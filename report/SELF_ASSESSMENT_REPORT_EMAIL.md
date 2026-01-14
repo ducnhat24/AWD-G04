@@ -102,11 +102,11 @@ Students must input minus points to every uncompleted feature in the SE column.
 |  | Delete emails | \-0.25 |  |  | **Move to trash via Gmail API** |
 | **10** | **Advanced features** |  |  |  |  |
 |  | Gmail Push Notifications | 0.25 |  |  | **Real-time inbox updates via Gmail watch + Pub/Sub** |
-|  | Multi-tab logout sync | 0.25 |  |  | **BroadcastChannel for logout sync across tabs** |
-|  | Offline caching | 0.25 |  |  | **IndexedDB + stale-while-revalidate for emails** |
-|  | Keyboard navigation | 0.25 |  |  | **Navigate emails with keyboard shortcuts** |
-|  | Dockerize your project | 0.25 |  |  | **Docker containers for backend, frontend** |
-|  | CI/CD | 0.25 |  |  | **Automated testing and deployment pipeline** |
+|  | Multi-tab logout sync | 0.25 |  |  | **BroadcastChannel for logout sync across tabs (chưa test)** |
+|  | Offline caching | 0.25 |  |  | **IndexedDB + stale-while-revalidate for emails (chưa test)** |
+|  | Keyboard navigation | 0.25 |  |  | **Navigate emails with keyboard shortcuts (chưa test)** |
+|  | Dockerize your project | 0.25 | 0.25 |  | Docker containers for backend, frontend |
+|  | CI/CD | 0.25 | 0.25 |  | Automated testing and deployment pipeline |
 
 # **GIT HISTORY**
 
