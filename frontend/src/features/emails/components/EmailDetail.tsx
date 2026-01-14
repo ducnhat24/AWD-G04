@@ -9,23 +9,30 @@ import {
   Paperclip,
   Download,
   Forward,
+  WifiOff,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchAttachment } from "@/features/emails/services/email.api";
 import { toast } from "sonner";
 import { SafeHTML } from "@/components/ui/SafeHTML";
 import { useAuthStore } from "@/stores/auth.store";
-import type { Attachment, Email } from "@/features/emails/types/email.type";
+import type { Attachment } from "@/features/emails/types/email.type";
+import { useEmailDetailQuery } from "../services/email.query"; // Import Hook
 
 interface EmailDetailProps {
-  email: Email | null;
+  emailId: string | null; // Đổi từ email object sang emailId
+  onClose: () => void; // Thêm hàm đóng (quan trọng cho mobile/dialog)
   onAction: (
     action: "toggleRead" | "delete" | "star" | "reply" | "forward"
   ) => void;
 }
 
-export function EmailDetail({ email, onAction }: EmailDetailProps) {
+export function EmailDetail({ emailId, onClose, onAction }: EmailDetailProps) {
   const user = useAuthStore((state) => state.user);
+
+  // 1. Gọi Hook để lấy dữ liệu (Tự động xử lý Cache & API)
+  const { data: email, isLoading, isError } = useEmailDetailQuery(emailId);
 
   const handleDownloadAttachment = async (attachment: Attachment) => {
     if (!email) return;
@@ -46,11 +53,12 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
       toast.success(`Downloaded ${attachment.filename}`);
     } catch (error) {
       console.error("Failed to download attachment", error);
-      toast.error("Failed to download attachment");
+      toast.error("Failed to download attachment. Check your connection.");
     }
   };
 
-  if (!email) {
+  // --- CASE 1: Chưa chọn Email ---
+  if (!emailId) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center text-muted-foreground">
         <div className="rounded-full bg-muted p-4 mb-4">
@@ -62,11 +70,67 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
     );
   }
 
+  // --- CASE 2: Đang tải ---
+  if (isLoading) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-8 text-muted-foreground">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+        <p>Loading email content...</p>
+      </div>
+    );
+  }
+
+  // --- CASE 3: LỖI (Mất mạng + Không có Cache) ---
+  // Đây là phần quan trọng giúp App không bị crash
+  if (isError || !email) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-6 text-center space-y-4 relative">
+        {/* Nút đóng cho trường hợp xem trên Dialog */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute right-4 top-4"
+          onClick={onClose}
+        >
+          <X className="size-5" />
+        </Button>
+
+        <div className="bg-red-100 p-4 rounded-full dark:bg-red-900/30">
+          <WifiOff className="w-10 h-10 text-red-500" />
+        </div>
+
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          Connection Failed
+        </h3>
+
+        <p className="text-gray-500 max-w-xs dark:text-gray-400">
+          Email này chưa được lưu offline. Vui lòng kết nối mạng để xem nội dung
+          chi tiết.
+        </p>
+
+        <Button onClick={onClose} variant="outline" className="mt-4">
+          Quay lại danh sách
+        </Button>
+      </div>
+    );
+  }
+
+  // --- CASE 4: HIỂN THỊ NỘI DUNG (Thành công) ---
   return (
     <div className="flex h-full flex-col">
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-2">
+          {/* Nút Back (cho mobile) */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={onClose}
+          >
+            <X className="size-4" />
+          </Button>
+
           <Button
             variant="ghost"
             size="icon"
@@ -117,21 +181,21 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      {/* Content Scrollable Area */}
+      <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-start gap-4">
             {/* Avatar Placeholder */}
             <div
-              className={`flex items-center justify-center size-10 rounded-full text-white font-bold ${
+              className={`flex items-center justify-center size-10 rounded-full text-white font-bold shrink-0 ${
                 email.avatarColor || "bg-gray-500"
               }`}
             >
-              {email.sender[0]}
+              {email.sender[0]?.toUpperCase()}
             </div>
             <div className="grid gap-1">
               <div className="font-semibold">{email.sender}</div>
-              <div className="line-clamp-1 text-xs text-muted-foreground">
+              <div className="line-clamp-1 text-xs text-muted-foreground break-all">
                 {email.senderEmail}
               </div>
               <div className="line-clamp-1 text-xs text-muted-foreground">
@@ -146,15 +210,17 @@ export function EmailDetail({ email, onAction }: EmailDetailProps) {
               </div>
             </div>
           </div>
-          <div className="text-xs text-muted-foreground">{email.timestamp}</div>
+          <div className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+            {email.timestamp}
+          </div>
         </div>
 
-        <h1 className="text-2xl font-bold mb-4">{email.subject}</h1>
+        <h1 className="text-2xl font-bold mb-4 break-words">{email.subject}</h1>
 
         {/* Email Body */}
         <SafeHTML
           html={email.body}
-          className="text-sm text-foreground max-w-none"
+          className="text-sm text-foreground max-w-none prose dark:prose-invert"
         />
 
         {/* Attachments */}
