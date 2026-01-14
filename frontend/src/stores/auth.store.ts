@@ -4,6 +4,8 @@ import { devtools } from "zustand/middleware";
 import { fetchUserProfile, type UserProfile } from "@/services/user.service";
 import { refreshAccessToken } from "@/features/auth/services/auth.api";
 
+export const authChannel = new BroadcastChannel("auth_sync_channel");
+
 interface AuthState {
   // State
   accessToken: string | null;
@@ -17,7 +19,7 @@ interface AuthState {
     refreshToken: string,
     provider: "local" | "google"
   ) => Promise<void>; // Chuyển thành async để component có thể await
-  logout: () => void;
+  logout: (fromRemote?: boolean) => void;
   initializeAuth: () => Promise<void>;
   fetchUser: () => Promise<void>;
 }
@@ -43,7 +45,7 @@ export const useAuthStore = create<AuthState>()(
       await get().fetchUser();
     },
 
-    logout: () => {
+    logout: (fromRemote = false) => {
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("authProvider");
 
@@ -51,8 +53,13 @@ export const useAuthStore = create<AuthState>()(
         accessToken: null,
         user: null,
         authProvider: null,
-        isLoading: false, // Logout xong thì chắc chắn không còn loading
+        isLoading: false,
       });
+
+      // Chỉ gửi tín hiệu nếu logout chủ động (không phải do nhận tín hiệu từ tab khác)
+      if (!fromRemote) {
+        authChannel.postMessage("LOGOUT");
+      }
     },
 
     fetchUser: async () => {
@@ -92,9 +99,30 @@ export const useAuthStore = create<AuthState>()(
           newRefreshToken,
           storedProvider || "local"
         );
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to restore session", error);
-        get().logout(); // Logout sẽ set isLoading: false
+
+        const isNetworkError = !error.response || error.code === "ERR_NETWORK";
+
+        if (isNetworkError) {
+          console.warn("Offline mode detected. Restoring session explicitly.");
+
+          // "Fake" trạng thái đăng nhập để qua mặt ProtectedRoute
+          // Token này không dùng được để gọi API (vì offline), nhưng đủ để render UI
+          set({
+            accessToken: "OFFLINE_ACCESS_TOKEN",
+            authProvider: storedProvider || "local",
+            isLoading: false,
+          });
+
+          // (Tuỳ chọn) Nếu bạn có lưu user info vào localStorage thì load lại ở đây
+          // set({ user: JSON.parse(localStorage.getItem("user") || "null") })
+
+          return; // Dừng hàm, KHÔNG gọi logout()
+        }
+
+        // Chỉ logout nếu lỗi từ server (Token sai/hết hạn)
+        get().logout();
       } finally {
         set({ isLoading: false });
       }

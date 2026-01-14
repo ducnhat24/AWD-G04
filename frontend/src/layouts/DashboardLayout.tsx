@@ -2,12 +2,13 @@
 import { useState, type ReactNode } from "react"; // Thêm useState
 import { Sidebar } from "@/components/common/Sidebar";
 import { cn } from "@/lib/utils";
-import { LogOut, Plus } from "lucide-react"; // Import Plus icon
-import { Button } from "@/components/ui/button";
+// import { LogOut, Plus } from "lucide-react"; // Import Plus icon
+// import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth.store";
 import { AddColumnDialog } from "@/features/home/components/AddColumnDialog";
-import { SearchBar } from "@/features/home/components/SearchBar";
-import { ThemeToggle } from "@/components/common/ThemeToggle";
+// import { SearchBar } from "@/features/home/components/SearchBar";
+// import { ThemeToggle } from "@/components/common/ThemeToggle";
+import { DashboardHeader } from "@/components/common/DashboardHeader";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -56,7 +57,7 @@ export function DashboardLayout({
         />
         <div className="p-4 border-t bg-muted/20">
           <button
-            onClick={logout}
+            onClick={() => logout()}
             className="text-sm font-medium text-red-600 hover:underline cursor-pointer"
           >
             Sign out
@@ -67,32 +68,12 @@ export function DashboardLayout({
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Bar */}
-        <header className="h-14 border-b flex items-center justify-between px-4 bg-background shrink-0 gap-4">
+        {/* <header className="h-14 border-b flex items-center justify-between px-4 bg-background shrink-0 gap-4">
           <div className="flex items-center gap-4 flex-1">
             <h2 className="font-semibold text-lg shrink-0">
               {viewMode === "list" ? "Search" : "Kanban Board"}
             </h2>
 
-            {/* Search Bar */}
-            {/* <div className="flex items-center gap-2 max-w-md w-full">
-              <Input
-                placeholder="Search emails..."
-                value={searchInput}
-                onChange={(e) => onSearchInputChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") onSearch();
-                }}
-                className="h-9"
-              />
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-9 w-9"
-                onClick={onSearch}
-              >
-                <Search className="w-4 h-4" />
-              </Button>
-            </div> */}
             <div className="flex items-center gap-2 max-w-md w-full">
               <SearchBar
                 initialValue={searchInput}
@@ -109,7 +90,6 @@ export function DashboardLayout({
           <div className="flex items-center gap-3">
             <ThemeToggle />
 
-            {/* --- NÚT ADD COLUMN (CHỈ HIỆN KHI VIEW KANBAN) --- */}
             {viewMode === "kanban" && (
               <Button
                 size="sm"
@@ -122,7 +102,7 @@ export function DashboardLayout({
               </Button>
             )}
 
-            {/* View Toggle Buttons */}
+
             <div className="flex items-center border rounded-lg p-1 bg-muted/20">
               <button
                 onClick={() => onViewModeChange("list")}
@@ -158,9 +138,17 @@ export function DashboardLayout({
               </button>
             )}
           </div>
-        </header>
+        </header> */}
+        <DashboardHeader
+          viewMode={viewMode}
+          onViewModeChange={onViewModeChange}
+          searchInput={searchInput}
+          onSearchInputChange={onSearchInputChange}
+          onSearch={onSearch}
+          onAddColumn={() => setIsAddColumnOpen(true)}
+          onLogout={logout}
+        />
 
-        {/* Content */}
         <div className="flex-1 flex overflow-hidden">{children}</div>
       </div>
 

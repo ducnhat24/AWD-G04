@@ -4,13 +4,13 @@ import {
   type InfiniteData,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { modifyEmail } from "@/services/email.service";
-import { snoozeEmail as apiSnoozeEmail } from "@/services/snooze.service";
+import { modifyEmail } from "@/features/emails/services/email.api";
+import { snoozeEmail as apiSnoozeEmail } from "@/features/emails/services/snooze.service";
 // Giả sử bạn đã có file này từ phần Kanban trước đó
-import type { Email } from "@/data/mockData";
 import type { KanbanColumnConfig } from "@/features/home/types/kanban.type";
 import { EMAIL_KEYS } from "./email.query";
 import { KANBAN_KEYS } from "@/features/home/services/kanban.query";
+import type { Email } from "../types/email.type";
 
 // Hook Modify Email (Move, Star, Read, Delete...)
 export const useModifyEmailMutation = (
@@ -108,7 +108,8 @@ export const useModifyEmailMutation = (
     },
 
     onError: (_err, _vars, context) => {
-      toast.error("Thao tác thất bại");
+      // toast.error("Thao tác thất bại");
+      console.log("Modify email failed:", _err);
       // Rollback data
       if (context?.previousEmails) {
         queryClient.setQueryData(context.listKey, context.previousEmails);
@@ -121,9 +122,10 @@ export const useModifyEmailMutation = (
       }
     },
 
-    onSettled: (data, error, vars) => {
-      console.log("Mutation settled:", { data, error, vars });
-      // Invalidate để fetch lại dữ liệu mới nhất từ server
+    onSuccess: (data, vars) => {
+      console.log("Mutation success:", { data, vars });
+
+      // CHỈ KHI THÀNH CÔNG MỚI ĐƯỢC INVALIDATE
       queryClient.invalidateQueries({ queryKey: EMAIL_KEYS.LIST });
       queryClient.invalidateQueries({ queryKey: [KANBAN_KEYS.DETAIL] });
 
@@ -193,7 +195,8 @@ export const useSnoozeEmailMutation = (
     },
 
     onError: (_err, _vars, context) => {
-      toast.error("Không thể hoãn email");
+      // toast.error("Không thể hoãn email");
+      console.log("Snooze email failed:", _err);
       // Rollback nếu lỗi
       if (context?.sourceKey && context.previousSource) {
         queryClient.setQueryData(context.sourceKey, context.previousSource);

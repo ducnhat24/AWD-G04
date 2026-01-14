@@ -1,7 +1,7 @@
 import { X, Loader2 } from "lucide-react";
 import { EmailDetail } from "./EmailDetail";
-import type { Email } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
+import type { Email } from "@/features/emails/types/email.type";
 
 interface EmailDetailDialogProps {
   isOpen: boolean;
@@ -47,7 +47,11 @@ export function EmailDetailDialog({
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : email ? (
-            <EmailDetail email={email} onAction={onAction} />
+            <EmailDetail
+              emailId={email.id}
+              onAction={onAction}
+              onClose={onClose}
+            />
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground">
               Select an email to view details

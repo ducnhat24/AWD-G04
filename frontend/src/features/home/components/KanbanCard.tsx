@@ -1,12 +1,12 @@
 import { useState, memo } from "react";
 import { Draggable } from "@hello-pangea/dnd";
 import { cva } from "class-variance-authority";
-import type { Email } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Clock, GripVertical, Maximize2 } from "lucide-react";
 import { SnoozeDialog } from "../../../components/common/SnoozeDialog";
 import { AISummaryWidget } from "../../../components/common/AISummaryWidget";
 import { useKanban } from "@/contexts/KanbanContext";
+import type { Email } from "@/features/emails/types/email.type";
 
 const cardVariants = cva(
   "rounded-lg border shadow-sm p-4 mb-3 select-none transition-all cursor-pointer bg-card text-card-foreground",
@@ -32,6 +32,7 @@ interface KanbanCardProps {
   email: Email;
   index: number;
   columnId?: string;
+  draggableId: string;
   isDraggable?: boolean;
 }
 
@@ -39,6 +40,7 @@ export const KanbanCard = memo(function KanbanCard({
   email,
   index,
   columnId,
+  draggableId,
   isDraggable = true,
 }: KanbanCardProps) {
   const [isSnoozeOpen, setIsSnoozeOpen] = useState(false);
@@ -164,7 +166,7 @@ export const KanbanCard = memo(function KanbanCard({
         onSnooze={(date) => onSnooze(email.id, date, columnId)}
       />
       {isDraggable ? (
-        <Draggable draggableId={email.id} index={index}>
+        <Draggable draggableId={draggableId} index={index}>
           {(provided, snapshot) => renderCard(provided, snapshot)}
         </Draggable>
       ) : (

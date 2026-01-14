@@ -7,12 +7,29 @@ import ProtectedRoute from "./components/ProtectRoute";
 import PublicRoute from "./components/PublicRoute";
 import NotFoundRedirect from "./components/NotFoundRoute";
 import GoogleCallback from "./features/google/pages/GoogleCallBack";
-import { useAuthStore } from "./stores/auth.store";
+import { authChannel, useAuthStore } from "./stores/auth.store";
 import { useThemeStore } from "./stores/theme.store";
 
 function App() {
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
+  const logout = useAuthStore((state) => state.logout);
   const theme = useThemeStore((state) => state.theme);
+
+  useEffect(() => {
+    const handleAuthSync = (event: MessageEvent) => {
+      if (event.data === "LOGOUT") {
+        console.log("Đồng bộ đăng xuất từ tab khác");
+        logout(true); // true = remote logout (không gửi lại tin nhắn)
+      }
+    };
+
+    console.log("Đăng ký lắng nghe kênh đồng bộ auth");
+    authChannel.onmessage = handleAuthSync;
+
+    return () => {
+      authChannel.onmessage = null;
+    };
+  }, [logout]);
 
   useEffect(() => {
     initializeAuth();

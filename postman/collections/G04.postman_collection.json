@@ -684,7 +684,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"query\": \"spotlights builders\"\r\n}",
+              "raw": "{\r\n  \"query\": \"attach file\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -756,12 +756,12 @@
   },
   "variable": [
     {
-      "id": "ed93a665-f72d-4ea3-9273-eff4b99df7ed",
+      "id": "6f6503f7-301e-4fe7-88b2-414f6295438e",
       "key": "base-path",
       "value": ""
     },
     {
-      "id": "86e144ae-1418-4457-8ff2-d20c266af829",
+      "id": "049d5e5d-c271-4eab-bd82-0928e90160e1",
       "key": "access_token",
       "value": "",
       "type": "default"
