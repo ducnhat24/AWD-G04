@@ -63,7 +63,7 @@ export const useSignUp = () => {
       });
       toast.success("Sign up successfully! Please log in.");
     } catch (error) {
-      handleErrorUi(error, toast.error, signUpForm);
+      handleErrorUi(error, toast.error, signUpForm as any);
     }
   };
 

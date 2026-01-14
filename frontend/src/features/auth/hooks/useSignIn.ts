@@ -39,7 +39,7 @@ export const useSignIn = () => {
       });
       toast.success("Sign in successfully!");
     } catch (error) {
-      handleErrorUi(error, toast.error, signInForm);
+      handleErrorUi(error, toast.error, signInForm as any);
     }
   };
 

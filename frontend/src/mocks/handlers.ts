@@ -11,7 +11,7 @@ const getPersistedConfig = () => {
   return saved ? JSON.parse(saved) : INITIAL_KANBAN_CONFIG;
 };
 
-const saveConfig = (config: Record<string, unknown>) => {
+const saveConfig = (config: any) => {
   localStorage.setItem("kanban_config", JSON.stringify(config));
 };
 
@@ -85,7 +85,7 @@ export const handlers = [
   }),
 
   http.put("/api/kanban/config", async ({ request }) => {
-    const newConfig = await request.json();
+    const newConfig = (await request.json()) as Record<string, unknown>;
     saveConfig(newConfig); // Lưu xuống storage
     return HttpResponse.json(newConfig);
   }),

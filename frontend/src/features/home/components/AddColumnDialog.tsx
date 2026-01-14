@@ -55,11 +55,6 @@ export function AddColumnDialog({
 
   const { form, isCreatingKanbanColumn, handlers } = useKanbanAddition();
 
-  const onSubmit = form.handleSubmit(async (values) => {
-    await handlers.onSubmit(values);
-    onOpenChange(false);
-  });
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -71,7 +66,10 @@ export function AddColumnDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(async (values) => {
+            await handlers.onSubmit(values);
+            onOpenChange(false);
+          })} className="space-y-4">
             {/* TITLE */}
             <FormField
               control={form.control}

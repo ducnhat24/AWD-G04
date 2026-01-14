@@ -28,24 +28,24 @@ export const transformEmail = (
     (backendEmail.to as string) || ""
   );
 
-  let isRead = backendEmail.isRead;
-  let isStarred = backendEmail.isStarred;
+  let isRead = backendEmail.isRead as boolean;
+  let isStarred = backendEmail.isStarred as boolean;
 
-  if (backendEmail.labelIds) {
-    isRead = !backendEmail.labelIds.includes("UNREAD");
-    isStarred = backendEmail.labelIds.includes("STARRED");
+  if (backendEmail.labelIds && Array.isArray(backendEmail.labelIds)) {
+    isRead = !(backendEmail.labelIds as string[]).includes("UNREAD");
+    isStarred = (backendEmail.labelIds as string[]).includes("STARRED");
   }
 
   return {
-    id: backendEmail.id,
+    id: (backendEmail.id as string) || "",
     sender,
     senderEmail,
     recipient,
     recipientEmail,
-    subject: backendEmail.subject || "(No Subject)",
-    preview: backendEmail.snippet || "",
-    body: backendEmail.body || "",
-    timestamp: backendEmail.date || "",
+    subject: (backendEmail.subject as string) || "(No Subject)",
+    preview: (backendEmail.snippet as string) || "",
+    body: (backendEmail.body as string) || "",
+    timestamp: (backendEmail.date as string) || "",
     isRead: isRead ?? true,
     isStarred: isStarred ?? false,
     folder: folderId,
@@ -55,9 +55,9 @@ export const transformEmail = (
         const attachment = att as Record<string, unknown>;
         return {
           id: (attachment.id || attachment._id || (attachment.body as Record<string, unknown>)?.attachmentId || attachment.attachmentId) as string,
-          filename: attachment.filename as string,
-          mimeType: attachment.mimeType as string,
-          size: (attachment.size || (attachment.body as Record<string, unknown>)?.size) as number | undefined,
+          filename: (attachment.filename as string) || "",
+          mimeType: (attachment.mimeType as string) || "",
+          size: ((attachment.size || (attachment.body as Record<string, unknown>)?.size) as number) || 0,
         };
       }),
   };

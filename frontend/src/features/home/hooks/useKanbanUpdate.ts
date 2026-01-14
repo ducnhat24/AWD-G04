@@ -7,6 +7,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { KanbanColumnConfig } from "../types/kanban.type";
 import { useEffect } from "react";
 
+interface ColumnFormData {
+  title: string;
+  gmailLabelId: string;
+  color: string;
+  order: number;
+}
+
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   gmailLabelId: z.string().min(1, "Gmail Label is required"),
@@ -15,8 +22,8 @@ const formSchema = z.object({
 });
 
 export const useKanbanUpdate = (config?: KanbanColumnConfig) => {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<ColumnFormData>({
+    resolver: zodResolver(formSchema) as any,
     mode: "onChange",
     defaultValues: {
       title: config?.title,
