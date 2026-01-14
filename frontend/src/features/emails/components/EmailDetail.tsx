@@ -11,6 +11,7 @@ import {
   Forward,
   WifiOff,
   X,
+  ExternalLink, // Import ExternalLink icon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchAttachment } from "@/features/emails/services/email.api";
@@ -18,11 +19,11 @@ import { toast } from "sonner";
 import { SafeHTML } from "@/components/ui/SafeHTML";
 import { useAuthStore } from "@/stores/auth.store";
 import type { Attachment } from "@/features/emails/types/email.type";
-import { useEmailDetailQuery } from "../services/email.query"; // Import Hook
+import { useEmailDetailQuery } from "../services/email.query";
 
 interface EmailDetailProps {
-  emailId: string | null; // Đổi từ email object sang emailId
-  onClose: () => void; // Thêm hàm đóng (quan trọng cho mobile/dialog)
+  emailId: string | null;
+  onClose: () => void;
   onAction: (
     action: "toggleRead" | "delete" | "star" | "reply" | "forward"
   ) => void;
@@ -31,7 +32,7 @@ interface EmailDetailProps {
 export function EmailDetail({ emailId, onClose, onAction }: EmailDetailProps) {
   const user = useAuthStore((state) => state.user);
 
-  // 1. Gọi Hook để lấy dữ liệu (Tự động xử lý Cache & API)
+  // 1. Hook to fetch data
   const { data: email, isLoading, isError } = useEmailDetailQuery(emailId);
 
   const handleDownloadAttachment = async (attachment: Attachment) => {
@@ -57,7 +58,7 @@ export function EmailDetail({ emailId, onClose, onAction }: EmailDetailProps) {
     }
   };
 
-  // --- CASE 1: Chưa chọn Email ---
+  // --- CASE 1: No Email Selected ---
   if (!emailId) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center text-muted-foreground">
@@ -70,7 +71,7 @@ export function EmailDetail({ emailId, onClose, onAction }: EmailDetailProps) {
     );
   }
 
-  // --- CASE 2: Đang tải ---
+  // --- CASE 2: Loading ---
   if (isLoading) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-muted-foreground">
@@ -80,12 +81,10 @@ export function EmailDetail({ emailId, onClose, onAction }: EmailDetailProps) {
     );
   }
 
-  // --- CASE 3: LỖI (Mất mạng + Không có Cache) ---
-  // Đây là phần quan trọng giúp App không bị crash
+  // --- CASE 3: Error (Offline & No Cache) ---
   if (isError || !email) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-6 text-center space-y-4 relative">
-        {/* Nút đóng cho trường hợp xem trên Dialog */}
         <Button
           variant="ghost"
           size="icon"
@@ -104,24 +103,23 @@ export function EmailDetail({ emailId, onClose, onAction }: EmailDetailProps) {
         </h3>
 
         <p className="text-gray-500 max-w-xs dark:text-gray-400">
-          Email này chưa được lưu offline. Vui lòng kết nối mạng để xem nội dung
-          chi tiết.
+          Email details not available offline. Please connect to the internet to
+          view this email.
         </p>
 
         <Button onClick={onClose} variant="outline" className="mt-4">
-          Quay lại danh sách
+          Back to list
         </Button>
       </div>
     );
   }
 
-  // --- CASE 4: HIỂN THỊ NỘI DUNG (Thành công) ---
+  // --- CASE 4: Success ---
   return (
     <div className="flex h-full flex-col">
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-2">
-          {/* Nút Back (cho mobile) */}
           <Button
             variant="ghost"
             size="icon"
@@ -130,7 +128,6 @@ export function EmailDetail({ emailId, onClose, onAction }: EmailDetailProps) {
           >
             <X className="size-4" />
           </Button>
-
           <Button
             variant="ghost"
             size="icon"
@@ -168,6 +165,20 @@ export function EmailDetail({ emailId, onClose, onAction }: EmailDetailProps) {
           >
             <Forward className="size-4" />
           </Button>
+          {/* New: Open in Gmail Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Open in Gmail"
+            onClick={() =>
+              window.open(
+                `https://mail.google.com/mail/u/0/#all/${email.id}`,
+                "_blank"
+              )
+            }
+          >
+            <ExternalLink className="size-4" />
+          </Button>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => onAction("star")}>
@@ -185,7 +196,6 @@ export function EmailDetail({ emailId, onClose, onAction }: EmailDetailProps) {
       <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-start gap-4">
-            {/* Avatar Placeholder */}
             <div
               className={`flex items-center justify-center size-10 rounded-full text-white font-bold shrink-0 ${
                 email.avatarColor || "bg-gray-500"
@@ -217,13 +227,11 @@ export function EmailDetail({ emailId, onClose, onAction }: EmailDetailProps) {
 
         <h1 className="text-2xl font-bold mb-4 break-words">{email.subject}</h1>
 
-        {/* Email Body */}
         <SafeHTML
           html={email.body}
           className="text-sm text-foreground max-w-none prose dark:prose-invert"
         />
 
-        {/* Attachments */}
         {email.attachments && email.attachments.length > 0 && (
           <div className="mt-6 border-t pt-4">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
@@ -268,7 +276,6 @@ export function EmailDetail({ emailId, onClose, onAction }: EmailDetailProps) {
         )}
       </div>
 
-      {/* Reply Area Mockup */}
       <div className="p-4 border-t bg-background">
         <div className="text-sm text-muted-foreground">
           Click here to{" "}
