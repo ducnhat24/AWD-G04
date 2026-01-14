@@ -19,6 +19,7 @@ interface AuthRequest {
   user: {
     _id: string;
     email: string;
+    userId?: string;
   };
 }
 
@@ -156,8 +157,9 @@ export class MailController {
   @Post('search/semantic')
   async searchSemantic(@Req() req: AuthRequest, @Body('query') query: string) {
     // 👇 Hãy chắc chắn bạn dùng .userId (String) thay vì ._id
-    console.log('User ID from Token:', (req.user as any).userId);
-    return this.mailService.searchSemantic((req.user as any).userId, query);
+    const userId = req.user.userId || req.user._id;
+    console.log('User ID from Token:', userId);
+    return this.mailService.searchSemantic(userId, query);
   }
 
   @Get('suggestions')

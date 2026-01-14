@@ -121,9 +121,9 @@ export class AuthService {
       );
 
       const googleData = googleRes.data as GoogleTokenResponse;
-      const access_token = String(googleData.access_token);
-      const refresh_token = googleData.refresh_token ? String(googleData.refresh_token) : undefined;
-      const id_token = String(googleData.id_token);
+      const access_token: string = String(googleData.access_token || '');
+      const refresh_token: string | undefined = googleData.refresh_token ? String(googleData.refresh_token) : undefined;
+      const id_token: string = String(googleData.id_token || '');
 
       // Decode id_token để lấy info user
       const googleUser = jwtDecode<GoogleUser>(id_token);

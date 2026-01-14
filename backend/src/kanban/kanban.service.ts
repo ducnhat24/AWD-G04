@@ -31,10 +31,10 @@ export class KanbanService {
     let config = await this.kanbanModel.findOne({ userId });
 
     // Helper sinh cột có UUID
-    const processColumns = (cols: any[]) => {
-      return cols.map(col => ({
+    const processColumns = (cols: any[]): any[] => {
+      return cols.map((col: any) => ({
         ...col,
-        id: col.id || uuidv4() // Nếu Frontend không gửi ID, Backend tự sinh
+        id: String(col.id || uuidv4()) // Nếu Frontend không gửi ID, Backend tự sinh
       }));
     };
 
