@@ -195,11 +195,9 @@ export default function HomePage() {
         email: emails.find((e) => e.id === id),
       });
     },
-    onMarkAsRead: (id) => {
-      // Logic phím tắt tùy chọn khác (nếu cần)
-      console.log("Mark as read shortcut for email ID:", id);
-    },
-    // Vô hiệu hóa khi các modal đang mở (để tránh xung đột phím)
+    onLoadMore: fetchNextList,
+    hasMore: hasNextList,
+    isFetching: isFetchingNextList,
     disabled:
       modals.isComposeOpen || modals.isSnoozeOpen || modals.isKanbanDetailOpen,
   });
