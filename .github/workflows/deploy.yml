@@ -44,7 +44,7 @@ jobs:
           # 👇 Bơm IP VPS vào lúc build để React gọi đúng API
           build-args: |
             VITE_API_URL=http://${{ secrets.VPS_IP }}:3000
-            VITE_GOOGLE_CLIENT_ID=dummy_id_chua_can_thiet
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
             VITE_GOOGLE_REDIRECT_URI=http://${{ secrets.VPS_IP }}/login/oauth/google/callback
 
       # 4. Copy file docker-compose lên VPS
