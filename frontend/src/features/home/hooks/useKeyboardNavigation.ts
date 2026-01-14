@@ -6,7 +6,11 @@ interface UseKeyboardNavigationProps {
   selectedEmailId: string | null;
   setSelectedEmailId: (id: string | null) => void;
   onDelete: (id: string) => void;
-  onMarkAsRead: (id: string) => void; // Tùy chọn: Đánh dấu đã đọc bằng phím tắt
+  // [THÊM] Các props để xử lý Infinite Scroll bằng phím
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  isFetching?: boolean;
+
   disabled?: boolean;
 }
 
@@ -15,14 +19,17 @@ export const useKeyboardNavigation = ({
   selectedEmailId,
   setSelectedEmailId,
   onDelete,
+  // [THÊM] Default values
+  onLoadMore,
+  hasMore = false,
+  isFetching = false,
+
   disabled = false,
 }: UseKeyboardNavigationProps) => {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      // Nếu đang bị disable hoặc danh sách rỗng thì không làm gì cả
       if (disabled || emails.length === 0) return;
 
-      // Bỏ qua nếu người dùng đang gõ trong ô input hoặc textarea
       if (
         document.activeElement instanceof HTMLInputElement ||
         document.activeElement instanceof HTMLTextAreaElement
@@ -33,36 +40,46 @@ export const useKeyboardNavigation = ({
       const currentIndex = emails.findIndex((e) => e.id === selectedEmailId);
 
       switch (e.key) {
-        // Phím Xuống hoặc 'j' (kiểu Vim)
         case "ArrowDown":
         case "j":
-          e.preventDefault(); // Ngăn trang web tự cuộn
-          const nextIndex =
-            currentIndex === -1 || currentIndex === emails.length - 1
-              ? 0 // Nếu đang ở cuối hoặc chưa chọn gì -> Về đầu
-              : currentIndex + 1;
-          setSelectedEmailId(emails[nextIndex].id);
+          e.preventDefault();
+
+          // Logic mới: Xử lý khi ở cuối danh sách
+          if (currentIndex === emails.length - 1) {
+            // Nếu còn dữ liệu và chưa đang tải -> Gọi load more
+            if (hasMore && onLoadMore && !isFetching) {
+              console.log("Keyboard: Reached bottom, loading more...");
+              onLoadMore();
+              // Return luôn để KHÔNG quay về đầu, giữ nguyên vị trí ở cuối
+              // Khi data mới về, người dùng bấm xuống lần nữa sẽ qua item mới
+              return;
+            }
+
+            // Nếu hết dữ liệu thật sự -> Quay về đầu
+            if (!hasMore) {
+              setSelectedEmailId(emails[0].id);
+            }
+            // Nếu đang fetching thì đứng yên đợi
+          } else {
+            // Trường hợp bình thường -> Chọn item tiếp theo
+            const nextIndex = currentIndex === -1 ? 0 : currentIndex + 1;
+            setSelectedEmailId(emails[nextIndex].id);
+          }
           break;
 
-        // Phím Lên hoặc 'k' (kiểu Vim)
         case "ArrowUp":
         case "k":
           e.preventDefault();
           const prevIndex =
-            currentIndex <= 0
-              ? emails.length - 1 // Nếu đang ở đầu -> Nhảy xuống cuối
-              : currentIndex - 1;
+            currentIndex <= 0 ? emails.length - 1 : currentIndex - 1;
           setSelectedEmailId(emails[prevIndex].id);
           break;
 
-        // Phím Delete hoặc Backspace để xóa
         case "Delete":
         case "Backspace":
           if (selectedEmailId) {
             e.preventDefault();
             onDelete(selectedEmailId);
-
-            // Tự động chọn email tiếp theo sau khi xóa
             const nextAfterDelete =
               currentIndex < emails.length - 1
                 ? emails[currentIndex + 1]
@@ -76,7 +93,6 @@ export const useKeyboardNavigation = ({
           }
           break;
 
-        // Phím Esc để bỏ chọn
         case "Escape":
           if (selectedEmailId) {
             e.preventDefault();
@@ -85,7 +101,16 @@ export const useKeyboardNavigation = ({
           break;
       }
     },
-    [emails, selectedEmailId, setSelectedEmailId, onDelete, disabled]
+    [
+      emails,
+      selectedEmailId,
+      setSelectedEmailId,
+      onDelete,
+      disabled,
+      onLoadMore,
+      hasMore,
+      isFetching,
+    ]
   );
 
   useEffect(() => {
