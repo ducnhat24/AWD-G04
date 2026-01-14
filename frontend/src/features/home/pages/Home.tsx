@@ -19,6 +19,7 @@ import { useEmailLogic } from "../hooks/useEmailLogic";
 import { useDashboardModals } from "../hooks/useDashboardModals";
 import { FOLDER_IDS, STORAGE_KEYS, VIEW_MODES } from "@/constants/app.constant";
 import { toast } from "sonner";
+import { useKeyboardNavigation } from "../hooks/useKeyboardNavigation";
 
 export default function HomePage() {
   // --- 1. Dashboard State ---
@@ -78,8 +79,6 @@ export default function HomePage() {
     kanbanColumns: columns || [],
   });
 
-  // --- 3. Handlers ---
-
   const handleSearch = (overrideQuery?: string) => {
     const queryToUse =
       typeof overrideQuery === "string" ? overrideQuery : searchInput;
@@ -129,16 +128,20 @@ export default function HomePage() {
   };
 
   // [FIX QUAN TRỌNG] Tách việc chọn mail và gọi API
-  const handleSelectEmail = (id: string) => {
-    // 1. Ưu tiên cập nhật UI trước
+  const handleSelectEmail = (id: string | null) => {
+    // 1. Nếu id là null (bỏ chọn), set state rồi return luôn
+    if (!id) {
+      setSelectedEmailId(null);
+      return;
+    }
+
+    // 2. Logic cũ: Cập nhật UI
     setSelectedEmailId(id);
 
-    // 2. Gọi API đánh dấu đã đọc sau (Async) để tránh lỗi mạng làm crash UI
+    // 3. Logic cũ: Gọi API đánh dấu đã đọc (Async & Check Offline)
     setTimeout(() => {
+      // Nếu đang Offline thì KHÔNG gọi API markAsRead
       if (!navigator.onLine) {
-        console.log(
-          "Offline: Skipping auto-mark-as-read to prevent LoadingOverlay glitch."
-        );
         return;
       }
 
@@ -180,7 +183,26 @@ export default function HomePage() {
     }
   };
 
-  // --- 4. Render ---
+  useKeyboardNavigation({
+    emails,
+    selectedEmailId,
+    // Sử dụng handleSelectEmail để đảm bảo logic đánh dấu đã đọc vẫn chạy
+    setSelectedEmailId: handleSelectEmail,
+    onDelete: (id) => {
+      // Logic xóa email
+      executeEmailAction("delete", {
+        id,
+        email: emails.find((e) => e.id === id),
+      });
+    },
+    onMarkAsRead: (id) => {
+      // Logic phím tắt tùy chọn khác (nếu cần)
+      console.log("Mark as read shortcut for email ID:", id);
+    },
+    // Vô hiệu hóa khi các modal đang mở (để tránh xung đột phím)
+    disabled:
+      modals.isComposeOpen || modals.isSnoozeOpen || modals.isKanbanDetailOpen,
+  });
 
   return (
     <>
