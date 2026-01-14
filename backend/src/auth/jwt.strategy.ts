@@ -33,11 +33,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     } // Best practice: Trả về thông tin user nhưng loại bỏ mật khẩu
 
     const userObj = user.toObject() as Record<string, any>;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...result } = userObj; // Đối tượng trả về từ đây sẽ được NestJS đính kèm vào request.user
 
     return {
       ...result,
-      userId: (result._id as any).toString() // Quan trọng: chuyển ObjectId sang string
+      userId: String((result._id as any)) // Quan trọng: chuyển ObjectId sang string
     };
   }
 }

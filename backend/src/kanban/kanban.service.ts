@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
@@ -144,7 +144,7 @@ export class KanbanService {
     const findLabelId = (name: string) => {
       // 1. Tìm chính xác (Case-sensitive)
       let found = mailboxes.find(m => m.name === name);
-      
+
       // 2. Nếu không thấy, tìm tương đối (Case-insensitive)
       if (!found) {
         found = mailboxes.find(m => m.name && m.name.toUpperCase() === name.toUpperCase());
@@ -166,7 +166,7 @@ export class KanbanService {
         id: uuidv4(),
         title: 'Cần làm',
         // Tìm label TODO, nếu user đã có 'todo' hoặc 'Todo' thì dùng lại ID đó luôn
-        gmailLabelId: findLabelId('TODO'), 
+        gmailLabelId: findLabelId('TODO'),
         color: '#eab308',
         order: 1
       },

@@ -121,9 +121,9 @@ export class AuthService {
       );
 
       const googleData = googleRes.data as GoogleTokenResponse;
-      const access_token = googleData.access_token as string;
-      const refresh_token = googleData.refresh_token as string | undefined;
-      const id_token = googleData.id_token as string;
+      const access_token = String(googleData.access_token);
+      const refresh_token = googleData.refresh_token ? String(googleData.refresh_token) : undefined;
+      const id_token = String(googleData.id_token);
 
       // Decode id_token để lấy info user
       const googleUser = jwtDecode<GoogleUser>(id_token);
@@ -183,7 +183,7 @@ export class AuthService {
       const err = error as { response?: { status?: number; data?: any } };
       const errorResponse = err.response;
       const errorStatus = errorResponse?.status;
-      const errorData = errorResponse?.data;
+      const errorData: unknown = errorResponse?.data;
       console.error('============ GOOGLE ERROR LOG ============');
       console.error('Status:', errorStatus);
       console.error('Data:', JSON.stringify(errorData));

@@ -410,7 +410,7 @@ export class GmailIntegrationService {
         To: ${originalMsg.to}<br>
         <br>
       `;
-            const fullBody: string = `${body}${forwardedHeader}${originalMsg.body}`;
+            const fullBody: string = `${body}${forwardedHeader}${String(originalMsg.body)}`;
 
             const rawMessage = this.createRawMessage(to, subject, fullBody);
 
