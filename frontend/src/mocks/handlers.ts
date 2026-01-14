@@ -62,7 +62,7 @@ export const handlers = [
   }),
 
   // 4. GET /mail/attachments/:emailId/:attachmentId
-  http.get(`${BASE_URL}/mail/attachments/:emailId/:attachmentId`, ({}) => {
+  http.get(`${BASE_URL}/mail/attachments/:emailId/:attachmentId`, () => {
     const authProvider = localStorage.getItem("authProvider");
     if (authProvider === "google") {
       return passthrough();
@@ -85,7 +85,7 @@ export const handlers = [
   }),
 
   http.put("/api/kanban/config", async ({ request }) => {
-    const newConfig = await request.json();
+    const newConfig = (await request.json()) as Record<string, unknown>;
     saveConfig(newConfig); // Lưu xuống storage
     return HttpResponse.json(newConfig);
   }),

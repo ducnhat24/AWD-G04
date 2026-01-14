@@ -3,7 +3,7 @@ import { isAxiosError } from "axios";
 import { CustomError, ErrorDisplayType } from "./custom-error";
 import { ServerError } from "./error-type";
 
-export const catchGlobalAxiosError = (error: any): CustomError => {
+export const catchGlobalAxiosError = (error: unknown): CustomError => {
   if (isAxiosError(error) && error.response) {
     const code = error.response.data.errorCode;
     const message = error.response.data.message;
@@ -21,7 +21,7 @@ export const catchGlobalAxiosError = (error: any): CustomError => {
 };
 
 export const handleErrorUi = (
-  error: any,
+  error: unknown,
   notifyCallback: (message: string) => void,
   form?: any
 ): void => {

@@ -6,17 +6,17 @@ export type SnoozeLogDocument = SnoozeLog & Document;
 
 @Schema({ timestamps: true })
 export class SnoozeLog {
-    @Prop({ required: true })
-    userId: string;
+  @Prop({ required: true })
+  userId: string;
 
-    @Prop({ required: true })
-    messageId: string;
+  @Prop({ required: true })
+  messageId: string;
 
-    @Prop({ required: true })
-    wakeUpTime: Date;
+  @Prop({ required: true })
+  wakeUpTime: Date;
 
-    @Prop({ default: 'ACTIVE' })
-    status: string; // 'ACTIVE' | 'PROCESSED' | 'CANCELLED'
+  @Prop({ default: 'ACTIVE' })
+  status: string; // 'ACTIVE' | 'PROCESSED' | 'CANCELLED'
 }
 
 export const SnoozeLogSchema = SchemaFactory.createForClass(SnoozeLog);

@@ -24,6 +24,7 @@ export function KanbanProvider({ children, onMoveEmail, onSnooze, onOpenMail }: 
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useKanban() {
     const context = useContext(KanbanContext);
     if (context === undefined) {

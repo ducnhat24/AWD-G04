@@ -7,18 +7,21 @@ import { useAuthStore } from "@/stores/auth.store";
 import * as z from "zod";
 import { VALIDATION_MESSAGES } from "@/utils/validation-rules";
 
-const formSchema = z.object({
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const formSchemaDefinition = z.object({
   email: z.email({ message: VALIDATION_MESSAGES.emailInvalid }),
   password: z
     .string()
     .min(1, { message: VALIDATION_MESSAGES.passwordRequired }),
 });
 
+type FormSchema = z.infer<typeof formSchemaDefinition>;
+
 export const useSignIn = () => {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
 
-  const signInForm = useForm<z.infer<typeof formSchema>>({
+  const signInForm = useForm<FormSchema>({
     mode: "onChange",
     defaultValues: {
       email: "",
@@ -28,7 +31,7 @@ export const useSignIn = () => {
 
   const { mutateAsync: signIn, isPending: isProcessing } = useSignInMutation();
 
-  const onSignIn = async (data: z.infer<typeof formSchema>) => {
+  const onSignIn = async (data: FormSchema) => {
     try {
       await signIn({
         email: data.email,
@@ -36,7 +39,7 @@ export const useSignIn = () => {
       });
       toast.success("Sign in successfully!");
     } catch (error) {
-      handleErrorUi(error, toast.error, signInForm);
+      handleErrorUi(error, toast.error, signInForm as any);
     }
   };
 
@@ -44,9 +47,10 @@ export const useSignIn = () => {
     navigate("/signup");
   };
 
-  const onGoogleSuccess = (payload: any) => {
-    if (payload?.accessToken && payload?.refreshToken) {
-      login(payload.accessToken, payload.refreshToken, "google");
+  const onGoogleSuccess = (payload: Record<string, unknown>) => {
+    const typedPayload = payload as { accessToken?: string; refreshToken?: string };
+    if (typedPayload?.accessToken && typedPayload?.refreshToken) {
+      login(typedPayload.accessToken, typedPayload.refreshToken, "google");
       toast.success("Sign in successfully!");
       navigate("/");
     } else {

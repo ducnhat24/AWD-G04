@@ -24,7 +24,7 @@ export function SnoozeDialog({ isOpen, onClose, onSnooze }: SnoozeDialogProps) {
 
   const handleSnooze = (type: "later" | "tomorrow" | "nextWeek") => {
     const now = new Date();
-    let snoozeDate = new Date();
+    const snoozeDate = new Date();
 
     switch (type) {
       case "later":
@@ -36,13 +36,14 @@ export function SnoozeDialog({ isOpen, onClose, onSnooze }: SnoozeDialogProps) {
         snoozeDate.setDate(now.getDate() + 1);
         snoozeDate.setHours(9, 0, 0, 0);
         break;
-      case "nextWeek":
+      case "nextWeek": {
         // Next Monday 9:00 AM
         const day = now.getDay();
         const diff = now.getDate() - day + (day === 0 ? -6 : 1) + 7; // Next Monday
         snoozeDate.setDate(diff);
         snoozeDate.setHours(9, 0, 0, 0);
         break;
+      }
     }
     onSnooze(snoozeDate);
     onClose();

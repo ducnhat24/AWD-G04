@@ -26,7 +26,7 @@ export const fetchEmails = async (
   searchQuery?: string
 ): Promise<{ emails: Email[]; nextPageToken?: string }> => {
   const mappedLabel = folderId;
-  const params: any = { limit };
+  const params: Record<string, string | number> = { limit };
 
   if (typeof pageParam === "string") {
     params.pageToken = pageParam;
@@ -45,13 +45,14 @@ export const fetchEmails = async (
     let nextPageToken: string | undefined = undefined;
 
     if (Array.isArray(data)) {
-      emails = data.map((e) => transformEmail(e, folderId));
+      emails = data.map((e) => transformEmail(e as Record<string, unknown>, folderId));
     } else if (data && typeof data === "object") {
-      const rawEmails = (data as any).messages || (data as any).emails || [];
+      const dataObj = data as Record<string, unknown>;
+      const rawEmails = (dataObj.messages || dataObj.emails || []) as unknown[];
       if (Array.isArray(rawEmails)) {
-        emails = rawEmails.map((e: any) => transformEmail(e, folderId));
+        emails = rawEmails.map((e) => transformEmail(e as Record<string, unknown>, folderId));
       }
-      nextPageToken = (data as any).nextPageToken;
+      nextPageToken = dataObj.nextPageToken as string | undefined;
     }
 
     return { emails, nextPageToken };
@@ -70,11 +71,12 @@ export const searchEmails = async (query: string): Promise<Email[]> => {
     let emails: Email[] = [];
 
     if (Array.isArray(data)) {
-      emails = data.map((e) => transformEmail(e));
+      emails = data.map((e) => transformEmail(e as Record<string, unknown>));
     } else if (data && typeof data === "object") {
-      const rawEmails = (data as any).messages || (data as any).emails || [];
+      const dataObj = data as Record<string, unknown>;
+      const rawEmails = (dataObj.messages || dataObj.emails || []) as unknown[];
       if (Array.isArray(rawEmails)) {
-        emails = rawEmails.map((e: any) => transformEmail(e));
+        emails = rawEmails.map((e) => transformEmail(e as Record<string, unknown>));
       }
     }
 

@@ -63,7 +63,7 @@ export const useSignUp = () => {
       });
       toast.success("Sign up successfully! Please log in.");
     } catch (error) {
-      handleErrorUi(error, toast.error, signUpForm);
+      handleErrorUi(error, toast.error, signUpForm as any);
     }
   };
 
@@ -71,9 +71,10 @@ export const useSignUp = () => {
     navigate("/signin");
   };
 
-  const onGoogleSuccess = (payload: any) => {
-    if (payload?.accessToken && payload?.refreshToken) {
-      login(payload.accessToken, payload.refreshToken, "google");
+  const onGoogleSuccess = (payload: Record<string, unknown>) => {
+    const typedPayload = payload as { accessToken?: string; refreshToken?: string };
+    if (typedPayload?.accessToken && typedPayload?.refreshToken) {
+      login(typedPayload.accessToken, typedPayload.refreshToken, "google");
       toast.success("Sign in successfully!");
       navigate("/");
     } else {

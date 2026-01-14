@@ -4,7 +4,7 @@ import GoogleLogin from "./GoogleLogin"
 
 type Props = {
     className?: string
-    onGoogleSuccess?: (payload: any) => void
+    onGoogleSuccess?: (payload: Record<string, unknown>) => void
     onGoogleError?: (err: unknown) => void
     /** Additional provider nodes to render alongside Google */
     children?: React.ReactNode

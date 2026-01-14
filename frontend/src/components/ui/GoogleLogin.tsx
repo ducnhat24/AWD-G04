@@ -3,8 +3,8 @@ import { getGoogleAuthUrl } from "@/utils/oauth" // Import hàm bạn đã tạo
 
 type Props = {
     className?: string
-    // Để props lại để tránh lỗi type ở các file cha, dù không dùng tới.
-    onSuccess?: (payload: any) => void
+    // Props kept for backward compatibility but not used
+    onSuccess?: (payload: Record<string, unknown>) => void
     onError?: (err: unknown) => void
 }
 

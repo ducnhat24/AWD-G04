@@ -55,7 +55,10 @@ export const KanbanCard = memo(function KanbanCard({
     }).format(date);
   };
 
-  const renderCard = (provided?: any, snapshot?: any) => (
+  const renderCard = (
+    provided?: any,
+    snapshot?: { isDragging: boolean }
+  ) => (
     <div
       ref={provided?.innerRef}
       {...(provided?.draggableProps || {})}
@@ -67,7 +70,7 @@ export const KanbanCard = memo(function KanbanCard({
           isRead: email.isRead,
         })
       )}
-      style={provided?.draggableProps?.style}
+      style={provided?.draggableProps?.style as React.CSSProperties | undefined}
     >
       {/* Header: Sender & Actions */}
       <div className="flex items-start justify-between mb-2">

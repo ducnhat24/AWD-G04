@@ -20,7 +20,7 @@ interface SidebarProps {
 }
 
 // Map string icon names to Lucide components
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   inbox: Inbox,
   send: Send,
   file: File,

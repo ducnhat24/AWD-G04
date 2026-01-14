@@ -138,8 +138,8 @@ http.interceptors.response.use(
     // CASE 2: Các lỗi khác (403, 500...)
     // ----------------------------------------------------------------
     if (error.response?.status !== 401) {
-      const message =
-        (error.response?.data as any)?.message || "Đã có lỗi xảy ra";
+      const errorData = error.response?.data as { message?: string } | undefined;
+      const message = errorData?.message || "Đã có lỗi xảy ra";
 
       console.log("HTTP Error:", {
         status: error.response?.status,

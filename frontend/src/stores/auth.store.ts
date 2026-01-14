@@ -99,10 +99,11 @@ export const useAuthStore = create<AuthState>()(
           newRefreshToken,
           storedProvider || "local"
         );
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const err = error as { response?: unknown; code?: string };
         console.error("Failed to restore session", error);
 
-        const isNetworkError = !error.response || error.code === "ERR_NETWORK";
+        const isNetworkError = !err.response || err.code === "ERR_NETWORK";
 
         if (isNetworkError) {
           console.warn("Offline mode detected. Restoring session explicitly.");

@@ -30,6 +30,7 @@ import { useMailboxesQuery } from "@/features/emails/services/email.query";
 import { useKanbanUpdate } from "../hooks/useKanbanUpdate";
 import type { KanbanColumnConfig } from "../types/kanban.type";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const COLOR_OPTIONS = [
   { label: "Gray", value: "#6b7280" }, // gray-500
   { label: "Blue", value: "#3b82f6" }, // blue-500
@@ -55,11 +56,6 @@ export function UpdateColumnDialog({
 
   const { form, isUpdatingKanbanColumn, handlers } = useKanbanUpdate(config);
 
-  const onSubmit = async (values: any) => {
-    await handlers.onSubmit(values);
-    onOpenChange(false);
-  };
-
   return (
     <Dialog open={!!config} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -71,7 +67,10 @@ export function UpdateColumnDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(async (values) => {
+            await handlers.onSubmit(values);
+            onOpenChange(false);
+          })} className="space-y-4">
             {/* TITLE */}
             <FormField
               control={form.control}
@@ -105,7 +104,7 @@ export function UpdateColumnDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {mailboxesData.map((box: any) => {
+                      {mailboxesData.map((box: { id: string; label: string }) => {
                         console.log("Mailbox:", box);
                         return (
                           <SelectItem key={box.id} value={box.id}>

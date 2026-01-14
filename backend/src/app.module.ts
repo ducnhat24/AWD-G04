@@ -17,7 +17,7 @@ import { KanbanModule } from './kanban/kanban.module';
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('DATABASE_URI'),
       }),
       inject: [ConfigService],
@@ -32,4 +32,4 @@ import { KanbanModule } from './kanban/kanban.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

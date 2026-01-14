@@ -39,7 +39,7 @@ export const useEmailListQuery = (
     networkMode: "online", // Chỉ fetch khi có mạng
 
     // Tăng retry để đảm bảo không clear cache khi lỗi network
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: Error) => {
       // Không retry nếu lỗi network
       if (
         error?.message?.includes("fetch") ||
