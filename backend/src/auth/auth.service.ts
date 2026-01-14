@@ -28,6 +28,12 @@ interface JwtPayload {
   email: string;
 }
 
+interface GoogleTokenResponse {
+  access_token: string;
+  refresh_token?: string;
+  id_token: string;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -36,7 +42,7 @@ export class AuthService {
     private configService: ConfigService,
     private linkedAccountRepository: LinkedAccountRepository,
     private mailService: MailService,
-  ) { }
+  ) {}
 
   async login(loginDto: LoginUserDto) {
     // 1. Tìm user
@@ -77,7 +83,10 @@ export class AuthService {
   }
 
   private async generateTokens(user: UserDocument) {
-    const payload = { email: user.email, sub: (user._id as Types.ObjectId).toString() };
+    const payload = {
+      email: user.email,
+      sub: (user._id as Types.ObjectId).toString(),
+    };
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload),
@@ -114,25 +123,33 @@ export class AuthService {
         },
       );
 
-      const { access_token, refresh_token, id_token } = googleRes.data;
+      const googleData = googleRes.data as GoogleTokenResponse;
 
       // Decode id_token để lấy info user
-      const googleUser = jwtDecode<GoogleUser>(id_token);
+      const googleUser = jwtDecode<GoogleUser>(googleData.id_token);
       const { sub: googleId, email, name, picture } = googleUser;
 
-      let linkedAccount = await this.linkedAccountRepository.findByProviderAndId(
-        'google',
-        googleId,
-      );
+      const access_token = String(googleData.access_token);
+
+      const refresh_token = googleData.refresh_token
+        ? String(googleData.refresh_token)
+        : undefined;
+
+      const linkedAccount =
+        await this.linkedAccountRepository.findByProviderAndId(
+          'google',
+          googleId,
+        );
 
       let user: UserDocument | null = null;
 
       if (linkedAccount) {
         // Case A: Đã link trước đó -> Lấy user ra
-        user = await this.userService.findById(linkedAccount.user.toString());
+        const userId = linkedAccount.user as unknown as Types.ObjectId;
+        user = await this.userService.findById(userId.toString());
 
         await this.linkedAccountRepository.updateTokens(
-          (linkedAccount as any)._id,
+          linkedAccount._id as Types.ObjectId,
           access_token,
           refresh_token,
         );
@@ -141,7 +158,11 @@ export class AuthService {
         user = await this.userService.findByEmail(email);
 
         if (!user) {
-          user = await this.userService.createByGoogle(email, name, picture ?? '');
+          user = await this.userService.createByGoogle(
+            email,
+            name,
+            picture ?? '',
+          );
         }
 
         if (!user) {
@@ -149,7 +170,7 @@ export class AuthService {
         }
 
         await this.linkedAccountRepository.create({
-          user: user._id as any,
+          user: user._id as any, // Mongoose accepts ObjectId even though type says User
           provider: 'google',
           providerId: googleId,
           accessToken: access_token,
@@ -169,10 +190,14 @@ export class AuthService {
         .catch((err) => console.error(`[Initial Sync] Error:`, err));
 
       return this.generateTokens(user);
-    } catch (error) {
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number; data?: any } };
+      const errorResponse = err.response;
+      const errorStatus = errorResponse?.status;
+      const errorData: unknown = errorResponse?.data;
       console.error('============ GOOGLE ERROR LOG ============');
-      console.error('Status:', error.response?.status);
-      console.error('Data:', JSON.stringify(error.response?.data));
+      console.error('Status:', errorStatus);
+      console.error('Data:', JSON.stringify(errorData));
       console.error(
         'Config Redirect URI:',
         this.configService.get('GOOGLE_REDIRECT_URI'),

@@ -15,20 +15,28 @@ import { SendEmailDto } from './dto/send-email.dto';
 import { ModifyEmailDto } from './dto/modify-email.dto';
 import { Response } from 'express';
 
+interface AuthRequest {
+  user: {
+    _id: string;
+    email: string;
+    userId?: string;
+  };
+}
+
 @Controller('mail')
 @UseGuards(JwtAuthGuard) // Bảo vệ toàn bộ endpoint, bắt buộc phải login
 export class MailController {
-  constructor(private readonly mailService: MailService) { }
+  constructor(private readonly mailService: MailService) {}
 
   // Tìm kiếm Email (Fuzzy Search)
   @Get('search')
-  searchEmails(@Req() req, @Query('q') query: string) {
+  searchEmails(@Req() req: AuthRequest, @Query('q') query: string) {
     return this.mailService.searchEmailsFuzzy(req.user._id, query);
   }
 
   // Lấy danh sách hộp thư (mailboxes/labels)
   @Get('mailboxes')
-  getMailboxes(@Req() req) {
+  getMailboxes(@Req() req: AuthRequest) {
     // req.user._id đến từ JwtStrategy
     return this.mailService.getMailboxes(req.user._id);
   }
@@ -36,7 +44,7 @@ export class MailController {
   // Lấy danh sách Email trong hộp thư (mailbox/label)
   @Get('mailboxes/:labelId/emails')
   getEmails(
-    @Req() req,
+    @Req() req: AuthRequest,
     @Param('labelId') labelId: string,
     @Query('limit') limit: string,
     @Query('pageToken') pageToken: string,
@@ -55,14 +63,14 @@ export class MailController {
 
   // Lấy chi tiết 1 Email
   @Get('emails/:id')
-  getEmailDetail(@Req() req, @Param('id') messageId: string) {
+  getEmailDetail(@Req() req: AuthRequest, @Param('id') messageId: string) {
     return this.mailService.getEmailDetail(req.user._id, messageId);
   }
 
   // Tải file đính kèm
   @Get('attachments/:messageId/:attachmentId')
   async getAttachment(
-    @Req() req,
+    @Req() req: AuthRequest,
     @Param('messageId') messageId: string,
     @Param('attachmentId') attachmentId: string,
     @Res() res: Response, // Dùng @Res để tự control response trả về file
@@ -85,7 +93,7 @@ export class MailController {
 
   // Gửi Email
   @Post('send')
-  sendEmail(@Req() req, @Body() dto: SendEmailDto) {
+  sendEmail(@Req() req: AuthRequest, @Body() dto: SendEmailDto) {
     return this.mailService.sendEmail(
       req.user._id,
       dto.to,
@@ -97,7 +105,7 @@ export class MailController {
   // Thao tác Modify (Xóa, Đánh dấu đọc...)
   @Post('emails/:id/modify')
   modifyEmail(
-    @Req() req,
+    @Req() req: AuthRequest,
     @Param('id') messageId: string,
     @Body() dto: ModifyEmailDto,
   ) {
@@ -112,7 +120,7 @@ export class MailController {
   // Reply Email
   @Post('emails/:id/reply')
   replyEmail(
-    @Req() req,
+    @Req() req: AuthRequest,
     @Param('id') originalMessageId: string,
     @Body('body') body: string,
   ) {
@@ -122,7 +130,7 @@ export class MailController {
   // forward Email
   @Post('emails/:id/forward')
   forwardEmail(
-    @Req() req,
+    @Req() req: AuthRequest,
     @Param('id') originalMessageId: string,
     @Body() dto: SendEmailDto,
   ) {
@@ -135,7 +143,10 @@ export class MailController {
   }
 
   @Get('emails/:id/summary')
-  async getEmailSummary(@Req() req, @Param('id') messageId: string) {
+  async getEmailSummary(
+    @Req() req: AuthRequest,
+    @Param('id') messageId: string,
+  ) {
     const summary = await this.mailService.summarizeEmail(
       req.user._id,
       messageId,
@@ -147,14 +158,18 @@ export class MailController {
   }
 
   @Post('search/semantic')
-  async searchSemantic(@Req() req, @Body('query') query: string) {
+  async searchSemantic(
+    @Req() req: AuthRequest,
+    @Body('query') query: string,
+  ): Promise<any[]> {
     // 👇 Hãy chắc chắn bạn dùng .userId (String) thay vì ._id
-    console.log('User ID from Token:', req.user.userId);
-    return this.mailService.searchSemantic(req.user.userId, query);
+    const userId = req.user.userId || req.user._id;
+    console.log('User ID from Token:', userId);
+    return this.mailService.searchSemantic(userId, query);
   }
 
   @Get('suggestions')
-  async getSuggestions(@Req() req, @Query('q') query: string) {
+  async getSuggestions(@Req() req: AuthRequest, @Query('q') query: string) {
     // Gọi hàm mới update bên search service
     // Lưu ý: hàm getSuggestions ở MailService cần gọi sang MailSearchService
     return this.mailService.getSuggestions(req.user._id, query);

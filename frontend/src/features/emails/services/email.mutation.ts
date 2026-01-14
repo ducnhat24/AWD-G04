@@ -52,13 +52,13 @@ export const useModifyEmailMutation = (
                   const isRead = addLabels.includes("UNREAD")
                     ? false
                     : removeLabels.includes("UNREAD")
-                    ? true
-                    : email.isRead;
+                      ? true
+                      : email.isRead;
                   const isStarred = addLabels.includes("STARRED")
                     ? true
                     : removeLabels.includes("STARRED")
-                    ? false
-                    : email.isStarred;
+                      ? false
+                      : email.isStarred;
                   return { ...email, isRead, isStarred };
                 }
                 return email;
@@ -69,10 +69,10 @@ export const useModifyEmailMutation = (
       );
 
       // --- 2. Optimistic Update cho Kanban View ---
-      let previousSource: any;
-      let previousDest: any;
-      let sourceKey: any[] | undefined;
-      let destKey: any[] | undefined;
+      let previousSource: unknown;
+      let previousDest: unknown;
+      let sourceKey: unknown[] | undefined;
+      let destKey: unknown[] | undefined;
 
       if (meta?.destinationFolder && meta?.sourceFolder) {
         const srcCol = kanbanColumns.find((c) => c.id === meta.sourceFolder);
@@ -156,8 +156,8 @@ export const useSnoozeEmailMutation = (
 
     onMutate: async ({ id, sourceFolder }) => {
       // Optimistic Update: Xóa ngay khỏi cột hiện tại nếu biết sourceFolder
-      let previousSource: any;
-      let sourceKey: any[] | undefined;
+      let previousSource: unknown;
+      let sourceKey: unknown[] | undefined;
 
       if (sourceFolder) {
         // Tìm config cột dựa trên ID
@@ -171,11 +171,12 @@ export const useSnoozeEmailMutation = (
           previousSource = queryClient.getQueryData(sourceKey);
 
           // Xóa email khỏi cache cột nguồn
-          queryClient.setQueryData(sourceKey, (old: any) => {
+          queryClient.setQueryData(sourceKey, (old: unknown) => {
             if (!old) return old;
+            const oldData = old as { pages: Array<{ emails: Email[] }> };
             return {
-              ...old,
-              pages: old.pages.map((page: any) => ({
+              ...oldData,
+              pages: oldData.pages.map((page) => ({
                 ...page,
                 emails: page.emails.filter((e: Email) => e.id !== id),
               })),

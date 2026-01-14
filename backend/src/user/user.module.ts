@@ -3,7 +3,10 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './entities/user.entity';
-import { LinkedAccount, LinkedAccountSchema } from './entities/linked-account.entity';
+import {
+  LinkedAccount,
+  LinkedAccountSchema,
+} from './entities/linked-account.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { UserRepository } from './repositories/user.repository';
 import { LinkedAccountRepository } from './repositories/linked-account.repository';
@@ -20,4 +23,4 @@ import { LinkedAccountRepository } from './repositories/linked-account.repositor
   providers: [UserService, UserRepository, LinkedAccountRepository],
   exports: [UserService, LinkedAccountRepository],
 })
-export class UserModule { }
+export class UserModule {}

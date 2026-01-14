@@ -68,12 +68,13 @@ export const useKeyboardNavigation = ({
           break;
 
         case "ArrowUp":
-        case "k":
+        case "k": {
           e.preventDefault();
           const prevIndex =
             currentIndex <= 0 ? emails.length - 1 : currentIndex - 1;
           setSelectedEmailId(emails[prevIndex].id);
           break;
+        }
 
         case "Delete":
         case "Backspace":

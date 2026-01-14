@@ -1,15 +1,32 @@
-import { Controller, Post, Body, UseGuards, Req, Get, Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Req,
+  Get,
+  Query,
+  DefaultValuePipe,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { SnoozeLogService } from './snooze-log.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
+interface AuthRequest {
+  user: {
+    _id: string;
+    email: string;
+  };
+}
 
 @Controller('snooze')
 @UseGuards(JwtAuthGuard)
 export class SnoozeLogController {
-  constructor(private readonly snoozeLogService: SnoozeLogService) { }
+  constructor(private readonly snoozeLogService: SnoozeLogService) {}
 
   @Post()
   async snooze(
-    @Req() req,
+    @Req() req: AuthRequest,
     @Body('messageId') messageId: string,
     @Body('wakeUpTime') wakeUpTime: string,
   ) {
@@ -20,7 +37,7 @@ export class SnoozeLogController {
 
   @Get()
   async getSnoozedList(
-    @Req() req,
+    @Req() req: AuthRequest,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
   ) {

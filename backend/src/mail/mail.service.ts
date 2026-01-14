@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GmailIntegrationService } from './services/gmail-integration.service';
@@ -15,7 +12,7 @@ import { MailRepository } from './mail.repository';
  * - GmailIntegrationService: Gọi Gmail API
  * - MailSyncService: Đồng bộ DB
  * - MailSearchService: Tìm kiếm/Filter
- * 
+ *
  * Service này cung cấp API tầng cao cho Controller
  */
 @Injectable()
@@ -72,7 +69,12 @@ export class MailService {
     }
 
     // 2. NẾU KHÔNG SEARCH -> GỌI GMAIL API
-    return this.gmailIntegrationService.fetchEmails(userId, labelId, limit, pageToken);
+    return this.gmailIntegrationService.fetchEmails(
+      userId,
+      labelId,
+      limit,
+      pageToken,
+    );
   }
 
   // ==================== SYNC ====================
@@ -89,7 +91,12 @@ export class MailService {
     labelId?: string,
     limit: number = 20,
   ) {
-    return this.mailSearchService.searchEmailsFuzzy(userId, query, labelId, limit);
+    return this.mailSearchService.searchEmailsFuzzy(
+      userId,
+      query,
+      labelId,
+      limit,
+    );
   }
 
   // ==================== EMAIL DETAIL & ACTIONS ====================
@@ -99,7 +106,11 @@ export class MailService {
   }
 
   async getAttachment(userId: string, messageId: string, attachmentId: string) {
-    return this.gmailIntegrationService.getAttachment(userId, messageId, attachmentId);
+    return this.gmailIntegrationService.getAttachment(
+      userId,
+      messageId,
+      attachmentId,
+    );
   }
 
   async sendEmail(userId: string, to: string, subject: string, body: string) {
@@ -112,11 +123,20 @@ export class MailService {
     addLabels: string[],
     removeLabels: string[],
   ) {
-    return this.gmailIntegrationService.modifyEmail(userId, messageId, addLabels, removeLabels);
+    return this.gmailIntegrationService.modifyEmail(
+      userId,
+      messageId,
+      addLabels,
+      removeLabels,
+    );
   }
 
   async replyEmail(userId: string, originalMessageId: string, body: string) {
-    return this.gmailIntegrationService.replyEmail(userId, originalMessageId, body);
+    return this.gmailIntegrationService.replyEmail(
+      userId,
+      originalMessageId,
+      body,
+    );
   }
 
   async forwardEmail(
@@ -130,7 +150,10 @@ export class MailService {
       originalMessageId,
       to,
       body,
-      this.getEmailDetail.bind(this),
+      this.getEmailDetail.bind(this) as (
+        uid: string,
+        mid: string,
+      ) => Promise<any>,
     );
   }
 
@@ -138,7 +161,8 @@ export class MailService {
 
   async summarizeEmail(userId: string, messageId: string): Promise<string> {
     // Kiểm tra cache
-    const existingSummary = await this.mailRepository.findSummaryByMessageId(messageId);
+    const existingSummary =
+      await this.mailRepository.findSummaryByMessageId(messageId);
     if (existingSummary) {
       return existingSummary.summary;
     }
@@ -190,7 +214,10 @@ export class MailService {
   }
 
   async getBasicEmailsDetails(userId: string, messageIds: string[]) {
-    return this.gmailIntegrationService.getBasicEmailsDetails(userId, messageIds);
+    return this.gmailIntegrationService.getBasicEmailsDetails(
+      userId,
+      messageIds,
+    );
   }
 
   async searchSemantic(userId: string, query: string) {

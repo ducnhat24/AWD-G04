@@ -32,4 +32,4 @@ import { KanbanModule } from './kanban/kanban.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

@@ -1,6 +1,6 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { User, UserDocument } from './entities/user.entity';
+import { UserDocument } from './entities/user.entity';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UserRepository } from './repositories/user.repository';
@@ -10,7 +10,7 @@ export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   async register(registerUserDto: RegisterUserDto): Promise<UserDocument> {
     const { email, password } = registerUserDto;
@@ -41,9 +41,15 @@ export class UserService {
     return this.userRepository.findById(id);
   }
 
-  async createByGoogle(email: string, name: string, avatar: string): Promise<UserDocument> {
+  async createByGoogle(
+    email: string,
+    name: string,
+    avatar: string,
+  ): Promise<UserDocument> {
     // random pass
-    const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+    const randomPassword =
+      Math.random().toString(36).slice(-8) +
+      Math.random().toString(36).slice(-8);
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(randomPassword, salt);

@@ -2,7 +2,10 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose'; // Import cái này
 import { KanbanService } from './kanban.service';
 import { KanbanController } from './kanban.controller';
-import { KanbanConfig, KanbanConfigSchema } from './entities/kanban-config.entity'; // Import Entity
+import {
+  KanbanConfig,
+  KanbanConfigSchema,
+} from './entities/kanban-config.entity'; // Import Entity
 import { MailModule } from 'src/mail/mail.module';
 
 @Module({
@@ -17,4 +20,4 @@ import { MailModule } from 'src/mail/mail.module';
   providers: [KanbanService],
   exports: [KanbanService], // Export nếu module khác cần dùng service này
 })
-export class KanbanModule { }
+export class KanbanModule {}

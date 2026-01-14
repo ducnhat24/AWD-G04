@@ -5,36 +5,36 @@ export type MailDocument = HydratedDocument<Mail>;
 
 @Schema({ timestamps: true })
 export class Mail {
-    // 1. Compound Index cho truy vấn phổ biến nhất: 
-    // "Lấy mail của user A, sắp xếp theo ngày giảm dần" -> Scan cực nhanh
-    @Prop({ required: true, index: true })
-    userId: string;
+  // 1. Compound Index cho truy vấn phổ biến nhất:
+  // "Lấy mail của user A, sắp xếp theo ngày giảm dần" -> Scan cực nhanh
+  @Prop({ required: true, index: true })
+  userId: string;
 
-    @Prop()
-    subject: string;
+  @Prop()
+  subject: string;
 
-    @Prop()
-    snippet: string;
+  @Prop()
+  snippet: string;
 
-    @Prop()
-    body: string;
+  @Prop()
+  body: string;
 
-    @Prop()
-    from: string;
+  @Prop()
+  from: string;
 
-    @Prop()
-    date: Date;
+  @Prop()
+  date: Date;
 
-    @Prop({ default: false })
-    isRead: boolean;
+  @Prop({ default: false })
+  isRead: boolean;
 
-    // 2. Vector Embedding
-    // Model text-embedding-004 của Google trả về 768 dimensions
-    @Prop({
-        type: [Number],
-        select: false, // Best Practice: Mặc định KHÔNG select field này khi query list để nhẹ băng thông
-    })
-    embedding: number[];
+  // 2. Vector Embedding
+  // Model text-embedding-004 của Google trả về 768 dimensions
+  @Prop({
+    type: [Number],
+    select: false, // Best Practice: Mặc định KHÔNG select field này khi query list để nhẹ băng thông
+  })
+  embedding: number[];
 }
 
 // 3. Định nghĩa Index

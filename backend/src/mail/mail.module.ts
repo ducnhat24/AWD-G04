@@ -34,8 +34,8 @@ import { UserModule } from '../user/user.module';
     GmailIntegrationService,
     MailSyncService,
     MailSearchService,
-    MailRepository
+    MailRepository,
   ],
   exports: [MailService, GmailIntegrationService],
 })
-export class MailModule { }
+export class MailModule {}
