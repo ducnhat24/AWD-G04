@@ -45,12 +45,12 @@ export const fetchEmails = async (
     let nextPageToken: string | undefined = undefined;
 
     if (Array.isArray(data)) {
-      emails = data.map((e) => transformEmail(e, folderId));
+      emails = data.map((e) => transformEmail(e as Record<string, unknown>, folderId));
     } else if (data && typeof data === "object") {
       const dataObj = data as Record<string, unknown>;
       const rawEmails = (dataObj.messages || dataObj.emails || []) as unknown[];
       if (Array.isArray(rawEmails)) {
-        emails = rawEmails.map((e) => transformEmail(e, folderId));
+        emails = rawEmails.map((e) => transformEmail(e as Record<string, unknown>, folderId));
       }
       nextPageToken = dataObj.nextPageToken as string | undefined;
     }
@@ -71,12 +71,12 @@ export const searchEmails = async (query: string): Promise<Email[]> => {
     let emails: Email[] = [];
 
     if (Array.isArray(data)) {
-      emails = data.map((e) => transformEmail(e));
+      emails = data.map((e) => transformEmail(e as Record<string, unknown>));
     } else if (data && typeof data === "object") {
       const dataObj = data as Record<string, unknown>;
       const rawEmails = (dataObj.messages || dataObj.emails || []) as unknown[];
       if (Array.isArray(rawEmails)) {
-        emails = rawEmails.map((e) => transformEmail(e));
+        emails = rawEmails.map((e) => transformEmail(e as Record<string, unknown>));
       }
     }
 

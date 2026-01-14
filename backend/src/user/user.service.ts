@@ -10,7 +10,7 @@ export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   async register(registerUserDto: RegisterUserDto): Promise<UserDocument> {
     const { email, password } = registerUserDto;

@@ -23,7 +23,7 @@ export const catchGlobalAxiosError = (error: unknown): CustomError => {
 export const handleErrorUi = (
   error: unknown,
   notifyCallback: (message: string) => void,
-  form?: { setError: (field: string, error: { message: string }) => void }
+  form?: { setError: (field: string, error: { type: string; message: string }) => void; getValues: () => Record<string, unknown> }
 ): void => {
   if (error instanceof CustomError) {
     console.log("Setting form errors: ", error.fieldErrors);

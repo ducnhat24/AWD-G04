@@ -56,10 +56,10 @@ export function UpdateColumnDialog({
 
   const { form, isUpdatingKanbanColumn, handlers } = useKanbanUpdate(config);
 
-  const onSubmit = async (values: { title: string; gmailLabelId: string; color: string; order: number }) => {
+  const onSubmit = form.handleSubmit(async (values) => {
     await handlers.onSubmit(values);
     onOpenChange(false);
-  };
+  });
 
   return (
     <Dialog open={!!config} onOpenChange={onOpenChange}>

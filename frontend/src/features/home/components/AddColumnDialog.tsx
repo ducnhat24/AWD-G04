@@ -55,10 +55,10 @@ export function AddColumnDialog({
 
   const { form, isCreatingKanbanColumn, handlers } = useKanbanAddition();
 
-  const onSubmit = async (values: { title: string; gmailLabelId: string; color: string }) => {
+  const onSubmit = form.handleSubmit(async (values) => {
     await handlers.onSubmit(values);
     onOpenChange(false);
-  };
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
