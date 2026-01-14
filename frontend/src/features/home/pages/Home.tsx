@@ -18,6 +18,7 @@ import { useKanbanConfig } from "../hooks/useKanban";
 import { useEmailLogic } from "../hooks/useEmailLogic";
 import { useDashboardModals } from "../hooks/useDashboardModals";
 import { FOLDER_IDS, STORAGE_KEYS, VIEW_MODES } from "@/constants/app.constant";
+import { toast } from "sonner";
 
 export default function HomePage() {
   // --- 1. Dashboard State ---
@@ -115,6 +116,11 @@ export default function HomePage() {
     sourceFolder: string,
     destinationFolder: string
   ) => {
+    if (!navigator.onLine) {
+      toast.error("You are offline. Cannot move email now.");
+      return;
+    }
+
     if (destinationFolder.toUpperCase() === FOLDER_IDS.SNOOZED) {
       modals.openSnooze(emailId, sourceFolder);
       return;
@@ -129,12 +135,19 @@ export default function HomePage() {
 
     // 2. Gọi API đánh dấu đã đọc sau (Async) để tránh lỗi mạng làm crash UI
     setTimeout(() => {
+      if (!navigator.onLine) {
+        console.log(
+          "Offline: Skipping auto-mark-as-read to prevent LoadingOverlay glitch."
+        );
+        return;
+      }
+
       const email = emails.find((e) => e.id === id);
       if (email && !email.isRead) {
         try {
           executeEmailAction("markAsRead", { id, email });
         } catch (error) {
-          console.warn("Offline: Mark as read skipped");
+          console.warn("Auto-mark-as-read failed:", error);
         }
       }
     }, 0);
@@ -171,7 +184,9 @@ export default function HomePage() {
 
   return (
     <>
-      <LoadingOverlay visible={isSnoozing || isModifyingEmail} />
+      <LoadingOverlay
+        visible={isSnoozing || (isModifyingEmail && viewMode === "kanban")}
+      />
 
       <DashboardLayout
         folders={folders}
