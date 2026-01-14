@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Loader2, WifiOff, RefreshCw } from "lucide-react";
 import { useAuthStore } from "@/stores/auth.store";
 import type { Email } from "@/features/emails/types/email.type";
@@ -12,9 +12,9 @@ interface EmailListProps {
   onLoadMore: () => void;
   hasMore: boolean;
   isLoadingMore: boolean;
-  isFetching?: boolean; // [THÊM] Prop này để biết Query có đang chạy ngầm không
-  isError?: boolean; // [THÊM] Để hiển thị nút Retry
-  onRetry?: () => void; // [THÊM] Hàm retry
+  isFetching?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
 }
 
 export function EmailList({
@@ -24,30 +24,30 @@ export function EmailList({
   onLoadMore,
   hasMore,
   isLoadingMore,
-  isFetching = false, // Mặc định false nếu không truyền
+  isFetching = false,
   isError = false,
   onRetry,
 }: EmailListProps) {
   const user = useAuthStore((state) => state.user);
   const observerTarget = useRef<HTMLDivElement>(null);
-  const [observerKey, setObserverKey] = useState(0);
 
-  // [LOGIC SENSOR]
+  // 1. [LOGIC SENSOR]
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        // Điều kiện load: Thấy đáy + Còn trang + Không đang load trang mới + Không đang fetch ngầm
+        // Chỉ load khi: Thấy đáy + Còn trang + Không đang load + Không lỗi
         if (
           entries[0].isIntersecting &&
           hasMore &&
           !isLoadingMore &&
-          !isFetching
+          !isFetching &&
+          !isError // [QUAN TRỌNG] Nếu đang lỗi thì đừng auto call nữa, đợi user bấm Retry hoặc Online lại
         ) {
           console.log("Observer Triggered: Loading more...");
           onLoadMore();
         }
       },
-      { threshold: 0.1 } // Nhạy hơn chút (10% hiện ra là gọi luôn)
+      { threshold: 0.1 }
     );
 
     if (observerTarget.current) {
@@ -59,17 +59,26 @@ export function EmailList({
         observer.unobserve(observerTarget.current);
       }
     };
-  }, [hasMore, isLoadingMore, onLoadMore, isFetching]); // [QUAN TRỌNG] Thêm isFetching vào dependency
+  }, [hasMore, isLoadingMore, onLoadMore, isFetching, isError]);
 
+  // 2. [FIX QUAN TRỌNG] Logic khi có mạng lại
   useEffect(() => {
     const handleOnline = () => {
-      console.log("Online again → reset observer");
-      setObserverKey((k) => k + 1);
+      console.log("Network back in EmailList. Force refreshing...");
+
+      // Khi có mạng, gọi hàm Retry (Invalidate Queries) ngay lập tức
+      // Để nó tính toán lại hasNextPage chuẩn xác thay vì dùng hasMore cũ kỹ
+      if (onRetry) {
+        onRetry();
+      } else if (hasMore) {
+        // Fallback nếu không có hàm onRetry
+        onLoadMore();
+      }
     };
 
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
-  }, []);
+  }, [onRetry, hasMore, onLoadMore]);
 
   // UI Error State (Mất mạng và danh sách rỗng)
   if (isError && emails.length === 0) {
@@ -103,8 +112,6 @@ export function EmailList({
           </div>
         ) : (
           <div className="flex flex-col pb-4">
-            {" "}
-            {/* Thêm padding bottom */}
             {emails.map((email) => (
               <EmailListItem
                 key={email.id}
@@ -114,22 +121,35 @@ export function EmailList({
                 currentUserEmail={user?.email}
               />
             ))}
-            {/* Loading Indicator (Cuối trang) */}
+
+            {/* Loading Indicator */}
             {(isLoadingMore || isFetching) && (
               <div className="flex justify-center p-4">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             )}
-            {/* Infinite Scroll Trigger (Luôn render nhưng ẩn đi nếu đang load để tránh gọi kép) */}
-            {!isLoadingMore && !isFetching && hasMore && !isError && (
-              <div
-                ref={observerTarget}
-                key={observerKey}
-                className="h-4 w-full shrink-0"
-              />
+
+            {/* Infinite Scroll Trigger */}
+            {/* Vẫn render div này kể cả khi !hasMore để layout ổn định, nhưng observer sẽ chặn logic */}
+            <div ref={observerTarget} className="h-4 w-full shrink-0" />
+
+            {/* [FIX UI] Nút thử lại ở cuối danh sách (nếu tải trang tiếp theo bị lỗi) */}
+            {isError && emails.length > 0 && (
+              <div className="p-4 flex justify-center border-t mt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onRetry}
+                  className="text-red-500 hover:text-red-600 hover:bg-red-50 gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Tải thêm thất bại - Thử lại
+                </Button>
+              </div>
             )}
-            {/* End of list message */}
-            {!hasMore && emails.length > 0 && (
+
+            {/* [FIX UI] Chỉ hiện "Đã hiển thị tất cả" nếu KHÔNG CÓ LỖI */}
+            {!hasMore && !isError && emails.length > 0 && !isFetching && (
               <div className="p-4 text-center text-xs text-muted-foreground border-t mt-2">
                 Đã hiển thị tất cả email
               </div>
