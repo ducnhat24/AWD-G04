@@ -1,0 +1,80 @@
+name: Deploy to VPS (GHCR)
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. Login vào GHCR (Dùng Token có sẵn của GitHub Action, KHÔNG CẦN SECRET)
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 2. Build & Push Backend
+      - name: Build and Push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          # Lưu ý: github.repository_owner sẽ lấy tên user github của bạn
+          tags: ghcr.io/${{ github.repository_owner }}/awd-g04-backend:latest
+
+      # 3. Build & Push Frontend
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/awd-g04-frontend:latest
+          # 👇 Bơm IP VPS vào lúc build để React gọi đúng API
+          build-args: |
+            VITE_API_URL=http://${{ secrets.VPS_IP }}:3000
+            VITE_GOOGLE_CLIENT_ID=dummy_id_chua_can_thiet
+            VITE_GOOGLE_REDIRECT_URI=http://${{ secrets.VPS_IP }}/login/oauth/google/callback
+
+      # 4. Copy file docker-compose lên VPS
+      - name: Copy docker-compose to VPS
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.prod.yml"
+          target: "/root/awd-g04/"
+
+      # 5. SSH vào VPS và chạy
+      - name: Deploy on VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /root/awd-g04
+            # Đổi tên file
+            mv docker-compose.prod.yml docker-compose.yml
+            
+            # Kéo Image mới nhất từ GHCR về
+            docker compose pull
+            
+            # Khởi động lại (Down trước cho chắc ăn vì đổi port/cấu hình)
+            docker compose down
+            docker compose up -d
+            
+            # Xóa image rác
+            docker image prune -f

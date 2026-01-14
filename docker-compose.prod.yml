@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  backend:
+    image: ghcr.io/ducnhat24/awd-g04-backend:latest
+    ports:
+      - "3000:3000"
+    env_file: .env
+    restart: always
+
+  frontend:
+    image: ghcr.io/ducnhat24/awd-g04-frontend:latest
+    ports:
+      - "80:80"
+    restart: always
