@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { Loader2, WifiOff, RefreshCw } from "lucide-react";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { Loader2, WifiOff, RefreshCw, ArrowUpDown } from "lucide-react";
 import { useAuthStore } from "@/stores/auth.store";
 import type { Email } from "@/features/emails/types/email.type";
 import { EmailListItem } from "./EmailListItem";
@@ -31,17 +31,51 @@ export function EmailList({
   const user = useAuthStore((state) => state.user);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // 1. [LOGIC SENSOR]
+  // --- 1. Sorting & Filtering State ---
+  const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
+  const [filterUnread, setFilterUnread] = useState(false);
+  const [filterHasAttachments, setFilterHasAttachments] = useState(false);
+
+  // --- 2. Data Processing (Memoized) ---
+  const processedEmails = useMemo(() => {
+    let processed = [...emails];
+
+    // Filter
+    if (filterUnread) {
+      processed = processed.filter((e) => !e.isRead);
+    }
+    if (filterHasAttachments) {
+      processed = processed.filter(
+        (e) => e.attachments && e.attachments.length > 0
+      );
+    }
+
+    // Sort
+    processed.sort((a, b) => {
+      const dateA = new Date(a.timestamp).getTime();
+      const dateB = new Date(b.timestamp).getTime();
+      return sortBy === "newest" ? dateB - dateA : dateA - dateB;
+    });
+
+    return processed;
+  }, [emails, filterUnread, filterHasAttachments, sortBy]);
+
+  // Handle logic for Infinite Scroll with Filters
+  // Similar to Kanban: Disable auto-load-more when filters are active to avoid mixed states
+  const isFiltering = filterUnread || filterHasAttachments;
+  const effectiveHasMore = !isFiltering && hasMore;
+
+  // --- 3. [LOGIC SENSOR] ---
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        // Chỉ load khi: Thấy đáy + Còn trang + Không đang load + Không lỗi
+        // Only load when: Seen bottom + Has more (and not filtering) + Not loading + Not fetching + Not error
         if (
           entries[0].isIntersecting &&
-          hasMore &&
+          effectiveHasMore &&
           !isLoadingMore &&
           !isFetching &&
-          !isError // [QUAN TRỌNG] Nếu đang lỗi thì đừng auto call nữa, đợi user bấm Retry hoặc Online lại
+          !isError // [IMPORTANT] If error, don't auto call, wait for Retry
         ) {
           console.log("Observer Triggered: Loading more...");
           onLoadMore();
@@ -59,19 +93,17 @@ export function EmailList({
         observer.unobserve(observerTarget.current);
       }
     };
-  }, [hasMore, isLoadingMore, onLoadMore, isFetching, isError]);
+  }, [effectiveHasMore, isLoadingMore, onLoadMore, isFetching, isError]);
 
-  // 2. [FIX QUAN TRỌNG] Logic khi có mạng lại
+  // 4. [FIX IMPORTANT] Logic when network is back
   useEffect(() => {
     const handleOnline = () => {
       console.log("Network back in EmailList. Force refreshing...");
 
-      // Khi có mạng, gọi hàm Retry (Invalidate Queries) ngay lập tức
-      // Để nó tính toán lại hasNextPage chuẩn xác thay vì dùng hasMore cũ kỹ
+      // When online, call Retry (Invalidate Queries) immediately
       if (onRetry) {
         onRetry();
       } else if (hasMore) {
-        // Fallback nếu không có hàm onRetry
         onLoadMore();
       }
     };
@@ -80,7 +112,7 @@ export function EmailList({
     return () => window.removeEventListener("online", handleOnline);
   }, [onRetry, hasMore, onLoadMore]);
 
-  // UI Error State (Mất mạng và danh sách rỗng)
+  // UI Error State (Offline and Empty List)
   if (isError && emails.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-4 border-r">
@@ -105,14 +137,55 @@ export function EmailList({
 
   return (
     <div className="flex flex-col h-full border-r bg-background">
+      {/* --- Toolbar: Sort & Filter --- */}
+      <div className="flex flex-col gap-3 p-4 border-b bg-muted/10 shrink-0">
+        <div className="flex justify-between">
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-xs font-medium cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={filterUnread}
+                onChange={(e) => setFilterUnread(e.target.checked)}
+                className="rounded border-gray-300 w-3.5 h-3.5 text-primary focus:ring-primary"
+              />
+              Unread
+            </label>
+            <label className="flex items-center gap-2 text-xs font-medium cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={filterHasAttachments}
+                onChange={(e) => setFilterHasAttachments(e.target.checked)}
+                className="rounded border-gray-300 w-3.5 h-3.5 text-primary focus:ring-primary"
+              />
+              Attachments
+            </label>
+          </div>
+
+          <div className="flex items-center gap-1 bg-background border rounded-md px-2 py-1 shadow-sm">
+            <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as "newest" | "oldest")}
+              className="bg-transparent text-xs font-medium focus:outline-none cursor-pointer pr-1"
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* --- Email List --- */}
       <div className="flex-1 overflow-y-auto">
-        {emails.length === 0 && !isFetching ? (
+        {processedEmails.length === 0 && !isFetching ? (
           <div className="p-8 text-center text-muted-foreground text-sm">
-            No emails found.
+            {emails.length > 0
+              ? "No emails match your filters."
+              : "No emails found."}
           </div>
         ) : (
           <div className="flex flex-col pb-4">
-            {emails.map((email) => (
+            {processedEmails.map((email) => (
               <EmailListItem
                 key={email.id}
                 email={email}
@@ -130,10 +203,9 @@ export function EmailList({
             )}
 
             {/* Infinite Scroll Trigger */}
-            {/* Vẫn render div này kể cả khi !hasMore để layout ổn định, nhưng observer sẽ chặn logic */}
             <div ref={observerTarget} className="h-4 w-full shrink-0" />
 
-            {/* [FIX UI] Nút thử lại ở cuối danh sách (nếu tải trang tiếp theo bị lỗi) */}
+            {/* [FIX UI] Retry Button */}
             {isError && emails.length > 0 && (
               <div className="p-4 flex justify-center border-t mt-2">
                 <Button
@@ -148,12 +220,17 @@ export function EmailList({
               </div>
             )}
 
-            {/* [FIX UI] Chỉ hiện "Đã hiển thị tất cả" nếu KHÔNG CÓ LỖI */}
-            {!hasMore && !isError && emails.length > 0 && !isFetching && (
-              <div className="p-4 text-center text-xs text-muted-foreground border-t mt-2">
-                Đã hiển thị tất cả email
-              </div>
-            )}
+            {/* [FIX UI] "All Loaded" Message */}
+            {!effectiveHasMore &&
+              !isError &&
+              processedEmails.length > 0 &&
+              !isFetching && (
+                <div className="p-4 text-center text-xs text-muted-foreground border-t mt-2">
+                  {isFiltering
+                    ? "Filtered results shown"
+                    : "Đã hiển thị tất cả email"}
+                </div>
+              )}
           </div>
         )}
       </div>
