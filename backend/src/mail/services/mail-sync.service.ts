@@ -19,7 +19,6 @@ export class MailSyncService {
   private readonly logger = new Logger(MailSyncService.name);
   private genAI: GoogleGenerativeAI;
   private embeddingModel: any;
-  private readonly mailGateway: MailGateway;
 
   constructor(
     private mailRepository: MailRepository,
@@ -27,7 +26,7 @@ export class MailSyncService {
     private linkedAccountRepository: LinkedAccountRepository,
     private configService: ConfigService,
     private userService: UserService,
-    mailGateway: MailGateway,
+    private mailGateway: MailGateway,
   ) {
     // Khởi tạo Gemini
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
@@ -153,10 +152,10 @@ export class MailSyncService {
     await this.syncEmailsForUser(String(user._id));
 
     if (user) {
-      console.log(`📡 Emitting NEW_MAIL event to user ${user._id}`);
+      console.log(`📡 Emitting NEW_MAIL event to user ${String(user._id)}`);
       // Bắn sự kiện 'NEW_MAIL' vào phòng của user đó
-      this.mailGateway.server.to(user.id.toString()).emit('NEW_MAIL', {
-        message: 'Có thư mới ting ting!'
+      void this.mailGateway.server.to(String(user._id)).emit('NEW_MAIL', {
+        message: 'Có thư mới ting ting!',
       });
     }
   }

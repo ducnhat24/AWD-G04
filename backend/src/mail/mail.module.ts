@@ -40,4 +40,4 @@ import { MailGateway } from './mail.gateway';
   ],
   exports: [MailService, GmailIntegrationService],
 })
-export class MailModule { }
+export class MailModule {}
