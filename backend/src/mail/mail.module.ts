@@ -17,6 +17,7 @@ import { MailSyncService } from './services/mail-sync.service';
 import { MailSearchService } from './services/mail-search.service';
 import { MailRepository } from './mail.repository';
 import { UserModule } from '../user/user.module';
+import { MailGateway } from './mail.gateway';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { UserModule } from '../user/user.module';
   ],
   controllers: [MailController],
   providers: [
+    MailGateway,
     MailService,
     GmailIntegrationService,
     MailSyncService,
@@ -38,4 +40,4 @@ import { UserModule } from '../user/user.module';
   ],
   exports: [MailService, GmailIntegrationService],
 })
-export class MailModule {}
+export class MailModule { }

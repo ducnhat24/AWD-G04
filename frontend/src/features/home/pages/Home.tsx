@@ -20,12 +20,27 @@ import { useDashboardModals } from "../hooks/useDashboardModals";
 import { FOLDER_IDS, STORAGE_KEYS, VIEW_MODES } from "@/constants/app.constant";
 import { toast } from "sonner";
 import { useKeyboardNavigation } from "../hooks/useKeyboardNavigation";
+import axiosClient from "@/api/axiosClient";
+import { useMailStore } from "@/stores/mail.store";
 
 export default function HomePage() {
   // --- 1. Dashboard State ---
   const [selectedFolder, setSelectedFolder] = useState<string>(
     FOLDER_IDS.INBOX
   );
+
+  const refreshKey = useMailStore((state) => state.refreshKey);
+
+  const fetchEmails = async () => {
+    try {
+      const res = await axiosClient.get('/mail'); // API lấy list mail của bạn
+      console.log("Dữ liệu mail mới:", res);
+      // setEmails(res.data)...
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
 
   // View Mode
@@ -201,6 +216,11 @@ export default function HomePage() {
     disabled:
       modals.isComposeOpen || modals.isSnoozeOpen || modals.isKanbanDetailOpen,
   });
+
+  useEffect(() => {
+    console.log("♻️ Đang tải lại danh sách mail...");
+    fetchEmails();
+  }, [refreshKey]);
 
   return (
     <>
