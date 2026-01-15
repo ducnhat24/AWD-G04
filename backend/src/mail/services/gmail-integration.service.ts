@@ -547,6 +547,24 @@ export class GmailIntegrationService {
     return results.filter((item) => item !== null);
   }
 
+  async watchMailbox(userId: string) {
+    const auth = await this.getAuthenticatedClient(userId);
+    const gmail = google.gmail({ version: 'v1', auth });
+
+    const res = await gmail.users.watch({
+      userId: 'me',
+      requestBody: {
+        labelIds: ['INBOX'], // Chỉ canh me Inbox
+        topicName: 'projects/myawdapp/topics/gmail-watch', //
+      },
+    });
+
+    console.log(
+      `👀 Start watching for User ${userId}. History ID: ${res.data.historyId}`,
+    );
+    return res.data;
+  }
+
   // ==================== PRIVATE HELPER METHODS ====================
 
   private async createLabel(gmail: any, name: string) {

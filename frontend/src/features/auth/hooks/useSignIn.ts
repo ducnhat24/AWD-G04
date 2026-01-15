@@ -39,6 +39,7 @@ export const useSignIn = () => {
       });
       toast.success("Sign in successfully!");
     } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       handleErrorUi(error, toast.error, signInForm as any);
     }
   };

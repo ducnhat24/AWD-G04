@@ -63,6 +63,7 @@ export const useSignUp = () => {
       });
       toast.success("Sign up successfully! Please log in.");
     } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       handleErrorUi(error, toast.error, signUpForm as any);
     }
   };

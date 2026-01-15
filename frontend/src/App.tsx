@@ -9,10 +9,13 @@ import NotFoundRedirect from "./components/NotFoundRoute";
 import GoogleCallback from "./features/google/pages/GoogleCallBack";
 import { authChannel, useAuthStore } from "./stores/auth.store";
 import { useThemeStore } from "./stores/theme.store";
+import axiosClient from "./api/axiosClient";
 
 function App() {
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
   const logout = useAuthStore((state) => state.logout);
+  const user = useAuthStore((state) => state.user);
+
   const theme = useThemeStore((state) => state.theme);
 
   useEffect(() => {
@@ -50,6 +53,22 @@ function App() {
 
     root.classList.add(theme);
   }, [theme]);
+
+  useEffect(() => {
+    const registerGmailWatch = async () => {
+      // Chỉ cần check user và user.id tồn tại là đủ
+      if (user?._id) {
+        try {
+          await axiosClient.post('/mail/watch');
+          console.log(`👀 Gmail Watch Active for user: ${user.email}`);
+        } catch (error) {
+          console.error("❌ Lỗi đăng ký Gmail Watch:", error);
+        }
+      }
+    };
+
+    registerGmailWatch();
+  }, [user]); // Chỉ phụ thuộc vào user
 
   return (
     <Routes>
