@@ -45,11 +45,13 @@ export const useKanbanColumnData = (column: KanbanColumnConfig) => {
     getNextPageParam: (lastPage) => lastPage.nextPageToken,
     initialPageParam: 1 as string | number,
     refetchInterval: 60000,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
 
     // [THÊM QUAN TRỌNG] Hỗ trợ Offline
     networkMode: "offlineFirst", // Ưu tiên cache, không báo lỗi ngay khi mất mạng
     refetchOnReconnect: true, // Tự động fetch lại khi có mạng
-    staleTime: 1000 * 60 * 5, // Giữ cache trong 5 phút
+    staleTime: 0,          // Luôn coi dữ liệu là cũ để kích hoạt fetch
+    gcTime: 0,
+    refetchOnMount: true,  // [QUAN TRỌNG] Bắt buộc gọi API lại ngay khi chuyển Tab sang Kanban
   });
 };
