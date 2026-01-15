@@ -206,4 +206,13 @@ export class MailController {
 
     return { success: true }; // Phải trả về 200 OK để Google biết đã nhận
   }
+
+  @Post('sync')
+  async syncNow(@Req() req: AuthRequest) {
+    console.log(`⏳ Force Sync requested by user ${req.user._id}`);
+
+    await this.mailService.syncEmailsForUser(req.user._id);
+
+    return { message: 'Sync completed' };
+  }
 }

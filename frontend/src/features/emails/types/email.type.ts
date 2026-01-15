@@ -21,4 +21,5 @@ export interface Email {
   avatarColor?: string;
   attachments?: Attachment[];
   snoozeUntil?: string; // ISO Date string
+  labelIds?: string[];
 }
