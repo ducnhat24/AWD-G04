@@ -45,7 +45,7 @@ export const useKanbanColumnData = (column: KanbanColumnConfig) => {
     getNextPageParam: (lastPage) => lastPage.nextPageToken,
     initialPageParam: 1 as string | number,
     refetchInterval: 60000,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
 
     // [THÊM QUAN TRỌNG] Hỗ trợ Offline
     networkMode: "offlineFirst", // Ưu tiên cache, không báo lỗi ngay khi mất mạng
