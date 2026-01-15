@@ -101,7 +101,7 @@ Students must input minus points to every uncompleted feature in the SE column.
 |  | Download attachments | \-0.25 | 0 |  | Download attachment files |
 |  | Delete emails | \-0.25 | 0 |  | Move to trash via Gmail API |
 | **10** | **Advanced features** |  |  |  |  |
-|  | Gmail Push Notifications | 0.25 |  |  | **Real-time inbox updates via Gmail watch + Pub/Sub** |
+|  | Gmail Push Notifications | 0.25 | 0.25 |  | Real-time inbox updates via Gmail watch + Pub/Sub |
 |  | Multi-tab logout sync | 0.25 | 0.25 |  | BroadcastChannel for logout sync across tabs |
 |  | Offline caching | 0.25 | 0.25 |  | IndexedDB + stale-while-revalidate for emails |
 |  | Keyboard navigation | 0.25 | 0.25 |  | Navigate emails with keyboard shortcuts |
@@ -171,6 +171,7 @@ Students must input minus points to every uncompleted feature in the SE column.
 | POST /mail/emails/:id/forward | Chuyển tiếp (Forward) một email. |
 | POST /mail/emails/:id/modify | Thay đổi trạng thái email (Đánh dấu đã đọc, Xóa, Gán nhãn...). |
 | GET /mail/attachments/:msgId/:attId | Tải xuống file đính kèm của email. |
+| POST /mail/sync | Đồng bộ mail |
 | **Kanban Configuration** | |
 | GET /kanban/config | Lấy cấu hình bảng Kanban cá nhân của user (danh sách cột, màu sắc, label mapping). |
 | POST /kanban/config | Khởi tạo cấu hình Kanban mới (thường gọi khi user lần đầu vào Dashboard). |

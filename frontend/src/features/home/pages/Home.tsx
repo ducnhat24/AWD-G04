@@ -211,22 +211,18 @@ export default function HomePage() {
   });
 
   useEffect(() => {
-    // Mỗi khi refreshKey nhảy số (do Socket kích hoạt)
     if (refreshKey > 0) {
       console.log("Real-time Update: Đang làm mới dữ liệu...");
 
-      // 1. Reload danh sách Email (List View)
+      // Reload List View
       refetchList();
-
-      // 2. Reload config Kanban (List cột)
       refetchKanbanConfig?.();
 
-      // 3. [THÊM 3] Bắt buộc reload nội dung email trong các cột Kanban
-      // Lệnh này sẽ tìm tất cả các query có key bắt đầu bằng KANBAN_KEYS.DETAIL 
-      // và bắt chúng tải lại từ server ngay lập tức.
-      queryClient.invalidateQueries({ queryKey: [KANBAN_KEYS.DETAIL] });
+      // [SỬA ĐOẠN NÀY]: Thay vì invalidate, ta dùng refetchQueries
+      // Lệnh này ép tất cả các cột Kanban đang hiển thị phải chạy lại API ngay lập tức
+      queryClient.refetchQueries({ queryKey: [KANBAN_KEYS.DETAIL] });
     }
-  }, [refreshKey, refetchList, refetchKanbanConfig, queryClient]); // Nhớ thêm queryClient vào đây
+  }, [refreshKey, refetchList, refetchKanbanConfig, queryClient]);
 
   const kanbanColumns = useMemo(() => {
     if (!columns || !emails) return [];
@@ -253,10 +249,17 @@ export default function HomePage() {
 
   useEffect(() => {
     if (viewMode === VIEW_MODES.KANBAN) {
-      // Invalidate để đảm bảo dữ liệu được đánh dấu là cũ và trigger fetch
+      console.log("Switching to Kanban: Cleaning old cache...");
+
+      // [SỬA ĐOẠN NÀY]: Xóa sạch cache cũ trước khi hiển thị
+      // Để đảm bảo không bao giờ hiện mail cũ
+      queryClient.removeQueries({ queryKey: [KANBAN_KEYS.DETAIL] });
+
+      // Sau đó invalidate để kích hoạt fetch mới (thường remove xong nó tự fetch do logic mount, nhưng thêm cho chắc)
       queryClient.invalidateQueries({ queryKey: [KANBAN_KEYS.DETAIL] });
     }
   }, [viewMode, queryClient]);
+
   return (
     <>
       <LoadingOverlay
