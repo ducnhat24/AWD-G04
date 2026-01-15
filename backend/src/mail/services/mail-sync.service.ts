@@ -5,7 +5,7 @@ import { MailRepository } from '../mail.repository';
 import { LinkedAccountRepository } from '../../user/repositories/linked-account.repository';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-
+import { UserService } from '../../user/user.service'; // Import service user
 /**
  * MailSyncService
  * Chịu trách nhiệm đồng bộ emails từ Gmail API vào Database
@@ -18,6 +18,7 @@ export class MailSyncService {
   private readonly logger = new Logger(MailSyncService.name);
   private genAI: GoogleGenerativeAI;
   private embeddingModel: any;
+  private readonly userService: UserService;
 
   constructor(
     private mailRepository: MailRepository,
@@ -133,6 +134,25 @@ export class MailSyncService {
     }
   }
 
+  async handleRealtimeSync(email: string) {
+    this.logger.log(`Webhook received for: ${email}`);
+
+    const user = await this.userService.findByEmail(email);
+
+    if (!user) {
+      this.logger.warn(`User not found for email: ${email}`);
+      return;
+    }
+
+    // 2. Logic Sync (Rush Strategy)
+    this.logger.log(`Triggering sync for user ID: ${String(user._id)}`);
+
+    await this.syncEmailsForUser(String(user._id));
+
+    // 3. (Optional) Nếu có Socket thì bắn ở đây
+    // this.mailGateway.notifyUser(user._id, 'NEW_EMAIL');
+  }
+
   /**
    * Cron job tự động sync emails cho tất cả users
    * Chạy mỗi 10 phút
@@ -147,7 +167,7 @@ export class MailSyncService {
 
       // Chạy vòng lặp sync cho từng user
       for (const acc of linkedAccounts) {
-        await this.syncEmailsForUser(acc.user.toString());
+        await this.syncEmailsForUser(String(acc.user));
       }
 
       this.logger.log('>>> Cron Job Finished.');

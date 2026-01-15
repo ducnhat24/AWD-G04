@@ -228,6 +228,14 @@ export class MailService {
     return this.mailSearchService.getSuggestions(userId, query);
   }
 
+  async watchMailbox(userId: string) {
+    return this.gmailIntegrationService.watchMailbox(userId);
+  }
+
+  async handleRealtimeSync(emailAddress: string) {
+    return this.mailSyncService.handleRealtimeSync(emailAddress);
+  }
+
   // ==================== PRIVATE HELPERS ====================
 
   private stripHtml(html: string): string {

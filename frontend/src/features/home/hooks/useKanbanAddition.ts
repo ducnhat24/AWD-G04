@@ -22,6 +22,7 @@ const formSchema = z.object({
 
 export const useKanbanAddition = () => {
   const form = useForm<ColumnFormData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(formSchema) as any,
     mode: "onChange",
     defaultValues: {

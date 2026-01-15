@@ -11,7 +11,7 @@ const getPersistedConfig = () => {
   return saved ? JSON.parse(saved) : INITIAL_KANBAN_CONFIG;
 };
 
-const saveConfig = (config: any) => {
+const saveConfig = (config: unknown) => {
   localStorage.setItem("kanban_config", JSON.stringify(config));
 };
 
