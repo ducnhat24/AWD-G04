@@ -14,6 +14,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SendEmailDto } from './dto/send-email.dto';
 import { ModifyEmailDto } from './dto/modify-email.dto';
 import { Response } from 'express';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 interface AuthRequest {
   user: {
@@ -26,7 +27,7 @@ interface AuthRequest {
 @Controller('mail')
 @UseGuards(JwtAuthGuard) // Bảo vệ toàn bộ endpoint, bắt buộc phải login
 export class MailController {
-  constructor(private readonly mailService: MailService) {}
+  constructor(private readonly mailService: MailService) { }
 
   // Tìm kiếm Email (Fuzzy Search)
   @Get('search')
@@ -173,5 +174,36 @@ export class MailController {
     // Gọi hàm mới update bên search service
     // Lưu ý: hàm getSuggestions ở MailService cần gọi sang MailSearchService
     return this.mailService.getSuggestions(req.user._id, query);
+  }
+
+  // 1. API để Frontend gọi kích hoạt lúc mới Login
+  @Post('watch')
+  async startWatch(@Req() req) {
+    return this.mailService.watchMailbox(req.user.userId);
+  }
+
+  // 2. WEBHOOK: Google Pub/Sub sẽ gọi vào đây
+  @Public()
+  @Post('notifications')
+  async handleGmailNotification(@Body() body: any) {
+    // Google gửi dữ liệu dưới dạng Base64, cần giải mã
+    if (!body.message || !body.message.data) {
+      return { status: 'ignored' };
+    }
+
+    const decodedData = Buffer.from(body.message.data, 'base64').toString();
+    const notification = JSON.parse(decodedData);
+
+    // Dữ liệu giải mã sẽ có dạng: { emailAddress: 'user@gmail.com', historyId: 12345 }
+    const email = notification.emailAddress;
+
+    console.log(`🔔 TING TING! Có thay đổi trong hộp mail của: ${email}`);
+
+    // LOGIC XỬ LÝ:
+    // Tìm user trong DB bằng emailAddress -> Gọi hàm syncEmails()
+    // Ví dụ:
+    await this.mailService.handleRealtimeSync(email);
+
+    return { success: true }; // Phải trả về 200 OK để Google biết đã nhận
   }
 }

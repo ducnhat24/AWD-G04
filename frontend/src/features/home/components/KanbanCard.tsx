@@ -56,6 +56,7 @@ export const KanbanCard = memo(function KanbanCard({
   };
 
   const renderCard = (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     provided?: any,
     snapshot?: { isDragging: boolean }
   ) => (

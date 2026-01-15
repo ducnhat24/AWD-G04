@@ -23,6 +23,7 @@ const formSchema = z.object({
 
 export const useKanbanUpdate = (config?: KanbanColumnConfig) => {
   const form = useForm<ColumnFormData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(formSchema) as any,
     mode: "onChange",
     defaultValues: {
@@ -42,7 +43,7 @@ export const useKanbanUpdate = (config?: KanbanColumnConfig) => {
         order: config.order,
       });
     }
-  }, [config]);
+  }, [config, form]);
 
   const { mutateAsync: updateColumn, isPending: isUpdatingKanbanColumn } =
     useUpdateKanbanConfigMutation();

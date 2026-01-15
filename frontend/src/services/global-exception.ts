@@ -23,6 +23,7 @@ export const catchGlobalAxiosError = (error: unknown): CustomError => {
 export const handleErrorUi = (
   error: unknown,
   notifyCallback: (message: string) => void,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   form?: any
 ): void => {
   if (error instanceof CustomError) {

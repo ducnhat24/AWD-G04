@@ -27,7 +27,7 @@ Students must input minus points to every uncompleted feature in the SE column.
 |  |  | **Point** | **SE\*** | **TR\*** |  |
 | **1** | **Overall requirements** |  |  |  |  |
 |  | User-centered design | \-5 | 0 |  | Built with user experience in mind. Kanban-style email management, AI summarization, semantic search for efficient email workflow |
-|  | Database design | \-1 |  |  | Database with tables: users, emails, **email_vectors**, kanban_columns, snooze_schedules, labels |
+|  | Database design | \-1 | 0 |  | Database with tables: users, emails, email_vectors, kanban_columns, snooze_schedules, labels |
 |  | Database mock data | \-1 |  |  | **Sample emails, kanban configurations, and test data** |
 |  | Website layout | \-2 | 0 |  | 3-column layout: mailbox list, email list, email detail. Kanban board view |
 |  | Website architect | \-3 | 0 |  | React SPA with backend API. Clear separation of concerns. OAuth2 flow, token handling |
@@ -49,7 +49,7 @@ Students must input minus points to every uncompleted feature in the SE column.
 |  | Email list with pagination | \-0.25 | 0 |  | Paginated/virtualized email list |
 |  | Email detail view | \-0.25 | 0 |  | Full email content with HTML/plain text support |
 |  | Mailbox/Labels list | \-0.25 | 0 |  | Display Gmail labels/folders in sidebar |
-|  | Open in Gmail link | \-0.25 |  |  | **Button/icon to open email in Gmail** |
+|  | Open in Gmail link | \-0.25 | 0 |  | Button/icon to open email in Gmail |
 | **4** | **Kanban Board Interface** |  |  |  |  |
 |  | Kanban board layout | \-0.5 | 0 |  | Board with columns: Inbox, To Do, Done, etc. |
 |  | Email cards display | \-0.25 | 0 |  | Cards showing sender, subject, snippet |
@@ -84,27 +84,27 @@ Students must input minus points to every uncompleted feature in the SE column.
 |  | › Conceptual relevance search | \-0.5 | 0 |  | Query "money" finds "invoice", "price", "salary" |
 |  | › Semantic search API endpoint | \-0.25 | 0 |  | POST /api/search/semantic endpoint |
 |  | Search Auto-Suggestion |  |  |  |  |
-|  | › Type-ahead dropdown | \-0.25 |  |  | Dropdown appears while typing with **3-5 suggestions** <br>Note: **Type-ahead suggestion khác Suggestion từ keyword / sender nha ae** |
-|  | › Suggestions from contacts/keywords | \-0.25 |  |  | Suggestions populated from **sender names**, subject keywords |
+|  | › Type-ahead dropdown | \-0.25 | 0 |  | Dropdown appears while typing with 3-5 suggestions  |
+|  | › Suggestions from contacts/keywords | \-0.25 | 0 |  | Suggestions populated from sender names, subject keywords |
 |  | › Trigger search on selection | \-0.25 | 0 |  | Clicking suggestion triggers semantic search |
 | **8** | **Filtering & Sorting** |  |  |  |  |
-|  | Sort by date (newest/oldest) | \-0.25 |  |  | At least two sorting options **(chưa có ở Email dạng list)**|
-|  | Filter by unread | \-0.25 |  |  | Show only unread emails **(chưa có ở Email dạng list)**|
-|  | Filter by attachments | \-0.25 |  |  | Show only emails with attachments **(chưa có ở Email dạng list)**|
-|  | Real-time filter updates | \-0.25 |  |  | Changes apply immediately without page reload **(chưa có ở Email dạng list)**|
+|  | Sort by date (newest/oldest) | \-0.25 | 0 |  | At least two sorting options |
+|  | Filter by unread | \-0.25 | 0 |  | Show only unread emails |
+|  | Filter by attachments | \-0.25 | 0 |  | Show only emails with attachments |
+|  | Real-time filter updates | \-0.25 | 0 |  | Changes apply immediately without page reload |
 | **9** | **Email Actions** |  |  |  |  |
-|  | Mark as read/unread | \-0.25 |  |  | **Toggle read status via Gmail API** |
+|  | Mark as read/unread | \-0.25 | 0 |  | Toggle read status via Gmail API |
 |  | Compose modal | \-0.25 | 0 |  | Modal to compose new email |
 |  | Reply/Forward flow | \-0.25 | 0 |  | Reply to and forward emails |
 |  | Send via Gmail API | \-0.25 | 0 |  | Send emails through Gmail API |
-|  | View attachments | \-0.25 |  |  | **Display attachments in email detail** |
+|  | View attachments | \-0.25 | 0 |  | Display attachments in email detail |
 |  | Download attachments | \-0.25 | 0 |  | Download attachment files |
-|  | Delete emails | \-0.25 |  |  | **Move to trash via Gmail API** |
+|  | Delete emails | \-0.25 | 0 |  | Move to trash via Gmail API |
 | **10** | **Advanced features** |  |  |  |  |
 |  | Gmail Push Notifications | 0.25 |  |  | **Real-time inbox updates via Gmail watch + Pub/Sub** |
-|  | Multi-tab logout sync | 0.25 |  |  | **BroadcastChannel for logout sync across tabs (chưa test)** |
-|  | Offline caching | 0.25 |  |  | **IndexedDB + stale-while-revalidate for emails (chưa test)** |
-|  | Keyboard navigation | 0.25 |  |  | **Navigate emails with keyboard shortcuts (chưa test)** |
+|  | Multi-tab logout sync | 0.25 | 0.25 |  | BroadcastChannel for logout sync across tabs |
+|  | Offline caching | 0.25 | 0.25 |  | IndexedDB + stale-while-revalidate for emails |
+|  | Keyboard navigation | 0.25 | 0.25 |  | Navigate emails with keyboard shortcuts |
 |  | Dockerize your project | 0.25 | 0.25 |  | Docker containers for backend, frontend |
 |  | CI/CD | 0.25 | 0.25 |  | Automated testing and deployment pipeline |
 
