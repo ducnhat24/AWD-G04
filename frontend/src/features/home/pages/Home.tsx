@@ -247,19 +247,6 @@ export default function HomePage() {
     });
   }, [columns, emails]);
 
-  useEffect(() => {
-    if (viewMode === VIEW_MODES.KANBAN) {
-      console.log("Switching to Kanban: Cleaning old cache...");
-
-      // [SỬA ĐOẠN NÀY]: Xóa sạch cache cũ trước khi hiển thị
-      // Để đảm bảo không bao giờ hiện mail cũ
-      queryClient.removeQueries({ queryKey: [KANBAN_KEYS.DETAIL] });
-
-      // Sau đó invalidate để kích hoạt fetch mới (thường remove xong nó tự fetch do logic mount, nhưng thêm cho chắc)
-      queryClient.invalidateQueries({ queryKey: [KANBAN_KEYS.DETAIL] });
-    }
-  }, [viewMode, queryClient]);
-
   return (
     <>
       <LoadingOverlay
