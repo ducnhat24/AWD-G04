@@ -27,7 +27,7 @@ interface AuthRequest {
 @Controller('mail')
 @UseGuards(JwtAuthGuard) // Bảo vệ toàn bộ endpoint, bắt buộc phải login
 export class MailController {
-  constructor(private readonly mailService: MailService) { }
+  constructor(private readonly mailService: MailService) {}
 
   // Tìm kiếm Email (Fuzzy Search)
   @Get('search')
@@ -205,5 +205,14 @@ export class MailController {
     await this.mailService.handleRealtimeSync(email);
 
     return { success: true }; // Phải trả về 200 OK để Google biết đã nhận
+  }
+
+  @Post('sync')
+  async syncNow(@Req() req: AuthRequest) {
+    console.log(`⏳ Force Sync requested by user ${req.user._id}`);
+
+    await this.mailService.syncEmailsForUser(req.user._id);
+
+    return { message: 'Sync completed' };
   }
 }

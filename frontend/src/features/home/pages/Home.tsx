@@ -1,5 +1,5 @@
 // src/features/home/pages/Home.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft } from "lucide-react";
 
 // Components
@@ -20,7 +20,6 @@ import { useDashboardModals } from "../hooks/useDashboardModals";
 import { FOLDER_IDS, STORAGE_KEYS, VIEW_MODES } from "@/constants/app.constant";
 import { toast } from "sonner";
 import { useKeyboardNavigation } from "../hooks/useKeyboardNavigation";
-import axiosClient from "@/api/axiosClient";
 import { useMailStore } from "@/stores/mail.store";
 
 export default function HomePage() {
@@ -30,16 +29,6 @@ export default function HomePage() {
   );
 
   const refreshKey = useMailStore((state) => state.refreshKey);
-
-  const fetchEmails = async () => {
-    try {
-      const res = await axiosClient.get('/mail'); // API lấy list mail của bạn
-      console.log("Dữ liệu mail mới:", res);
-      // setEmails(res.data)...
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
 
@@ -64,9 +53,10 @@ export default function HomePage() {
     localStorage.setItem(STORAGE_KEYS.VIEW_MODE, viewMode);
   }, [viewMode]);
 
-  // --- 2. Custom Hooks & Business Logic ---
-  const { columns, isKanbanConfigLoading } = useKanbanConfig();
 
+
+  // --- 2. Custom Hooks & Business Logic ---
+  const { columns, isKanbanConfigLoading, refetchKanbanConfig } = useKanbanConfig();
   const {
     emails,
     fetchNextList,
@@ -218,9 +208,42 @@ export default function HomePage() {
   });
 
   useEffect(() => {
-    console.log("♻️ Đang tải lại danh sách mail...");
-    fetchEmails();
-  }, [refreshKey]);
+    // Mỗi khi refreshKey nhảy số (do Socket kích hoạt)
+    if (refreshKey > 0) {
+      console.log("Real-time Update: Đang làm mới dữ liệu...");
+
+      // 1. Reload danh sách Email
+      refetchList();
+
+      // 2. Reload bảng Kanban (Sửa tên hàm ở đây)
+      refetchKanbanConfig?.();
+    }
+  }, [refreshKey, refetchList, refetchKanbanConfig]); // Nhớ thêm vào dependency array
+
+
+
+  const kanbanColumns = useMemo(() => {
+    if (!columns || !emails) return [];
+
+    return columns.map((col) => {
+      // Logic lọc: Email nào thuộc về cột này?
+      // Ví dụ: So khớp labelId của cột với danh sách label của email
+      const colEmails = emails.filter((email) => {
+        // Tùy chỉnh logic này theo cấu trúc DB của bạn
+        // Ví dụ: Nếu cột là 'INBOX'
+        if (col.id === 'INBOX' || col.gmailLabelId === 'INBOX') {
+          return email.labelIds?.includes('INBOX');
+        }
+        // Các cột khác (Custom Label)
+        return email.labelIds?.includes(col.gmailLabelId);
+      });
+
+      return {
+        ...col,
+        cards: colEmails,
+      };
+    });
+  }, [columns, emails]);
 
   return (
     <>
@@ -351,7 +374,7 @@ export default function HomePage() {
                 }}
                 onOpenMail={handleOpenMail}
               >
-                <KanbanBoard columns={columns || []} />
+                <KanbanBoard columns={kanbanColumns || []} />
               </KanbanProvider>
             )}
           </div>

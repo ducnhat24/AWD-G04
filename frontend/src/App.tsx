@@ -19,107 +19,93 @@ function App() {
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
-
   const theme = useThemeStore((state) => state.theme);
-
   const triggerRefresh = useMailStore((state) => state.triggerRefresh);
 
+  // 1. Logic Auth & Theme (Giữ nguyên)
   useEffect(() => {
     const handleAuthSync = (event: MessageEvent) => {
-      if (event.data === "LOGOUT") {
-        console.log("Đồng bộ đăng xuất từ tab khác");
-        logout(true); // true = remote logout (không gửi lại tin nhắn)
-      }
+      if (event.data === "LOGOUT") logout(true);
     };
-
-    console.log("Đăng ký lắng nghe kênh đồng bộ auth");
     authChannel.onmessage = handleAuthSync;
-
-    return () => {
-      authChannel.onmessage = null;
-    };
+    return () => { authChannel.onmessage = null; };
   }, [logout]);
 
-  useEffect(() => {
-    initializeAuth();
-  }, [initializeAuth]);
+  useEffect(() => { initializeAuth(); }, [initializeAuth]);
 
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
-
     if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light";
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
       root.classList.add(systemTheme);
-      return;
+    } else {
+      root.classList.add(theme);
     }
-
-    root.classList.add(theme);
   }, [theme]);
 
+  // 2. LOGIC KHỞI TẠO (Force Sync + Watch)
+  // Chạy 1 lần duy nhất khi User mới vào để đảm bảo dữ liệu mới nhất
   useEffect(() => {
-    const registerGmailWatch = async () => {
-      // Chỉ cần check user và user.id tồn tại là đủ
+    const initMailSystem = async () => {
       if (user?._id) {
         try {
+          console.log("🚀 Bắt đầu khởi tạo hệ thống Mail...");
+
+          // B1: Đăng ký Webhook trước (để không sót mail)
           await axiosClient.post('/mail/watch');
-          console.log(`👀 Gmail Watch Active for user: ${user.email}`);
+
+          // B2: Force Sync (kéo mail cũ về)
+          await axiosClient.post('/mail/sync');
+          console.log("✅ Đồng bộ Initial hoàn tất!");
+
+          // B3: Refresh giao diện
+          triggerRefresh();
         } catch (error) {
-          console.error("❌ Lỗi đăng ký Gmail Watch:", error);
+          console.error("❌ Lỗi khởi tạo hệ thống Mail:", error);
         }
       }
     };
+    initMailSystem();
+  }, [user?._id]); // Chỉ chạy khi user ID thay đổi
 
-    registerGmailWatch();
-  }, [user]); // Chỉ phụ thuộc vào user
-
+  // 3. LOGIC REAL-TIME (Socket.IO) - 👇 ĐOẠN NÀY VỪA BỊ THIẾU NÈ
+  // Lắng nghe sự kiện "NEW_MAIL" về sau
   useEffect(() => {
-    // Chỉ kết nối khi có user ID
     if (!user?._id) return;
 
-    // 1. Tạo kết nối
+    // Kết nối Socket
     const socket = io(SOCKET_URL, {
       transports: ['websocket'],
       path: '/socket.io/',
     });
 
-    // 2. Khi nối thành công -> Xin vào phòng
     socket.on('connect', () => {
-      console.log('Socket connected');
+      console.log('🟢 Socket connected');
       socket.emit('join_room', user._id);
     });
 
-    // 3. Lắng nghe sự kiện 'NEW_MAIL' từ server
+    // Khi Server báo có mail mới -> Refresh giao diện
     socket.on('NEW_MAIL', (data) => {
-      console.log('⚡ NHẬN ĐƯỢC MAIL MỚI:', data);
-
-      // 👉 GỌI HÀM RELOAD API Ở ĐÂY
-
+      console.log('⚡ NHẬN ĐƯỢC MAIL MỚI (Real-time):', data);
       triggerRefresh();
     });
 
-    // 4. Dọn dẹp khi thoát
     return () => {
       socket.disconnect();
     };
-  }, [user?._id]); // Chạy lại khi user ID thay đổi
+  }, [user?._id]);
 
   return (
     <Routes>
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<HomePage />} />
       </Route>
-
       <Route element={<PublicRoute />}>
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
       </Route>
-
       <Route path="/login/oauth/google/callback" element={<GoogleCallback />} />
-
       <Route path="*" element={<NotFoundRedirect />} />
     </Routes>
   );
