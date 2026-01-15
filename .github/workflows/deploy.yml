@@ -46,7 +46,8 @@ jobs:
             VITE_API_URL=https://${{ secrets.VPS_IP }}.nip.io/api
             VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
             VITE_GOOGLE_REDIRECT_URI=https://${{ secrets.VPS_IP }}.nip.io/login/oauth/google/callback
-
+            VITE_SOCKET_URL=https://${{ secrets.VPS_IP }}.nip.io
+            
       # 4. Copy file docker-compose lên VPS
       - name: Copy docker-compose to VPS
         uses: appleboy/scp-action@master

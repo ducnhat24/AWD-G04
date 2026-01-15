@@ -5,7 +5,8 @@ import { MailRepository } from '../mail.repository';
 import { LinkedAccountRepository } from '../../user/repositories/linked-account.repository';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { UserService } from '../../user/user.service'; // Import service user
+import { UserService } from '../../user/user.service';
+import { MailGateway } from '../mail.gateway';
 /**
  * MailSyncService
  * Chịu trách nhiệm đồng bộ emails từ Gmail API vào Database
@@ -18,6 +19,7 @@ export class MailSyncService {
   private readonly logger = new Logger(MailSyncService.name);
   private genAI: GoogleGenerativeAI;
   private embeddingModel: any;
+  private readonly mailGateway: MailGateway;
 
   constructor(
     private mailRepository: MailRepository,
@@ -25,6 +27,7 @@ export class MailSyncService {
     private linkedAccountRepository: LinkedAccountRepository,
     private configService: ConfigService,
     private userService: UserService,
+    mailGateway: MailGateway,
   ) {
     // Khởi tạo Gemini
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
@@ -149,8 +152,13 @@ export class MailSyncService {
 
     await this.syncEmailsForUser(String(user._id));
 
-    // 3. (Optional) Nếu có Socket thì bắn ở đây
-    // this.mailGateway.notifyUser(user._id, 'NEW_EMAIL');
+    if (user) {
+      console.log(`📡 Emitting NEW_MAIL event to user ${user._id}`);
+      // Bắn sự kiện 'NEW_MAIL' vào phòng của user đó
+      this.mailGateway.server.to(user.id.toString()).emit('NEW_MAIL', {
+        message: 'Có thư mới ting ting!'
+      });
+    }
   }
 
   /**
