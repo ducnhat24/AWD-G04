@@ -8,9 +8,9 @@ GitHub repo URL: https://github.com/ducnhat24/AWD-G04
 
 | Student ID | Full name | Git account | Contribution | Contribution percentage (100% total) | Expected total points | Final total points |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
-| 22120252 | Giang Đức Nhật | ducnhat24 | **BE:**<br>- Google OAuth 2.0 integration <br>- Email Synchronization <br>- Snooze Mechanism<br>- AI Features<br>- Search Features<br> -  Filtering & Sorting <br> - Email Actions| 33.3% | 10 |  |
+| 22120252 | Giang Đức Nhật | ducnhat24 | **BE:**<br>- Google OAuth 2.0 integration <br>- Email Synchronization <br>- Snooze Mechanism<br>- AI Features<br>- Search Features<br> -  Filtering & Sorting <br> - Email Actions <br> - CI/CD & Dockerize <br> - Gmail Watch Pub&Sub| 33.3% | 10 |  |
 | 22120427 | Nguyễn Mạnh Văn | nmvan | **FE:**<br> - Email Display <br> - Kanban Board Interface <br>- Snooze Mechanism <br> -  Search & Sort & Filter Email UI <br> - Email Action <br> - UI AI summary <br> - Mockdata Email | 33.3% | 10 |  |
-| 22120450 | Bùi Đình Gia Vỹ | VyBui13 | **BE:** <br>- Authentication & Token Management<br> **FE:**<br>- Concurrency handling<br>- Login Page <br>- Signup Page <br>- Dynamic Kanban Configuration  | 33.4% | 10 |  |
+| 22120450 | Bùi Đình Gia Vỹ | VyBui13 | **BE:** <br>- Authentication & Token Management<br> **FE:**<br>- Concurrency handling<br>- Login Page <br>- Signup Page <br>- Dynamic Kanban Configuration <br> - Keyboard navigation <br> - Offline caching <br> - Multi-tab logout sync | 33.4% | 10 |  |
 
 # **FEATURE LIST**
 
@@ -178,6 +178,9 @@ Students must input minus points to every uncompleted feature in the SE column.
 | DELETE /kanban/config | Xóa cấu hình Kanban hiện tại (Reset về mặc định). |
 | PATCH /kanban/config/column/:id | Cập nhật thông tin chi tiết của một cột cụ thể (đổi tên cột, đổi màu, đổi Gmail Label liên kết). |
 | DELETE /kanban/config/column/:id | Xóa một cột cụ thể khỏi bảng Kanban. |
+| **Gmail Watch Pub&Sub** | |
+| POST /mail/watch | Endpoint để Gmail Watch |
+| POST /mail/notification | Endpoint để nhận thông báo từ Gmail Pub&Sub |
 
 
 ## Key User Flows
