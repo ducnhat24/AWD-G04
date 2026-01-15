@@ -33,7 +33,7 @@ export default function HomePage() {
 
   const fetchEmails = async () => {
     try {
-      const res = await axiosClient.get('/mail'); // API lấy list mail của bạn
+      const res = await axiosClient.get('/mail/mailboxes/INBOX/emails'); // API lấy list mail của bạn
       console.log("Dữ liệu mail mới:", res);
       // setEmails(res.data)...
     } catch (err) {
