@@ -20,7 +20,6 @@ import { useDashboardModals } from "../hooks/useDashboardModals";
 import { FOLDER_IDS, STORAGE_KEYS, VIEW_MODES } from "@/constants/app.constant";
 import { toast } from "sonner";
 import { useKeyboardNavigation } from "../hooks/useKeyboardNavigation";
-import axiosClient from "@/api/axiosClient";
 import { useMailStore } from "@/stores/mail.store";
 
 export default function HomePage() {
@@ -30,16 +29,6 @@ export default function HomePage() {
   );
 
   const refreshKey = useMailStore((state) => state.refreshKey);
-
-  const fetchEmails = async () => {
-    try {
-      const res = await axiosClient.get('/mail/mailboxes/INBOX/emails'); // API lấy list mail của bạn
-      console.log("Dữ liệu mail mới:", res);
-      // setEmails(res.data)...
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
 
@@ -65,8 +54,7 @@ export default function HomePage() {
   }, [viewMode]);
 
   // --- 2. Custom Hooks & Business Logic ---
-  const { columns, isKanbanConfigLoading } = useKanbanConfig();
-
+  const { columns, isKanbanConfigLoading, refetchKanbanConfig } = useKanbanConfig();
   const {
     emails,
     fetchNextList,
@@ -218,9 +206,17 @@ export default function HomePage() {
   });
 
   useEffect(() => {
-    console.log("♻️ Đang tải lại danh sách mail...");
-    fetchEmails();
-  }, [refreshKey]);
+    // Mỗi khi refreshKey nhảy số (do Socket kích hoạt)
+    if (refreshKey > 0) {
+      console.log("Real-time Update: Đang làm mới dữ liệu...");
+
+      // 1. Reload danh sách Email
+      refetchList();
+
+      // 2. Reload bảng Kanban (Sửa tên hàm ở đây)
+      refetchKanbanConfig?.();
+    }
+  }, [refreshKey, refetchList, refetchKanbanConfig]); // Nhớ thêm vào dependency array
 
   return (
     <>
