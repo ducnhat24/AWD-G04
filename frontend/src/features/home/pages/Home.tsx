@@ -251,6 +251,12 @@ export default function HomePage() {
     });
   }, [columns, emails]);
 
+  useEffect(() => {
+    if (viewMode === VIEW_MODES.KANBAN) {
+      // Invalidate để đảm bảo dữ liệu được đánh dấu là cũ và trigger fetch
+      queryClient.invalidateQueries({ queryKey: [KANBAN_KEYS.DETAIL] });
+    }
+  }, [viewMode, queryClient]);
   return (
     <>
       <LoadingOverlay
