@@ -18,13 +18,13 @@ export class MailSyncService {
   private readonly logger = new Logger(MailSyncService.name);
   private genAI: GoogleGenerativeAI;
   private embeddingModel: any;
-  private readonly userService: UserService;
 
   constructor(
     private mailRepository: MailRepository,
     private gmailIntegrationService: GmailIntegrationService,
     private linkedAccountRepository: LinkedAccountRepository,
     private configService: ConfigService,
+    private userService: UserService,
   ) {
     // Khởi tạo Gemini
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
