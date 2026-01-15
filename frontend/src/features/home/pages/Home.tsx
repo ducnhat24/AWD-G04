@@ -22,6 +22,9 @@ import { toast } from "sonner";
 import { useKeyboardNavigation } from "../hooks/useKeyboardNavigation";
 import { useMailStore } from "@/stores/mail.store";
 
+import { useQueryClient } from "@tanstack/react-query";
+import { KANBAN_KEYS } from "../services/kanban.query";
+
 export default function HomePage() {
   // --- 1. Dashboard State ---
   const [selectedFolder, setSelectedFolder] = useState<string>(
@@ -53,7 +56,7 @@ export default function HomePage() {
     localStorage.setItem(STORAGE_KEYS.VIEW_MODE, viewMode);
   }, [viewMode]);
 
-
+  const queryClient = useQueryClient();
 
   // --- 2. Custom Hooks & Business Logic ---
   const { columns, isKanbanConfigLoading, refetchKanbanConfig } = useKanbanConfig();
@@ -212,15 +215,18 @@ export default function HomePage() {
     if (refreshKey > 0) {
       console.log("Real-time Update: Đang làm mới dữ liệu...");
 
-      // 1. Reload danh sách Email
+      // 1. Reload danh sách Email (List View)
       refetchList();
 
-      // 2. Reload bảng Kanban (Sửa tên hàm ở đây)
+      // 2. Reload config Kanban (List cột)
       refetchKanbanConfig?.();
+
+      // 3. [THÊM 3] Bắt buộc reload nội dung email trong các cột Kanban
+      // Lệnh này sẽ tìm tất cả các query có key bắt đầu bằng KANBAN_KEYS.DETAIL 
+      // và bắt chúng tải lại từ server ngay lập tức.
+      queryClient.invalidateQueries({ queryKey: [KANBAN_KEYS.DETAIL] });
     }
-  }, [refreshKey, refetchList, refetchKanbanConfig]); // Nhớ thêm vào dependency array
-
-
+  }, [refreshKey, refetchList, refetchKanbanConfig, queryClient]); // Nhớ thêm queryClient vào đây
 
   const kanbanColumns = useMemo(() => {
     if (!columns || !emails) return [];
