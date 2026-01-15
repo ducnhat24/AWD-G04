@@ -1,5 +1,5 @@
 // src/features/home/pages/Home.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft } from "lucide-react";
 
 // Components
@@ -52,6 +52,8 @@ export default function HomePage() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.VIEW_MODE, viewMode);
   }, [viewMode]);
+
+
 
   // --- 2. Custom Hooks & Business Logic ---
   const { columns, isKanbanConfigLoading, refetchKanbanConfig } = useKanbanConfig();
@@ -218,6 +220,31 @@ export default function HomePage() {
     }
   }, [refreshKey, refetchList, refetchKanbanConfig]); // Nhớ thêm vào dependency array
 
+
+
+  const kanbanColumns = useMemo(() => {
+    if (!columns || !emails) return [];
+
+    return columns.map((col) => {
+      // Logic lọc: Email nào thuộc về cột này?
+      // Ví dụ: So khớp labelId của cột với danh sách label của email
+      const colEmails = emails.filter((email) => {
+        // Tùy chỉnh logic này theo cấu trúc DB của bạn
+        // Ví dụ: Nếu cột là 'INBOX'
+        if (col.id === 'INBOX' || col.gmailLabelId === 'INBOX') {
+          return email.labelIds?.includes('INBOX');
+        }
+        // Các cột khác (Custom Label)
+        return email.labelIds?.includes(col.gmailLabelId);
+      });
+
+      return {
+        ...col,
+        cards: colEmails,
+      };
+    });
+  }, [columns, emails]);
+
   return (
     <>
       <LoadingOverlay
@@ -347,7 +374,7 @@ export default function HomePage() {
                 }}
                 onOpenMail={handleOpenMail}
               >
-                <KanbanBoard columns={columns || []} />
+                <KanbanBoard columns={kanbanColumns || []} />
               </KanbanProvider>
             )}
           </div>

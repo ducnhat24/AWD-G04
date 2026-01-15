@@ -50,6 +50,7 @@ export const transformEmail = (
     isStarred: isStarred ?? false,
     folder: folderId,
     avatarColor: "bg-blue-500",
+    labelIds: (backendEmail.labelIds as string[]) || [],
     attachments:
       ((backendEmail.attachments as unknown[] | undefined) || []).map((att) => {
         const attachment = att as Record<string, unknown>;
