@@ -50,6 +50,7 @@ export const useKanbanColumnData = (column: KanbanColumnConfig) => {
     // [THÊM QUAN TRỌNG] Hỗ trợ Offline
     networkMode: "offlineFirst", // Ưu tiên cache, không báo lỗi ngay khi mất mạng
     refetchOnReconnect: true, // Tự động fetch lại khi có mạng
-    staleTime: 0, // Giữ cache trong 5 phút
+    staleTime: 0,          // Luôn coi dữ liệu là cũ để kích hoạt fetch
+    refetchOnMount: true,  // [QUAN TRỌNG] Bắt buộc gọi API lại ngay khi chuyển Tab sang Kanban
   });
 };
