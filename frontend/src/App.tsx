@@ -10,6 +10,10 @@ import GoogleCallback from "./features/google/pages/GoogleCallBack";
 import { authChannel, useAuthStore } from "./stores/auth.store";
 import { useThemeStore } from "./stores/theme.store";
 import axiosClient from "./api/axiosClient";
+import { io } from 'socket.io-client';
+import { useMailStore } from "./stores/mail.store";
+
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
 function App() {
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
@@ -17,6 +21,8 @@ function App() {
   const user = useAuthStore((state) => state.user);
 
   const theme = useThemeStore((state) => state.theme);
+
+  const triggerRefresh = useMailStore((state) => state.triggerRefresh);
 
   useEffect(() => {
     const handleAuthSync = (event: MessageEvent) => {
@@ -69,6 +75,37 @@ function App() {
 
     registerGmailWatch();
   }, [user]); // Chỉ phụ thuộc vào user
+
+  useEffect(() => {
+    // Chỉ kết nối khi có user ID
+    if (!user?._id) return;
+
+    // 1. Tạo kết nối
+    const socket = io(SOCKET_URL, {
+      transports: ['websocket'],
+      path: '/socket.io/',
+    });
+
+    // 2. Khi nối thành công -> Xin vào phòng
+    socket.on('connect', () => {
+      console.log('Socket connected');
+      socket.emit('join_room', user._id);
+    });
+
+    // 3. Lắng nghe sự kiện 'NEW_MAIL' từ server
+    socket.on('NEW_MAIL', (data) => {
+      console.log('⚡ NHẬN ĐƯỢC MAIL MỚI:', data);
+
+      // 👉 GỌI HÀM RELOAD API Ở ĐÂY
+
+      triggerRefresh();
+    });
+
+    // 4. Dọn dẹp khi thoát
+    return () => {
+      socket.disconnect();
+    };
+  }, [user?._id]); // Chạy lại khi user ID thay đổi
 
   return (
     <Routes>
