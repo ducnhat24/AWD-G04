@@ -61,20 +61,19 @@ export class MailService {
         labelId,
         limit,
       );
-
       return {
         emails: searchResults,
         nextPageToken: null,
       };
     }
 
-    // 2. NẾU KHÔNG SEARCH -> GỌI GMAIL API
-    return this.gmailIntegrationService.fetchEmails(
-      userId,
-      labelId,
-      limit,
-      pageToken,
-    );
+    // 2. 👇 THAY ĐỔI Ở ĐÂY: Đọc từ Database (MailRepository) thay vì gọi Gmail API
+    // Điều này giúp:
+    // - Tránh lỗi 401 với User Demo
+    // - Tốc độ siêu nhanh (vì đọc local DB)
+    // - Đúng kiến trúc "Offline-first"
+
+    return this.mailRepository.getEmails(userId, labelId, limit, pageToken);
   }
 
   // ==================== SYNC ====================
@@ -102,6 +101,30 @@ export class MailService {
   // ==================== EMAIL DETAIL & ACTIONS ====================
 
   async getEmailDetail(userId: string, messageId: string) {
+    // 👇 CŨ: Gọi Gmail API (Lỗi 401 với user fake)
+    // return this.gmailIntegrationService.getEmailDetail(userId, messageId);
+
+    // 👇 MỚI: Đọc từ Database (Nhanh & Không lỗi)
+    const email = await this.mailRepository.findOneByMessageId(messageId);
+
+    if (email) {
+      // Map dữ liệu từ DB sang format mà Frontend cần
+      return {
+        id: email.messageId,
+        threadId: email.threadId,
+        labelIds: email.labelIds,
+        snippet: email.snippet,
+        subject: email.subject,
+        sender: email.from,
+        to: 'me', // Mock tạm
+        date: email.date,
+        body: email.body || '<p>No content</p>', // Trả về HTML body đã lưu
+        attachments: [], // Tạm thời mock rỗng, sau này lưu attachment vào DB sau
+      };
+    }
+
+    // Fallback: Nếu không thấy trong DB (trường hợp user thật chưa sync),
+    // thì mới gọi Google API (nhưng với user fake thì sẽ throw lỗi ở đây cũng đc)
     return this.gmailIntegrationService.getEmailDetail(userId, messageId);
   }
 
