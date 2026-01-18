@@ -8,7 +8,7 @@ GitHub repo URL: https://github.com/ducnhat24/AWD-G04
 
 | Student ID | Full name | Git account | Contribution | Contribution percentage (100% total) | Expected total points | Final total points |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
-| 22120252 | Giang Đức Nhật | ducnhat24 | **BE:**<br>- Google OAuth 2.0 integration <br>- Email Synchronization <br>- Snooze Mechanism<br>- AI Features<br>- Search Features<br> -  Filtering & Sorting <br> - Email Actions <br> - CI/CD & Dockerize <br> - Gmail Watch Pub&Sub| 33.3% | 10 |  |
+| 22120252 | Giang Đức Nhật | ducnhat24 | **BE:**<br>- Google OAuth 2.0 integration <br>- Email Synchronization <br>- Snooze Mechanism<br>- AI Features<br>- Search Features<br> -  Filtering & Sorting <br> - Email Actions <br> - CI/CD & Dockerize <br> - Gmail Watch Pub&Sub <br> - Seed data| 33.3% | 10 |  |
 | 22120427 | Nguyễn Mạnh Văn | nmvan | **FE:**<br> - Email Display <br> - Kanban Board Interface <br>- Snooze Mechanism <br> -  Search & Sort & Filter Email UI <br> - Email Action <br> - UI AI summary <br> - Mockdata Email | 33.3% | 10 |  |
 | 22120450 | Bùi Đình Gia Vỹ | VyBui13 | **BE:** <br>- Authentication & Token Management<br> **FE:**<br>- Concurrency handling<br>- Login Page <br>- Signup Page <br>- Dynamic Kanban Configuration <br> - Keyboard navigation <br> - Offline caching <br> - Multi-tab logout sync | 33.4% | 10 |  |
 
@@ -28,7 +28,7 @@ Students must input minus points to every uncompleted feature in the SE column.
 | **1** | **Overall requirements** |  |  |  |  |
 |  | User-centered design | \-5 | 0 |  | Built with user experience in mind. Kanban-style email management, AI summarization, semantic search for efficient email workflow |
 |  | Database design | \-1 | 0 |  | Database with tables: users, emails, email_vectors, kanban_columns, snooze_schedules, labels |
-|  | Database mock data | \-1 |  |  | **Sample emails, kanban configurations, and test data** |
+|  | Database mock data | \-1 | 0 |  | Sample emails, kanban configurations, and test data |
 |  | Website layout | \-2 | 0 |  | 3-column layout: mailbox list, email list, email detail. Kanban board view |
 |  | Website architect | \-3 | 0 |  | React SPA with backend API. Clear separation of concerns. OAuth2 flow, token handling |
 |  | Website stability and compatibility | \-4 | 0 |  | Responsive design, tested on Chrome, Safari, Firefox, and Edge |
@@ -111,12 +111,13 @@ Students must input minus points to every uncompleted feature in the SE column.
 # **GIT HISTORY**
 
 ## **Contributors**
+Git contributors at 16:30, 18/01/2026
 
 | Avatar | Username | Commits | Additions | Deletions |
 | :---- | :---- | :---- | :---- | :---- |
-| ![center](./assets/ducnhat24.JPG) | ducnhat24 | 39 | 27267 | 2636 |
-| ![center](./assets/nmvan.png) | nmvan | 43 | 4721 | 2200 |
-| ![center](./assets/VyBui13.JPG) | VyBui13 | 15 | 8015 | 4887 |
+| ![center](./assets/ducnhat24.JPG) | ducnhat24 | 78 | 31,401 | 4,940 |
+| ![center](./assets/nmvan.png) | nmvan | 44 | 4,821 | 2,223 |
+| ![center](./assets/VyBui13.JPG) | VyBui13 | 42 | 33,472 | 10,315 |
 
 ## **Commits**
 
@@ -157,6 +158,8 @@ Students must input minus points to every uncompleted feature in the SE column.
 | :---- | :---- |
 | **Auth** | |
 | POST /auth/login | Đăng nhập hệ thống (trả về Access Token & User Info). |
+| **Mock data** | |
+| POST /seed | Seed data và trả về một tài khoản có thể đăng nhập hệ thống xem mock data. |
 | **Search Features** | |
 | GET /mail/search | Fuzzy Search: Tìm kiếm email theo từ khóa (Subject, Sender) dùng Fuse.js. |
 | POST /mail/search/semantic | Semantic Search: Tìm kiếm email theo ngữ nghĩa dùng Vector Search (Gemini embedding). |
