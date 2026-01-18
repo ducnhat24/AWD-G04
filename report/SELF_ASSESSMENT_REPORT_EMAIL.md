@@ -9,7 +9,7 @@ GitHub repo URL: https://github.com/ducnhat24/AWD-G04
 | Student ID | Full name | Git account | Contribution | Contribution percentage (100% total) | Expected total points | Final total points |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
 | 22120252 | Giang Đức Nhật | ducnhat24 | **BE:**<br>- Google OAuth 2.0 integration <br>- Email Synchronization <br>- Snooze Mechanism<br>- AI Features<br>- Search Features<br> -  Filtering & Sorting <br> - Email Actions <br> - CI/CD & Dockerize <br> - Gmail Watch Pub&Sub <br> - Seed data| 33.3% | 10 |  |
-| 22120427 | Nguyễn Mạnh Văn | nmvan | **FE:**<br> - Email Display <br> - Kanban Board Interface <br>- Snooze Mechanism <br> -  Search & Sort & Filter Email UI <br> - Email Action <br> - UI AI summary <br> - Mockdata Email | 33.3% | 10 |  |
+| 22120427 | Nguyễn Mạnh Văn | nmvan | **FE:**<br> - Email Display <br> - Kanban Board Interface <br>- Snooze Mechanism <br> -  Search & Sort & Filter Email UI <br> - Email Action <br> - UI AI summary | 33.3% | 10 |  |
 | 22120450 | Bùi Đình Gia Vỹ | VyBui13 | **BE:** <br>- Authentication & Token Management<br> **FE:**<br>- Concurrency handling<br>- Login Page <br>- Signup Page <br>- Dynamic Kanban Configuration <br> - Keyboard navigation <br> - Offline caching <br> - Multi-tab logout sync | 33.4% | 10 |  |
 
 # **FEATURE LIST**
@@ -32,7 +32,7 @@ Students must input minus points to every uncompleted feature in the SE column.
 |  | Website layout | \-2 | 0 |  | 3-column layout: mailbox list, email list, email detail. Kanban board view |
 |  | Website architect | \-3 | 0 |  | React SPA with backend API. Clear separation of concerns. OAuth2 flow, token handling |
 |  | Website stability and compatibility | \-4 | 0 |  | Responsive design, tested on Chrome, Safari, Firefox, and Edge |
-|  | Document | \-2 |  |  | **README with setup guide, API endpoints, Google OAuth setup, token storage explanation, security considerations** |
+|  | Document | \-2 | 0 |  | README with setup guide, API endpoints, Google OAuth setup, token storage explanation, security considerations |
 |  | Demo video | \-5 |  |  | **Video demonstrating: Gmail login, inbox sync, Kanban board, AI summarization, semantic search, drag-drop** |
 |  | Publish to public hosts | \-1 | 0 |  | Frontend deployed (Netlify/Vercel), Backend deployed (Render/Railway/Cloud Run) |
 |  | Development progress is recorded in Github | \-7 | 0 |  | Git history with meaningful commits, branches for features, pull requests |
@@ -111,21 +111,37 @@ Students must input minus points to every uncompleted feature in the SE column.
 # **GIT HISTORY**
 
 ## **Contributors**
-Git contributors at 16:30, 18/01/2026
+Git contributors at 21:00, 18/01/2026
 
 | Avatar | Username | Commits | Additions | Deletions |
 | :---- | :---- | :---- | :---- | :---- |
-| ![center](./assets/ducnhat24.JPG) | ducnhat24 | 78 | 31,401 | 4,940 |
+| ![center](./assets/ducnhat24.JPG) | ducnhat24 | 56 | 31,130 | 4,712 |
 | ![center](./assets/nmvan.png) | nmvan | 44 | 4,821 | 2,223 |
 | ![center](./assets/VyBui13.JPG) | VyBui13 | 42 | 33,472 | 10,315 |
 
 ## **Commits**
 
-*List significant commits here with format:*
+| Date       | Author     | Commit Message                                                                               | Files Changed |
+| :--------- | :--------- | :------------------------------------------------------------------------------------------- | :------------ |
+| 2026-01-18 | ducnhaat24 | feat(feat/mock-data): added endpoint to get mock account with sample data                    | 8             |
+| 2026-01-15 | ducnhaat24 | feat(feat/gmail-pubsub): Real-time inbox updates via Gmail watch + Pub/Sub                   | 12            |
+| 2026-01-14 | ducnhaat24 | feat(feat/cicd): update cd workflow and dockerize frontend & backend                         | 7             |
+| 2026-01-14 | nmvan  | feat: add filter and sort for list mode                                                      | 6             |
+| 2026-01-14 | VyBui13    | refactor(refactor/structure-v2): add keyboard moving accessibility v1 & v2                   | 9             |
+| 2026-01-14 | VyBui13    | refactor(refactor/structure-v2): add offline feature (handle network status & restore fetch) | 15            |
+| 2026-01-14 | ducnhaat24 | feat(search-email): update endpoint to handle fuzzy and semantic search                      | 10            |
+| 2026-01-07 | VyBui13    | refactor(refactor/structure-v2): separate component and mock data for email                  | 14            |
+| 2026-01-06 | VyBui13    | refactor(refactor/structure-v2): extract infinite scroll logic and modal state hook          | 8             |
+| 2026-01-06 | VyBui13    | feat(feat/mode): add theme toggle button and custom scrollbar                                | 5             |
+| 2025-12-28 | ducnhaat24 | feat(suggestions): search suggestions UI and logic added                                     | 6             |
+| 2025-12-24 | ducnhaat24 | feat(semantic-search): init vector embedding and initial state                               | 11            |
+| 2025-12-24 | VyBui13    | feat(refactor/structure): add create, get and delete for kanban config                       | 13            |
+| 2025-12-16 | nmvan  | feat(feat/frontend/searchbar): full UI searchbar with filter bar                             | 9             |
+| 2025-12-10 | ducnhaat24 | feat(feat/backend/ai-summary): GET mail/emails/{email-id}/summary added                      | 4             |
+| 2025-12-09 | nmvan  | feat(feat/kanban): add basic kanban mode UI and mock api                                     | 12            |
+| 2025-12-03 | nmvan  | feat(feat/frontend/gmail-api-integration): add reply, forward logic                          | 8             |
+| 2025-11-30 | ducnhaat24 | feat(feat/backend/gmail-endpoint): add Mail module and Gmail endpoints integration           | 20            |
 
-| Date | Author | Commit Message | Files Changed |
-| :---- | :---- | :---- | :---- |
-| YYYY-MM-DD | \<author\> | \<commit message\> | \<number\> |
 
 ---
 

@@ -1,128 +1,103 @@
-# G06 – React Email Client Frontend (Week 3 Updated)
+# AWD Mail Client - Frontend
 
-<p align="center">
-  Single Page Application (SPA) quản lý <b>Email Client</b> tích hợp <b>AI</b> và quy trình làm việc dạng <b>Kanban</b>.
-  <br />
-  Phiên bản <b>G06</b> bổ sung <b>Fuzzy Search</b> và <b>Filtering / Sorting</b> nâng cao trên bảng Kanban.
-</p>
+Giao diện người dùng cho ứng dụng **Email Client thế hệ mới**, được xây dựng theo kiến trúc **Single Page Application (SPA)**. Ứng dụng tích hợp quy trình làm việc Kanban, hỗ trợ AI và hoạt động mượt mà ngay cả khi mất kết nối mạng.
 
----
+## Tính năng nổi bật
 
-## 🚀 Tính năng mới (Tuần 3)
+### Quản lý Email dạng Kanban
+* **Drag & Drop:** Kéo thả email dễ dàng giữa các cột trạng thái: *Inbox, To Do, Doing, Done*.
+* **Snooze:** Tạm hoãn email và tự động nhắc lại sau khoảng thời gian cài đặt.
+* **Filtering & Sorting:** Lọc email chưa đọc, có đính kèm và sắp xếp theo thời gian thực.
 
-### F2 – Fuzzy Search UI (Giao diện tìm kiếm mờ)
+### Tìm kiếm thông minh (Smart Search)
+* **Fuzzy Search:** Tìm kiếm nhanh theo từ khóa (tiêu đề, người gửi) ngay khi gõ.
+* **Semantic Search (AI):** Tìm kiếm theo ngữ nghĩa/ý định (Ví dụ: *"Tìm các email liên quan đến hóa đơn tháng trước"*).
+* **Search Suggestions:** Gợi ý từ khóa thông minh.
 
-* **Thanh tìm kiếm:** Tích hợp trên Header, cho phép tìm kiếm nhanh email.
-* **Chế độ kết quả:**
-
-  * Hiển thị danh sách dạng thẻ dọc.
-  * Thông tin gồm: Người gửi, Tiêu đề, Snippet.
-  * Click để xem chi tiết email và tự động cập nhật trạng thái **Đã đọc**.
-* **UX States:**
-
-  * Loading
-  * Empty State: *Không tìm thấy kết quả*
-  * Error Handling
-* **Navigation:** Quay lại Kanban bằng nút **Back to Board** hoặc xóa từ khóa tìm kiếm.
-
-### F3 – Filtering & Sorting Kanban
-
-* **Toolbar:** Hiển thị trực tiếp trên Kanban Board.
-* **Filtering:**
-
-  * *Unread Only* – Chỉ email chưa đọc
-  * *Has Attachments* – Chỉ email có đính kèm
-* **Sorting:**
-
-  * Mới nhất
-  * Cũ nhất
-* **Server-side Processing:**
-
-  * Gọi trực tiếp API Backend để đảm bảo dữ liệu chính xác khi phân trang.
-* **Real-time Update:** UI cập nhật ngay khi thay đổi bộ lọc.
+### Trải nghiệm người dùng (UX) & Hiệu năng
+* **Real-time Sync:** Tự động cập nhật Inbox ngay khi có email mới (sử dụng WebSockets/PubSub).
+* **Offline Mode:** Ứng dụng vẫn hoạt động khi mất mạng. Các thao tác sẽ được đồng bộ tự động khi có mạng trở lại.
+* **Theme Customization:** Hỗ trợ chế độ Sáng/Tối (Dark/Light Mode) với nút chuyển đổi nhanh.
+* **Accessibility:** Hỗ trợ phím tắt và điều hướng bằng bàn phím.
 
 ---
 
-## 🌟 Tính năng cốt lõi (Tuần 1 & 2)
+## Công nghệ sử dụng
 
-### Dashboard (Kanban + AI)
-
-* Kéo & thả email giữa các cột: Inbox, To Do, Done, Snoozed.
-* AI Summary (Mock hoặc LLM) giúp đọc nhanh nội dung.
-* Snooze email và tự động khôi phục theo thời gian.
-
-### Thao tác Email
-
-* Soạn thảo, Trả lời, Chuyển tiếp.
-* Hiển thị nội dung HTML an toàn.
-* Tải file đính kèm.
-
----
-
-## 🛠 Công nghệ sử dụng
-
-* **Core:** React 19, Vite, TypeScript
+* **Core:** React 18+, Vite, TypeScript
+* **State Management:** Zustand / React Context
 * **Styling:** Tailwind CSS, Shadcn/UI
-* **State Management:** React Hooks, Context API
-* **HTTP Client:** Axios (Interceptor xử lý Refresh Token)
+* **HTTP Client:** Axios (với Interceptor xử lý Refresh Token tự động)
+* **Real-time:** Socket.io-client
 * **Drag & Drop:** @hello-pangea/dnd
 
 ---
 
-## ⚙️ Cài đặt & Chạy dự án
+## Hướng dẫn cài đặt
 
-### Yêu cầu tiên quyết
+### 1. Yêu cầu tiên quyết
+* Node.js v18 trở lên.
+* **Backend** đã được khởi chạy tại port `3001` (hoặc port tuỳ chỉnh của bạn).
 
-* Node.js v18+
-* Backend G06 đang chạy tại `http://localhost:3000`
-
-### Cài đặt
+### 2. Cài đặt thư viện
+Tại thư mục `frontend/`, chạy lệnh:
 
 ```bash
-cd frontend
 npm install
 ```
 
-### Cấu hình môi trường (`.env`)
+## 3. Cấu hình môi trường (.env)
+Tạo file .env tại thư mục gốc của frontend và điền các thông số:
 
-```env
+```Đoạn mã
+# URL của Backend API
 VITE_API_URL=http://localhost:3000
+
+# Google OAuth Client ID (Lấy từ Google Cloud Console)
 VITE_GOOGLE_CLIENT_ID=your-google-client-id
+
+# Redirect URI (Phải khớp với cấu hình trong Google Cloud)
 VITE_GOOGLE_REDIRECT_URI=http://localhost:5173/login/oauth/google/callback
 ```
+## 4. Chạy ứng dụng
+Chế độ phát triển (Development):
 
-### Chạy ứng dụng
-
-```bash
+```Bash
 npm run dev
 ```
+Truy cập: http://localhost:5173
 
-Truy cập: **[http://localhost:5173](http://localhost:5173)**
+Build cho Production:
 
----
+```Bash
+npm run build
+npm run preview
+```
 
-## 💡 Hướng dẫn kiểm thử (Demo Flow)
+## Hướng dẫn sử dụng (User Guide)
+### Đăng nhập & Demo
+* Bạn có thể đăng nhập bằng tài khoản Google thật.
 
-### 1. Tìm kiếm (F1 & F2)
+* Hoặc sử dụng Demo Account (nếu Backend đã chạy Seed Data) để trải nghiệm đầy đủ tính năng mà không cần login Google.
 
-* Nhập từ khóa (ví dụ: `marrketing`).
-* Nhấn **Enter** để xem kết quả fuzzy search.
+**Thao tác trên Kanban**
 
-### 2. Lọc Kanban (F3)
+* Kéo thả: Nhấn giữ vào một thẻ email và kéo sang cột mong muốn.
 
-* Quay lại màn hình chính.
-* Tick **Unread Only**.
-* Kiểm tra các cột chỉ hiển thị email chưa đọc.
+* Xem chi tiết: Bấm vào thẻ để xem nội dung email đầy đủ (HTML).
 
-### 3. Sắp xếp (F3)
+* Tóm tắt AI: Bấm nút "Summarize" trong chi tiết email để xem nội dung tóm gọn.
 
-* Chọn **Date: Oldest**.
-* Thứ tự email trong cột sẽ đảo ngược.
+**Tìm kiếm**
+* Nhập từ khoá vào thanh tìm kiếm trên Header.
 
----
+* Kết quả sẽ hiển thị ngay lập tức (Fuzzy) hoặc nhấn Enter để tìm sâu hơn (Semantic).
 
-## 🔒 Bảo mật Frontend
+**Bảo mật**
 
-* **Access Token:** Lưu trong Memory.
-* **Refresh Token:** Lưu trong LocalStorage để duy trì session.
-* **Concurrency Guard:** Hàng đợi request khi token hết hạn, tránh spam API refresh.
+* Access Token: Được lưu trong bộ nhớ ứng dụng (Memory) để tránh XSS.
+
+* Refresh Token: Được xử lý an toàn để duy trì phiên đăng nhập mà không làm phiền người dùng.
+
+* CORS: Đã cấu hình chỉ chấp nhận request từ domain frontend.
+

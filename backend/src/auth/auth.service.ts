@@ -12,7 +12,7 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import * as bcrypt from 'bcrypt';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
-import { MailService } from 'src/mail/mail.service';
+import { MailService } from '../mail/mail.service';
 import { UserDocument } from '../user/entities/user.entity';
 import { Types } from 'mongoose';
 
@@ -42,7 +42,7 @@ export class AuthService {
     private configService: ConfigService,
     private linkedAccountRepository: LinkedAccountRepository,
     private mailService: MailService,
-  ) {}
+  ) { }
 
   async login(loginDto: LoginUserDto) {
     // 1. Tìm user

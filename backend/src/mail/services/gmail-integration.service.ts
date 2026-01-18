@@ -25,7 +25,7 @@ export class GmailIntegrationService {
   constructor(
     private linkedAccountRepository: LinkedAccountRepository,
     private configService: ConfigService,
-  ) {}
+  ) { }
 
   /**
    * Lấy OAuth2Client đã xác thực cho user
@@ -551,20 +551,27 @@ export class GmailIntegrationService {
     const auth = await this.getAuthenticatedClient(userId);
     const gmail = google.gmail({ version: 'v1', auth });
 
+    // Lấy Topic từ biến môi trường
+    const topicName = this.configService.get<string>('GOOGLE_PUBSUB_TOPIC');
+
+    if (!topicName) {
+      this.logger.error('GOOGLE_PUBSUB_TOPIC is missing in .env');
+      throw new Error('Server configuration error: Missing Pub/Sub Topic');
+    }
+
     const res = await gmail.users.watch({
       userId: 'me',
       requestBody: {
-        labelIds: ['INBOX'], // Chỉ canh me Inbox
-        topicName: 'projects/myawdapp/topics/gmail-watch', //
+        labelIds: ['INBOX'],
+        topicName: topicName,
       },
     });
 
     console.log(
-      `👀 Start watching for User ${userId}. History ID: ${res.data.historyId}`,
+      `Start watching for User ${userId}. History ID: ${res.data.historyId}`,
     );
     return res.data;
   }
-
   // ==================== PRIVATE HELPER METHODS ====================
 
   private async createLabel(gmail: any, name: string) {

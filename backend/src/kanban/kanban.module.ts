@@ -6,7 +6,7 @@ import {
   KanbanConfig,
   KanbanConfigSchema,
 } from './entities/kanban-config.entity'; // Import Entity
-import { MailModule } from 'src/mail/mail.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -20,4 +20,4 @@ import { MailModule } from 'src/mail/mail.module';
   providers: [KanbanService],
   exports: [KanbanService], // Export nếu module khác cần dùng service này
 })
-export class KanbanModule {}
+export class KanbanModule { }
