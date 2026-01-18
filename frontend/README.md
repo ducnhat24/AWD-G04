@@ -8,7 +8,27 @@
 
 ---
 
-## 🚀 Tính năng mới (Tuần 3)
+## Tính năng mới (Tuần 4)
+
+### Intelligent Search Bar
+- **Type-ahead Suggestions**: Instantly shows relevant contacts and subjects as you type.
+- **Keyboard Navigation**: Full support for arrow keys and Enter to select suggestions.
+- **Debounced Input**: Optimized performance to reduce unnecessary API calls.
+
+### Customizable Kanban Board
+- **Drag & Drop**: Move emails between columns to change their status (syncs with Gmail).
+- **Dynamic Columns**: 
+  - Add new columns for your workflow.
+  - Rename columns to fit your needs.
+  - Delete unused columns.
+- **Real-time Updates**: Changes are reflected immediately in the UI.
+
+### Email Management
+- **Detailed View**: View full email content securely.
+- **Composing**: Send emails with a rich text editor.
+
+
+## Tính năng mới (Tuần 3)
 
 ### F2 – Fuzzy Search UI (Giao diện tìm kiếm mờ)
 

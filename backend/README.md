@@ -25,6 +25,22 @@
   </a>
 </p>
 
+# G07 – NestJS Email Client Backend (Week 4 Updated)
+
+### 1. Semantic Search (AI-Powered)
+- **Vector Embeddings**: Generates embeddings for email content using Google Gemini (`text-embedding-004`).
+- **Hybrid Search**: 
+  - **Vector Search**: Finds conceptually related emails (e.g., searching "cost" finds "invoice") using MongoDB Atlas Vector Search.
+  - **Fuzzy Search**: Fallback mechanism using `Fuse.js` for typo-tolerant keyword matching.
+
+### 2. Smart Auto-Suggestion
+- Provides real-time suggestions for Senders and Email Subjects.
+- **Smart Truncation**: Intelligently crops long email subjects to show relevant context matching the user's query.
+
+### 3. Dynamic Kanban Configuration
+- **Custom Workflow**: Users can Create, Rename, Delete, and Reorder Kanban columns.
+- **Gmail Sync**: Maps Kanban columns to specific Gmail Labels (e.g., "To Do" column ↔ "STARRED" label). Actions on the board reflect directly in Gmail.
+
 ---
 
 # G06 – NestJS Email Client Backend (Week 3 Updated)
@@ -128,6 +144,16 @@ Server chạy tại: **[http://localhost:3000](http://localhost:3000)**
 ---
 
 ## 📡 API Endpoints chính
+
+Search: POST /api/mail/search/semantic - Search Email.
+
+Suggestions: GET /api/mail/suggestions - Get type-ahead suggestions.
+
+Kanban:
+
+GET /api/kanban - Get user config.
+
+PUT /api/kanban/column/:id - Update column details.
 
 ### Authentication
 
