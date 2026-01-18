@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { SnoozeLogService } from './snooze-log.service';
 import { SnoozeLogController } from './snooze-log.controller';
 import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module';
-import { MailModule } from 'src/mail/mail.module';
+import { MailModule } from '../mail/mail.module';
 import { SnoozeLog, SnoozeLogSchema } from './entities/snooze-log.entity';
 import { SnoozeLogRepository } from './snooze-log.repository';
 
@@ -16,4 +16,4 @@ import { SnoozeLogRepository } from './snooze-log.repository';
   controllers: [SnoozeLogController],
   providers: [SnoozeLogService, SnoozeLogRepository],
 })
-export class SnoozeLogModule {}
+export class SnoozeLogModule { }

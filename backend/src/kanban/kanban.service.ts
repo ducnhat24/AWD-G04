@@ -9,7 +9,7 @@ import {
 import { UpdateKanbanConfigDto } from './dto/update-kanban.dto';
 import { CreateKanbanConfigDto } from './dto/create-kanban.dto';
 import { UpdateColumnDto } from './dto/update-column.dto';
-import { GmailIntegrationService } from 'src/mail/services/gmail-integration.service';
+import { GmailIntegrationService } from '../mail/services/gmail-integration.service';
 
 @Injectable()
 export class KanbanService {
@@ -17,7 +17,7 @@ export class KanbanService {
     @InjectModel(KanbanConfig.name)
     private kanbanModel: Model<KanbanConfigDocument>,
     private readonly gmailService: GmailIntegrationService,
-  ) {}
+  ) { }
   // Lấy config, nếu chưa có thì tạo Default
   async getConfig(userId: string) {
     let config = await this.kanbanModel.findOne({ userId });

@@ -27,64 +27,40 @@
 
 ---
 
-# G06 – NestJS Email Client Backend (Week 3 Updated)
+# NestJS Email Client Backend
 
-## 🚀 Tính năng mới (Tuần 3)
+Backend service cho ứng dụng Email Client thế hệ mới, tích hợp Kanban Board và AI hỗ trợ. Dự án được xây dựng bằng NestJS và MongoDB, sử dụng Google Gmail API để đồng bộ dữ liệu.
 
-### F1 – Fuzzy Search Engine (Công cụ tìm kiếm mờ)
+## Tính năng chính
+* **OAuth2 Authentication**: Đăng nhập và liên kết tài khoản Google an toàn.
 
-* **Cơ chế:** Tìm kiếm trên MongoDB đã được đồng bộ hóa, không gọi trực tiếp Gmail API nhằm tối ưu hiệu năng.
-* **Phạm vi:**
+* **Email Management**: Đọc, gửi, trả lời, chuyển tiếp email thông qua Gmail API.
 
-  * Tiêu đề (Subject)
-  * Người gửi (Sender Name / Email)
-  * Tóm tắt (Snippet)
-* **Typo Tolerance:** Hỗ trợ sai chính tả, tìm kiếm không dấu.
-* **Partial Matching:** Sử dụng Regex (case-insensitive).
+* **Kanban Integration**: Tự động biến email thành thẻ Kanban để quản lý công việc (Inbox, Todo, Doing, Done).
 
-  * Ví dụ: `Nguy` → `Nguyễn`, `marketing` → email liên quan marketing.
-* **Xếp hạng:** Ưu tiên email mới hơn và độ liên quan cao hơn.
+* **Real-time Sync**: Đồng bộ email mới tức thì sử dụng Gmail Push Notifications (Pub/Sub).
 
-### Filtering & Sorting (Server-side)
+* **AI Features**: Tóm tắt nội dung email, Semantic Search (Tìm kiếm ngữ nghĩa).
 
-* `filterUnread=true` – Chỉ email chưa đọc
-* `filterHasAttachments=true` – Chỉ email có đính kèm
-* `sortBy=date-asc | date-desc` – Sắp xếp theo ngày
+* **Demo Mode**: Hệ thống Seed Data thông minh để test UI mà không cần tài khoản Google thật.
 
 ---
 
-## 🌟 Các tính năng cốt lõi (Tuần 1 & 2)
+## Công nghệ sử dụng
 
-### Xác thực & Phân quyền
+* **Framework**: NestJS
 
-* JWT Authentication (Access & Refresh Token)
-* Google OAuth 2.0 (Authorization Code Flow)
-* Route Guards
+* **Database**: MongoDB (Mongoose)
 
-### Gmail Proxy & Đồng bộ
+* **Authentication**: Passport, JWT, Google OAuth2
 
-* Tự động refresh Google Access Token (server-side)
-* Đồng bộ email Gmail → MongoDB
-* Chức năng:
+* **External APIs**: Google Gmail API, Gemini AI
 
-  * Gửi email
-  * Lấy danh sách / chi tiết email
-  * Tải file đính kèm
-  * Đánh dấu đã đọc / gắn sao
+* **Real-time**: WebSockets (Socket.io)
 
 ---
 
-## 🛠 Công nghệ sử dụng
-
-* **Framework:** NestJS
-* **Database:** MongoDB, Mongoose
-* **Search:** MongoDB Regex & Aggregation
-* **Google API:** googleapis (Official Node.js Client)
-* **Auth:** Passport, JWT, Bcrypt
-
----
-
-## ⚙️ Cài đặt & Chạy dự án
+## Cài đặt & Chạy dự án
 
 ### Yêu cầu tiên quyết
 
@@ -102,20 +78,114 @@ npm install
 ### Cấu hình môi trường (`.env`)
 
 ```env
+# APP
 PORT=3000
+FRONTEND_URL=http://localhost:5173
+
+# DATABASE
 DATABASE_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/db
 
+# AUTHENTICATION
 JWT_SECRET=your_secret_key
 JWT_REFRESH_SECRET=your_refresh_secret_key
 ACCESS_TOKEN_EXPIRATION=15m
 REFRESH_TOKEN_EXPIRATION=7d
 
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_REDIRECT_URI=http://localhost:5173/login/oauth/google/callback
+# GOOGLE OAUTH (Xem hướng dẫn bên dưới)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:3001/auth/google/callback
 
-FRONTEND_URL=http://localhost:5173
+# GOOGLE PUBSUB (Real-time sync)
+GOOGLE_PUBSUB_TOPIC=projects/your-project-id/topics/gmail-watch
+
+# AI
+GEMINI_API_KEY=your_gemini_api_key
 ```
+
+## Google OAuth Setup & Security
+Để ứng dụng có thể truy cập Gmail của người dùng, bạn cần cấu hình OAuth2 trên Google Cloud Console.
+
+### 1. Tạo Project & Credentials
+Truy cập Google Cloud Console.
+
+* Tạo Project mới.
+
+* Vào APIs & Services > Library > Tìm và Enable Gmail API.
+
+* Vào OAuth consent screen:
+
+* User Type: External (hoặc Internal nếu dùng G-Suite).
+
+* Thêm Scopes: https://mail.google.com/, email, profile.
+
+* Thêm Test Users: Email của bạn (nếu để app ở chế độ Testing).
+
+* Vào Credentials > Create Credentials > OAuth Client ID:
+
+* Application type: Web application.
+
+* Authorized redirect URIs: http://localhost:3000/auth/google/callback (Backend URL).
+
+* Copy Client ID và Client Secret vào file .env.
+
+### 2. Cơ chế lưu trữ Token (Token Storage)
+Chúng tôi tuyệt đối không lưu mật khẩu của người dùng. Thay vào đó, hệ thống sử dụng cơ chế OAuth2 chuẩn:
+
+* Access Token: Dùng để gọi API (Gmail), có thời hạn ngắn (1 giờ).
+
+* Refresh Token: Dùng để lấy Access Token mới khi cái cũ hết hạn mà không cần người dùng đăng nhập lại.
+
+é.
+
+### 3. Cấu hình Real-time Notification (Google Pub/Sub)
+Để ứng dụng nhận được thông báo ngay lập tức khi có email mới, bạn cần tạo một Topic trên Google Cloud Pub/Sub.
+
+#### **Tạo Topic**:
+
+Trong Google Cloud Console, tìm kiếm và chọn Pub/Sub > Topics.
+
+* Bấm Create Topic.
+
+* Đặt Topic ID (ví dụ: gmail-watch).
+
+* Bỏ chọn "Add a default subscription" (nếu không cần thiết).
+
+* Bấm Create.
+
+Cấp quyền cho Gmail (Quan trọng):
+
+* Sau khi tạo xong, bấm vào Topic vừa tạo.
+
+* Chọn tab Permissions.
+
+* Bấm Add Principal.
+
+* Trong ô "New principals", nhập địa chỉ email hệ thống của Gmail: gmail-api-push@system.gserviceaccount.com
+
+* Trong ô "Select a role", chọn Pub/Sub Publisher.
+
+* Bấm Save. (Bước này cho phép Gmail được quyền đẩy thông báo vào Topic của bạn).
+
+Cập nhật cấu hình:
+
+* Copy Topic Name đầy đủ (có dạng projects/`<project-id>`/topics/`<topic-id>`).
+
+* Dán vào file .env của Backend:
+
+```
+GOOGLE_PUBSUB_TOPIC=projects/your-project-id/topics/gmail-watch
+```
+
+### Quy trình bảo mật:
+
+* Khi user login Google, Server nhận auth_code.
+
+* Server đổi auth_code lấy cặp access_token và refresh_token.
+
+* Token được lưu trong Collection linked_accounts.
+z
+* Security Consideration: Trong môi trường Production, refresh_token nên được mã hóa (Encrypt) ở tầng Database (Application Level Encryption) để đảm bảo an toàn nếu DB bị lộ.
 
 ### Chạy server
 
@@ -125,32 +195,56 @@ npm run start:dev
 
 Server chạy tại: **[http://localhost:3000](http://localhost:3000)**
 
+
+Chế độ Demo (Seed Data): Để nạp dữ liệu giả (không cần login Google thật):
+
+```Bash
+# Gọi API seed qua Postman hoặc Curl để nhận được tài khoản demo
+POST http://localhost:3000/seed
+```
 ---
 
 ## 📡 API Endpoints chính
 
-### Authentication
-
-| Method | Endpoint      | Mô tả            |
-| ------ | ------------- | ---------------- |
-| POST   | /auth/login   | Đăng nhập thường |
-| POST   | /auth/google  | Đăng nhập Google |
-| POST   | /auth/refresh | Refresh Token    |
-
-### Mail & Search
-
-| Method | Endpoint                        | Mô tả                       |
-| ------ | ------------------------------- | --------------------------- |
-| GET    | /mail/search                    | Fuzzy Search (`?q=keyword`) |
-| GET    | /mail/mailboxes/:id/emails      | Lấy email (filter/sort)     |
-| GET    | /mail/attachments/:msgId/:attId | Tải đính kèm                |
-| POST   | /mail/send                      | Gửi email                   |
-| POST   | /mail/emails/:id/reply          | Trả lời email               |
+| Endpoint | Description |
+| :---- | :---- |
+| **Auth** | |
+| POST /auth/login | Đăng nhập hệ thống (trả về Access Token & User Info). |
+| **Mock data** | |
+| POST /seed | Seed data và trả về một tài khoản có thể đăng nhập hệ thống xem mock data. |
+| **Search Features** | |
+| GET /mail/search | Fuzzy Search: Tìm kiếm email theo từ khóa (Subject, Sender) dùng Fuse.js. |
+| POST /mail/search/semantic | Semantic Search: Tìm kiếm email theo ngữ nghĩa dùng Vector Search (Gemini embedding). |
+| GET /mail/suggestions | Auto-suggestion: Gợi ý từ khóa/người gửi khi user đang nhập liệu. |
+| **Mail Operations** | |
+| GET /mail/mailboxes | Lấy danh sách các hộp thư (Inbox, Sent, Drafts, Trash...). |
+| GET /mail/mailboxes/:labelId/emails | Lấy danh sách email trong một hộp thư cụ thể (có phân trang). |
+| GET /mail/emails/:id | Lấy chi tiết nội dung của một email. |
+| GET /mail/emails/:id/summary | AI Summary: Lấy tóm tắt nội dung email do AI tạo ra. |
+| POST /mail/send | Gửi email mới. |
+| POST /mail/emails/:id/reply | Trả lời (Reply) một email. |
+| POST /mail/emails/:id/forward | Chuyển tiếp (Forward) một email. |
+| POST /mail/emails/:id/modify | Thay đổi trạng thái email (Đánh dấu đã đọc, Xóa, Gán nhãn...). |
+| GET /mail/attachments/:msgId/:attId | Tải xuống file đính kèm của email. |
+| POST /mail/sync | Đồng bộ mail |
+| **Kanban Configuration** | |
+| GET /kanban/config | Lấy cấu hình bảng Kanban cá nhân của user (danh sách cột, màu sắc, label mapping). |
+| POST /kanban/config | Khởi tạo cấu hình Kanban mới (thường gọi khi user lần đầu vào Dashboard). |
+| PUT /kanban/config | Cập nhật toàn bộ cấu hình Kanban (ví dụ: thay đổi thứ tự các cột, đổi tên nhiều cột cùng lúc). |
+| DELETE /kanban/config | Xóa cấu hình Kanban hiện tại (Reset về mặc định). |
+| PATCH /kanban/config/column/:id | Cập nhật thông tin chi tiết của một cột cụ thể (đổi tên cột, đổi màu, đổi Gmail Label liên kết). |
+| DELETE /kanban/config/column/:id | Xóa một cột cụ thể khỏi bảng Kanban. |
+| **Gmail Watch Pub&Sub** | |
+| POST /mail/watch | Endpoint để Gmail Watch |
+| POST /mail/notification | Endpoint để nhận thông báo từ Gmail Pub&Sub |
 
 ---
 
-## 🔐 Bảo mật
+## Security Considerations
+* **Least Privilege**: Chỉ xin quyền (Scope) tối thiểu cần thiết để app hoạt động.
 
-* Google Refresh Token được **mã hóa** trong database
-* Frontend **không bao giờ** truy cập trực tiếp token Google
-* Backend đóng vai trò **Proxy**, tự động refresh token thông qua `googleapis`
+* **JWT Authentication**: Bảo vệ các Internal API bằng Access Token ngắn hạn.
+
+* **CORS**: Chỉ cho phép Frontend (CLIENT_URL) gọi API.
+
+* **Sensitive Data**: Không bao giờ log access_token hoặc refresh_token ra console.

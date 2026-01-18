@@ -12,7 +12,7 @@ import {
 } from '../user/entities/linked-account.entity';
 import { LinkedAccountRepository } from '../user/repositories/linked-account.repository';
 import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module';
-import { MailModule } from 'src/mail/mail.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -37,4 +37,4 @@ import { MailModule } from 'src/mail/mail.module';
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, LinkedAccountRepository],
 })
-export class AuthModule {}
+export class AuthModule { }
