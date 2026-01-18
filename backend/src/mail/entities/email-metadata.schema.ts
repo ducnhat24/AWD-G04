@@ -18,6 +18,9 @@ export class EmailMetadata {
   subject: string;
 
   @Prop()
+  body: string;
+
+  @Prop()
   snippet: string;
 
   @Prop({ text: true })

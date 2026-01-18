@@ -18,7 +18,7 @@ export class MailRepository {
     private readonly emailMetadataModel: Model<EmailMetadataDocument>,
     @InjectModel(EmailSummary.name)
     private readonly emailSummaryModel: Model<EmailSummaryDocument>,
-  ) {}
+  ) { }
 
   // ==================== EMAIL METADATA ====================
 
@@ -126,5 +126,54 @@ export class MailRepository {
       summary,
       originalContentShort,
     });
+  }
+
+  async getEmails(
+    userId: string,
+    labelId: string,
+    limit: number,
+    pageToken?: string,
+  ) {
+    // Mark unused optional arg as intentionally ignored to satisfy lint
+    void pageToken;
+    const query: any = { userId };
+
+    if (labelId && labelId !== 'ALL') {
+      query.labelIds = { $in: [labelId] };
+    }
+
+    const sort = { date: -1 };
+
+    const emails = await this.emailMetadataModel
+      .find(query)
+      .sort(sort as any)
+      .limit(limit)
+      .exec();
+
+    return {
+      // 👇 SỬA Ở ĐÂY: Trả về object phẳng (Flatten) giống GmailIntegrationService cũ
+      emails: emails.map((e) => ({
+        id: e.messageId,
+        threadId: e.threadId,
+        labelIds: e.labelIds || [],
+        snippet: e.snippet,
+
+        // 👇 Các trường này giờ nằm ngay root, không chui vào payload nữa
+        subject: e.subject || '(No Subject)',
+        sender: e.from, // Frontend map biến này là 'sender'
+        date: e.date ? e.date.toISOString() : new Date().toISOString(),
+        isRead: e.isRead,
+        isStarred: e.labelIds?.includes('STARRED') || false,
+
+        // Mock attachments rỗng cho list view nhẹ
+        attachments: [],
+      })),
+      nextPageToken: null,
+      resultSizeEstimate: emails.length,
+    };
+  }
+
+  async findOneByMessageId(messageId: string) {
+    return this.emailMetadataModel.findOne({ messageId }).exec();
   }
 }
