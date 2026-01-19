@@ -482,11 +482,7 @@ export class GmailIntegrationService {
           bodyText = bodyHtml.replace(/<[^>]*>?/gm, ' ');
         }
 
-        // Fallback nếu không lấy được gì thì dùng snippet
-        const finalContent = bodyText ? bodyText : detail.data.snippet;
-
         let bodyHtml = this.getBody(detail.data.payload, 'text/html');
-
 
         // Fallback: Nếu không có HTML thì dùng text, nếu không có text thì dùng HTML strip tag
         if (!bodyHtml && bodyText) {
@@ -499,7 +495,9 @@ export class GmailIntegrationService {
         }
 
         // Nội dung dùng cho Vector Search (cần sạch)
-        const finalContentForEmbedding = bodyText ? bodyText : detail.data.snippet;
+        const finalContentForEmbedding = bodyText
+          ? bodyText
+          : detail.data.snippet;
 
         // Nội dung dùng để lưu DB hiển thị (cần format)
         const finalBodyForDisplay = bodyHtml || bodyText || '<p>No content</p>';
@@ -511,7 +509,7 @@ export class GmailIntegrationService {
           from,
           snippet: detail.data.snippet,
           bodyContent: finalContentForEmbedding, // Dùng cho AI
-          body: finalBodyForDisplay,             // Dùng để lưu và hiển thị <--- QUAN TRỌNG
+          body: finalBodyForDisplay, // Dùng để lưu và hiển thị <--- QUAN TRỌNG
           date,
           isRead: !labelIds.includes('UNREAD'),
           labelIds: labelIds,

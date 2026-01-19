@@ -27,7 +27,7 @@ interface AuthRequest {
 @Controller('mail')
 @UseGuards(JwtAuthGuard) // Bảo vệ toàn bộ endpoint, bắt buộc phải login
 export class MailController {
-  constructor(private readonly mailService: MailService) { }
+  constructor(private readonly mailService: MailService) {}
 
   // Tìm kiếm Email (Fuzzy Search)
   @Get('search')

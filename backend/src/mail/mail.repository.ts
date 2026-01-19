@@ -18,7 +18,7 @@ export class MailRepository {
     private readonly emailMetadataModel: Model<EmailMetadataDocument>,
     @InjectModel(EmailSummary.name)
     private readonly emailSummaryModel: Model<EmailSummaryDocument>,
-  ) { }
+  ) {}
 
   // ==================== EMAIL METADATA ====================
 
@@ -150,8 +150,8 @@ export class MailRepository {
     const emails = await this.emailMetadataModel
       .find(query)
       .sort(sort as any)
-      .skip(skip)       // <--- Bỏ qua các email đã lấy ở trang trước
-      .limit(limit)     // <--- Lấy số lượng email theo limit (ví dụ 20)
+      .skip(skip) // <--- Bỏ qua các email đã lấy ở trang trước
+      .limit(limit) // <--- Lấy số lượng email theo limit (ví dụ 20)
       .exec();
 
     // --- 2. TÍNH TOÁN NEXT PAGE TOKEN ---
@@ -181,7 +181,11 @@ export class MailRepository {
     return this.emailMetadataModel.findOne({ messageId }).exec();
   }
 
-  async updateLabels(messageId: string, addLabels: string[], removeLabels: string[]) {
+  async updateLabels(
+    messageId: string,
+    addLabels: string[],
+    removeLabels: string[],
+  ) {
     // 1. Xóa các label cần xóa
     if (removeLabels.length > 0) {
       await this.emailMetadataModel.updateOne(
