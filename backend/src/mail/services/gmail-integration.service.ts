@@ -502,6 +502,8 @@ export class GmailIntegrationService {
         // Nội dung dùng để lưu DB hiển thị (cần format)
         const finalBodyForDisplay = bodyHtml || bodyText || '<p>No content</p>';
 
+        const hasAttachments = this.checkHasAttachments(detail.data.payload);
+
         return {
           messageId: msg.id,
           threadId: msg.threadId,
@@ -513,6 +515,7 @@ export class GmailIntegrationService {
           date,
           isRead: !labelIds.includes('UNREAD'),
           labelIds: labelIds,
+          hasAttachments: hasAttachments,
         };
       } catch {
         return null;
@@ -686,5 +689,16 @@ export class GmailIntegrationService {
   private extractEmail(text: string): string {
     const match = text.match(/<([^>]+)>/);
     return match ? match[1] : text;
+  }
+
+  private checkHasAttachments(payload: any): boolean {
+    if (!payload) return false;
+    if (payload.body?.attachmentId) return true;
+    if (payload.parts) {
+      for (const part of payload.parts) {
+        if (this.checkHasAttachments(part)) return true;
+      }
+    }
+    return false;
   }
 }

@@ -101,39 +101,43 @@ export class MailSearchService {
     return mappedResults;
   }
 
-  async searchSemantic(userId: string, query: string, limit: number = 20) {
+  async searchSemantic(
+    userId: string,
+    query: string,
+    limit: number = 20,
+  ) {
     try {
       if (!this.embeddingModel) {
-        this.logger.error(
-          'Embedding Model chưa khởi tạo. Kiểm tra GEMINI_API_KEY.',
-        );
+        this.logger.error('Embedding Model chưa khởi tạo');
         return this.searchEmailsFuzzy(userId, query, undefined, limit);
       }
 
-      this.logger.log(
-        `Bắt đầu Semantic Search cho User: ${userId} - Query: ${query}`,
-      );
+      this.logger.log({
+        mode: 'semantic',
+        step: 'start',
+        userId,
+        query,
+      });
 
-      // 1. Tạo vector cho query
+      // 1. Embed query
       const result = await this.embeddingModel.embedContent(query);
       const queryVector = result.embedding.values;
 
-      // 2. Thực hiện Vector Search
+      // 2. Vector search
       const emails = await this.emailModel.aggregate([
         {
           $vectorSearch: {
             index: 'vector_index',
             path: 'embedding',
-            queryVector: queryVector,
+            queryVector,
             numCandidates: 100,
-            limit: limit,
-            filter: { userId: userId },
+            limit,
+            filter: { userId },
           },
         },
         {
           $project: {
             _id: 0,
-            id: '$messageId',
             messageId: 1,
             threadId: 1,
             subject: 1,
@@ -142,50 +146,65 @@ export class MailSearchService {
             date: 1,
             isRead: 1,
             labelIds: 1,
-            userId: 1,
             score: { $meta: 'vectorSearchScore' },
-          },
-        },
-        {
-          // Lọc những kết quả có độ tương đồng thấp
-          // Nếu chỉnh số này càng cao (ví dụ 0.8) thì càng khó khớp Semantic -> càng dễ nhảy vào Fuzzy
-          $match: {
-            score: { $gte: 0.65 },
           },
         },
       ]);
 
-      // --- ĐOẠN CODE SỬA ĐỔI QUAN TRỌNG Ở ĐÂY ---
-
-      // 3. Logic Fallback: Nếu không tìm thấy kết quả Semantic nào tốt (length == 0)
       if (!emails || emails.length === 0) {
-        this.logger.warn(
-          `⚠️ Semantic Score thấp hoặc không tìm thấy. Chuyển sang Fuzzy Search cho query: "${query}"`,
-        );
+        this.logger.warn({
+          mode: 'semantic',
+          action: 'no_result',
+          query,
+        });
 
-        // Gọi ngay hàm Fuzzy Search
         return this.searchEmailsFuzzy(userId, query, undefined, limit);
       }
 
-      // 4. Nếu tìm thấy kết quả Semantic tốt -> Trả về luôn
-      this.logger.log(
-        `✅ Kết quả Semantic tìm thấy: ${emails.length} emails (Score >= 0.65)`,
-      );
+      const bestScore = emails[0].score;
 
-      return emails.map((email) => ({
-        id: email.messageId,
-        threadId: email.threadId,
-        snippet: email.snippet,
-        subject: email.subject,
-        sender: email.from,
-        date: email.date ? email.date.toString() : '',
-        isRead: email.isRead,
-        isStarred: email.labelIds ? email.labelIds.includes('STARRED') : false,
-        score: email.score,
-      }));
+      if (bestScore < 0.7) {
+        this.logger.warn({
+          mode: 'semantic',
+          action: 'fallback_to_fuzzy',
+          bestScore,
+          query,
+        });
+
+        return this.searchEmailsFuzzy(userId, query, undefined, limit);
+      }
+
+      // ✅ SEMANTIC THÀNH CÔNG
+      this.logger.log({
+        mode: 'semantic',
+        action: 'success',
+        resultCount: emails.length,
+        bestScore,
+      });
+
+      return {
+        searchMode: 'semantic',
+        bestScore,
+        results: emails.map((email) => ({
+          id: email.messageId,
+          threadId: email.threadId,
+          subject: email.subject,
+          snippet: email.snippet,
+          sender: email.from,
+          date: email.date?.toString() ?? '',
+          isRead: email.isRead,
+          isStarred: email.labelIds?.includes('STARRED') ?? false,
+          score: email.score,
+        })),
+      };
     } catch (error) {
-      this.logger.error(`Semantic search error: ${error.message}`);
-      // Fallback về fuzzy search nếu có lỗi (ví dụ lỗi gọi API Gemini, lỗi DB)
+      this.logger.error({
+        mode: 'semantic',
+        action: 'error',
+        error: error.message,
+        query,
+      });
+
       return this.searchEmailsFuzzy(userId, query, undefined, limit);
     }
   }

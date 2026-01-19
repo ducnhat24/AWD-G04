@@ -32,6 +32,9 @@ export class EmailMetadata {
   @Prop({ default: false })
   isRead: boolean;
 
+  @Prop({ default: false })
+  hasAttachments: boolean;
+
   // --- THÊM TRƯỜNG NÀY ---
   @Prop({ type: [String], index: true })
   labelIds: string[]; // Ví dụ: ['INBOX', 'IMPORTANT', 'UNREAD']
