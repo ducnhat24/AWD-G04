@@ -110,6 +110,7 @@ export class MailSyncService {
                   subject: email.subject,
                   from: email.from,
                   snippet: email.snippet,
+                  body: email.body,
                   date: email.date,
                   isRead: email.isRead,
                   labelIds: email.labelIds,
