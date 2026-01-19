@@ -115,6 +115,7 @@ export class MailSyncService {
                   isRead: email.isRead,
                   labelIds: email.labelIds,
                   hasAttachments: email.hasAttachments,
+                  attachments: email.attachments, // <--- THÊM DÒNG NÀY VÀO DB
                   embedding: embedding,
                 },
               },

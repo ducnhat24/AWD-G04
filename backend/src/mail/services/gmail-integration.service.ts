@@ -502,7 +502,8 @@ export class GmailIntegrationService {
         // Nội dung dùng để lưu DB hiển thị (cần format)
         const finalBodyForDisplay = bodyHtml || bodyText || '<p>No content</p>';
 
-        const hasAttachments = this.checkHasAttachments(detail.data.payload);
+        const attachments = this.getAttachments(detail.data.payload);
+        const hasAttachments = attachments.length > 0;
 
         return {
           messageId: msg.id,
@@ -516,6 +517,7 @@ export class GmailIntegrationService {
           isRead: !labelIds.includes('UNREAD'),
           labelIds: labelIds,
           hasAttachments: hasAttachments,
+          attachments: attachments,
         };
       } catch {
         return null;

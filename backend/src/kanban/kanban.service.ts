@@ -17,7 +17,7 @@ export class KanbanService {
     @InjectModel(KanbanConfig.name)
     private kanbanModel: Model<KanbanConfigDocument>,
     private readonly gmailService: GmailIntegrationService,
-  ) {}
+  ) { }
   // Lấy config, nếu chưa có thì tạo Default
   async getConfig(userId: string) {
     let config = await this.kanbanModel.findOne({ userId });
@@ -198,7 +198,7 @@ export class KanbanService {
         order: 2,
       },
       {
-        id: uuidv4(),
+        id: 'snoozed',
         title: 'Tạm hoãn',
         gmailLabelId: findLabelId('SNOOZED'),
         color: '#a855f7',
