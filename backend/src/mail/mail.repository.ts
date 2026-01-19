@@ -176,4 +176,22 @@ export class MailRepository {
   async findOneByMessageId(messageId: string) {
     return this.emailMetadataModel.findOne({ messageId }).exec();
   }
+
+  async updateLabels(messageId: string, addLabels: string[], removeLabels: string[]) {
+    // 1. Xóa các label cần xóa
+    if (removeLabels.length > 0) {
+      await this.emailMetadataModel.updateOne(
+        { messageId },
+        { $pull: { labelIds: { $in: removeLabels } } },
+      );
+    }
+
+    // 2. Thêm các label mới (dùng $addToSet để tránh trùng)
+    if (addLabels.length > 0) {
+      await this.emailMetadataModel.updateOne(
+        { messageId },
+        { $addToSet: { labelIds: { $each: addLabels } } },
+      );
+    }
+  }
 }

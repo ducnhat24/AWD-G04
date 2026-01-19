@@ -146,12 +146,19 @@ export class MailService {
     addLabels: string[],
     removeLabels: string[],
   ) {
-    return this.gmailIntegrationService.modifyEmail(
+    // 1. Gọi Gmail API (Để thay đổi thực tế trên Gmail)
+    await this.gmailIntegrationService.modifyEmail(
       userId,
       messageId,
       addLabels,
       removeLabels,
     );
+
+    // 2. [MỚI] Cập nhật ngay lập tức vào Database local
+    // Để khi Frontend fetch lại, nó sẽ thấy dữ liệu mới nhất
+    await this.mailRepository.updateLabels(messageId, addLabels, removeLabels);
+
+    return { success: true };
   }
 
   async replyEmail(userId: string, originalMessageId: string, body: string) {
