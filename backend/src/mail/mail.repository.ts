@@ -134,41 +134,45 @@ export class MailRepository {
     limit: number,
     pageToken?: string,
   ) {
-    // Mark unused optional arg as intentionally ignored to satisfy lint
-    void pageToken;
     const query: any = { userId };
 
     if (labelId && labelId !== 'ALL') {
       query.labelIds = { $in: [labelId] };
     }
 
+    // --- 1. XỬ LÝ PHÂN TRANG (PAGINATION) ---
+    // Gmail API dùng token ngẫu nhiên, nhưng với Local DB ta dùng "Offset" (số lượng bản ghi đã bỏ qua)
+    // Nếu không có pageToken (trang đầu), skip = 0.
+    const skip = pageToken ? parseInt(pageToken) : 0;
+
     const sort = { date: -1 };
 
     const emails = await this.emailMetadataModel
       .find(query)
       .sort(sort as any)
-      .limit(limit)
+      .skip(skip)       // <--- Bỏ qua các email đã lấy ở trang trước
+      .limit(limit)     // <--- Lấy số lượng email theo limit (ví dụ 20)
       .exec();
 
+    // --- 2. TÍNH TOÁN NEXT PAGE TOKEN ---
+    // Nếu số lượng email lấy được < limit, nghĩa là đã đến trang cuối cùng -> nextToken = null
+    // Ngược lại, token cho trang sau sẽ là vị trí hiện tại + số lượng vừa lấy
+    const nextToken = emails.length < limit ? null : (skip + limit).toString();
+
     return {
-      // 👇 SỬA Ở ĐÂY: Trả về object phẳng (Flatten) giống GmailIntegrationService cũ
       emails: emails.map((e) => ({
         id: e.messageId,
         threadId: e.threadId,
         labelIds: e.labelIds || [],
         snippet: e.snippet,
-
-        // 👇 Các trường này giờ nằm ngay root, không chui vào payload nữa
         subject: e.subject || '(No Subject)',
-        sender: e.from, // Frontend map biến này là 'sender'
+        sender: e.from,
         date: e.date ? e.date.toISOString() : new Date().toISOString(),
         isRead: e.isRead,
         isStarred: e.labelIds?.includes('STARRED') || false,
-
-        // Mock attachments rỗng cho list view nhẹ
         attachments: [],
       })),
-      nextPageToken: null,
+      nextPageToken: nextToken, // <--- QUAN TRỌNG: Trả về token để Frontend biết còn trang sau
       resultSizeEstimate: emails.length,
     };
   }
