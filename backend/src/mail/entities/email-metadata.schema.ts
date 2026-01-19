@@ -16,8 +16,8 @@ export class AttachmentMetadata {
   @Prop()
   attachmentId: string; // ID này dùng để gọi API lấy content file
 }
-export const AttachmentMetadataSchema = SchemaFactory.createForClass(AttachmentMetadata);
-
+export const AttachmentMetadataSchema =
+  SchemaFactory.createForClass(AttachmentMetadata);
 
 export type EmailMetadataDocument = HydratedDocument<EmailMetadata>;
 

@@ -101,11 +101,7 @@ export class MailSearchService {
     return mappedResults;
   }
 
-  async searchSemantic(
-    userId: string,
-    query: string,
-    limit: number = 20,
-  ) {
+  async searchSemantic(userId: string, query: string, limit: number = 20) {
     try {
       if (!this.embeddingModel) {
         this.logger.error('Embedding Model chưa khởi tạo');

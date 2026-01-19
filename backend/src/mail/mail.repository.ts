@@ -18,7 +18,7 @@ export class MailRepository {
     private readonly emailMetadataModel: Model<EmailMetadataDocument>,
     @InjectModel(EmailSummary.name)
     private readonly emailSummaryModel: Model<EmailSummaryDocument>,
-  ) { }
+  ) {}
 
   // ==================== EMAIL METADATA ====================
 
@@ -170,18 +170,24 @@ export class MailRepository {
         date: e.date ? e.date.toISOString() : new Date().toISOString(),
         isRead: e.isRead,
         isStarred: e.labelIds?.includes('STARRED') || false,
-        attachments: e.hasAttachments ? [{ filename: 'file', mimeType: 'application/pdf' }] : [],
+        attachments: e.hasAttachments
+          ? [{ filename: 'file', mimeType: 'application/pdf' }]
+          : [],
       })),
       nextPageToken: nextToken, // <--- QUAN TRỌNG: Trả về token để Frontend biết còn trang sau
       resultSizeEstimate: emails.length,
     };
   }
 
-  async updateLabels(messageId: string, addLabels: string[], removeLabels: string[]) {
+  async updateLabels(
+    messageId: string,
+    addLabels: string[],
+    removeLabels: string[],
+  ) {
     // 1. Xử lý REMOVE LABELS (và cập nhật isRead = true nếu xóa UNREAD)
     if (removeLabels.length > 0) {
       const updateOps: any = {
-        $pull: { labelIds: { $in: removeLabels } }
+        $pull: { labelIds: { $in: removeLabels } },
       };
 
       // Nếu xóa nhãn UNREAD -> Tức là đã đọc
@@ -195,7 +201,7 @@ export class MailRepository {
     // 2. Xử lý ADD LABELS (và cập nhật isRead = false nếu thêm UNREAD)
     if (addLabels.length > 0) {
       const updateOps: any = {
-        $addToSet: { labelIds: { $each: addLabels } }
+        $addToSet: { labelIds: { $each: addLabels } },
       };
 
       // Nếu thêm nhãn UNREAD -> Tức là chưa đọc

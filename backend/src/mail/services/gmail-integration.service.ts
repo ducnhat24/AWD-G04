@@ -25,7 +25,7 @@ export class GmailIntegrationService {
   constructor(
     private linkedAccountRepository: LinkedAccountRepository,
     private configService: ConfigService,
-  ) { }
+  ) {}
 
   /**
    * Lấy OAuth2Client đã xác thực cho user
