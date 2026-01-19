@@ -15,7 +15,8 @@ import type { Email } from "../types/email.type";
 // Hook Modify Email (Move, Star, Read, Delete...)
 export const useModifyEmailMutation = (
   selectedFolder: string,
-  kanbanColumns: KanbanColumnConfig[] = []
+  kanbanColumns: KanbanColumnConfig[] = [],
+  options?: { onSuccess?: () => void }
 ) => {
   const queryClient = useQueryClient();
 
@@ -125,7 +126,7 @@ export const useModifyEmailMutation = (
     onSuccess: (data, vars) => {
       console.log("Mutation success:", { data, vars });
 
-      // CHỈ KHI THÀNH CÔNG MỚI ĐƯỢC INVALIDATE
+      // 1. Logic mặc định: Invalidate cache
       queryClient.invalidateQueries({ queryKey: EMAIL_KEYS.LIST });
       queryClient.invalidateQueries({ queryKey: [KANBAN_KEYS.DETAIL] });
 
@@ -133,6 +134,11 @@ export const useModifyEmailMutation = (
         queryClient.invalidateQueries({
           queryKey: [...EMAIL_KEYS.DETAIL, vars.id],
         });
+      }
+
+      // 2. 👇 GỌI HÀM ONSUCCESS ĐƯỢC TRUYỀN VÀO (NẾU CÓ)
+      if (options?.onSuccess) {
+        options.onSuccess();
       }
     },
   });

@@ -16,4 +16,4 @@ import { SnoozeLogRepository } from './snooze-log.repository';
   controllers: [SnoozeLogController],
   providers: [SnoozeLogService, SnoozeLogRepository],
 })
-export class SnoozeLogModule { }
+export class SnoozeLogModule {}

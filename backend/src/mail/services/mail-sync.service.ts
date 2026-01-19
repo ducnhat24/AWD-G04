@@ -79,7 +79,7 @@ export class MailSyncService {
       const emails = await this.gmailIntegrationService.fetchEmailsWithQuery(
         userId,
         gmailQuery,
-        20, // Mỗi lần sync lấy tối đa 50 mail
+        100, // Mỗi lần sync lấy tối đa 100 mail
       );
 
       if (emails.length === 0) {
@@ -110,6 +110,7 @@ export class MailSyncService {
                   subject: email.subject,
                   from: email.from,
                   snippet: email.snippet,
+                  body: email.body,
                   date: email.date,
                   isRead: email.isRead,
                   labelIds: email.labelIds,

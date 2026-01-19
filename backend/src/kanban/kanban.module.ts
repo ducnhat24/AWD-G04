@@ -20,4 +20,4 @@ import { MailModule } from '../mail/mail.module';
   providers: [KanbanService],
   exports: [KanbanService], // Export nếu module khác cần dùng service này
 })
-export class KanbanModule { }
+export class KanbanModule {}

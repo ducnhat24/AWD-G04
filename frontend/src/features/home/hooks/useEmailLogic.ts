@@ -11,6 +11,8 @@ import {
   useSnoozeEmailMutation,
 } from "@/features/emails/services/email.mutation";
 import type { Email } from "@/features/emails/types/email.type";
+import { useQueryClient } from "@tanstack/react-query";
+import { KANBAN_KEYS } from "../services/kanban.query";
 
 interface UseEmailLogicProps {
   selectedFolder: string;
@@ -27,6 +29,7 @@ export const useEmailLogic = ({
   searchQuery,
   kanbanColumns = [],
 }: UseEmailLogicProps) => {
+  const queryClient = useQueryClient();
   // 1. Queries
   const {
     data: emailsInfiniteData,
@@ -54,7 +57,11 @@ export const useEmailLogic = ({
 
   // 2. Mutations
   const { mutateAsync: modifyEmailMutation, isPending: isModifyingEmail } =
-    useModifyEmailMutation(selectedFolder, kanbanColumns);
+    useModifyEmailMutation(selectedFolder, kanbanColumns, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [KANBAN_KEYS.DETAIL] });
+      }
+    });
 
   const { mutateAsync: snoozeEmailMutateAsync, isPending: isSnoozing } =
     useSnoozeEmailMutation();
@@ -65,39 +72,46 @@ export const useEmailLogic = ({
     destinationColId: string,
     sourceColId?: string
   ) => {
-    const addLabels: string[] = [];
-    const removeLabels: string[] = [];
+    // Sử dụng Set để tự động loại bỏ trùng lặp ngay từ đầu
+    const addLabels = new Set<string>();
+    const removeLabels = new Set<string>();
 
     const destCol = kanbanColumns.find((c) => c.id === destinationColId);
     const sourceCol = kanbanColumns.find((c) => c.id === sourceColId);
 
     if (!destCol) return;
 
+    // --- XỬ LÝ ADD LABELS ---
     if (
       destCol.gmailLabelId !== "INBOX" &&
       destCol.gmailLabelId !== "SNOOZED"
     ) {
-      addLabels.push(destCol.gmailLabelId);
+      addLabels.add(destCol.gmailLabelId);
     } else if (destCol.gmailLabelId === "INBOX") {
-      addLabels.push("INBOX");
+      addLabels.add("INBOX");
     }
 
+    // --- XỬ LÝ REMOVE LABELS ---
     if (sourceCol) {
       if (sourceCol.gmailLabelId === "INBOX") {
-        removeLabels.push("INBOX");
+        removeLabels.add("INBOX");
       } else if (sourceCol.gmailLabelId !== "SNOOZED") {
-        removeLabels.push(sourceCol.gmailLabelId);
+        removeLabels.add(sourceCol.gmailLabelId);
       }
     }
 
+    // Logic cũ của bạn: Nếu đích KHÔNG phải INBOX thì xóa INBOX khỏi email (Archive)
     if (destCol.gmailLabelId !== "INBOX") {
-      removeLabels.push("INBOX");
+      removeLabels.add("INBOX");
     }
+
+    // [QUAN TRỌNG] Không được xóa label mà mình vừa định thêm vào (trường hợp kéo thả trong cùng 1 loại label nhưng khác cột logic - hiếm nhưng có thể xảy ra)
+    addLabels.forEach(label => removeLabels.delete(label));
 
     await modifyEmailMutation({
       id: emailId,
-      addLabels,
-      removeLabels,
+      addLabels: Array.from(addLabels),    // Convert Set về Array
+      removeLabels: Array.from(removeLabels), // Convert Set về Array
       meta: { destinationFolder: destinationColId, sourceFolder: sourceColId },
     });
   };

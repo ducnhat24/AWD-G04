@@ -42,7 +42,7 @@ export class AuthService {
     private configService: ConfigService,
     private linkedAccountRepository: LinkedAccountRepository,
     private mailService: MailService,
-  ) { }
+  ) {}
 
   async login(loginDto: LoginUserDto) {
     // 1. Tìm user
