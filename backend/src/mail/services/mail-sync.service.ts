@@ -114,7 +114,9 @@ export class MailSyncService {
                   date: email.date,
                   isRead: email.isRead,
                   labelIds: email.labelIds,
-                  embedding: embedding, // Lưu vector vào DB
+                  hasAttachments: email.hasAttachments,
+                  attachments: email.attachments, // <--- THÊM DÒNG NÀY VÀO DB
+                  embedding: embedding,
                 },
               },
               upsert: true,

@@ -62,30 +62,37 @@ export const fetchEmails = async (
   }
 };
 
+type SearchResponse = {
+  searchMode: "semantic" | "fuzzy";
+  bestScore?: number;
+  reason?: string;
+  results: Email[];
+};
+
 export const searchEmails = async (query: string): Promise<Email[]> => {
   try {
-    const { data } = await http.post(`/mail/search/semantic`, {
-      query: query
-    });
+    const { data } = await http.post<SearchResponse>(
+      `/mail/search/semantic`,
+      { query }
+    );
 
-    let emails: Email[] = [];
-
-    if (Array.isArray(data)) {
-      emails = data.map((e) => transformEmail(e as Record<string, unknown>));
-    } else if (data && typeof data === "object") {
-      const dataObj = data as Record<string, unknown>;
-      const rawEmails = (dataObj.messages || dataObj.emails || []) as unknown[];
-      if (Array.isArray(rawEmails)) {
-        emails = rawEmails.map((e) => transformEmail(e as Record<string, unknown>));
-      }
+    if (!data || !Array.isArray(data.results)) {
+      console.warn("Invalid search response shape", data);
+      return [];
     }
 
-    return emails;
+    // (optional) log để debug
+    console.debug("Search mode:", data.searchMode, "Score:", data.bestScore);
+
+    return data.results.map((e) =>
+      transformEmail(e as unknown as Record<string, unknown>)
+    );
   } catch (error) {
     console.error("Error searching emails:", error);
     throw error;
   }
 };
+
 
 export const fetchEmailDetail = async (
   emailId: string

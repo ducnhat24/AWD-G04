@@ -198,7 +198,7 @@ export class KanbanService {
         order: 2,
       },
       {
-        id: uuidv4(),
+        id: 'snoozed',
         title: 'Tạm hoãn',
         gmailLabelId: findLabelId('SNOOZED'),
         color: '#a855f7',

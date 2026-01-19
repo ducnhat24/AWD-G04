@@ -1,6 +1,24 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
+// 1. Định nghĩa Schema con cho Attachment
+@Schema()
+export class AttachmentMetadata {
+  @Prop()
+  filename: string;
+
+  @Prop()
+  mimeType: string;
+
+  @Prop()
+  size: number;
+
+  @Prop()
+  attachmentId: string; // ID này dùng để gọi API lấy content file
+}
+export const AttachmentMetadataSchema =
+  SchemaFactory.createForClass(AttachmentMetadata);
+
 export type EmailMetadataDocument = HydratedDocument<EmailMetadata>;
 
 @Schema({ timestamps: true })
@@ -31,6 +49,12 @@ export class EmailMetadata {
 
   @Prop({ default: false })
   isRead: boolean;
+
+  @Prop({ default: false })
+  hasAttachments: boolean;
+
+  @Prop({ type: [AttachmentMetadataSchema], default: [] })
+  attachments: AttachmentMetadata[];
 
   // --- THÊM TRƯỜNG NÀY ---
   @Prop({ type: [String], index: true })

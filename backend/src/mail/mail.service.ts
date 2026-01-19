@@ -119,7 +119,12 @@ export class MailService {
         to: 'me', // Mock tạm
         date: email.date,
         body: email.body || '<p>No content</p>', // Trả về HTML body đã lưu
-        attachments: [], // Tạm thời mock rỗng, sau này lưu attachment vào DB sau
+        attachments: (email.attachments || []).map((att: any) => ({
+          filename: att.filename,
+          mimeType: att.mimeType,
+          size: att.size,
+          id: att.attachmentId, // <--- QUAN TRỌNG: Lấy ID thật của Gmail gán vào 'id'
+        })),
       };
     }
 

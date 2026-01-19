@@ -129,41 +129,57 @@ export const useEmailLogic = ({
     payload: { id: string; email?: Email | null }
   ) => {
     const { id, email } = payload;
-    const addLabels: string[] = [];
-    const removeLabels: string[] = [];
+    const addLabels = new Set<string>();
+    const removeLabels = new Set<string>();
     let successMessage = "";
 
     switch (action) {
       case "toggleRead":
         if (email?.isRead) {
-          addLabels.push("UNREAD");
+          addLabels.add("UNREAD");
           successMessage = "Marked as unread";
         } else {
-          removeLabels.push("UNREAD");
+          removeLabels.add("UNREAD");
           successMessage = "Marked as read";
         }
         break;
       case "markAsRead":
-        removeLabels.push("UNREAD");
+        removeLabels.add("UNREAD");
         break;
       case "delete":
-        addLabels.push("TRASH");
-        removeLabels.push("INBOX");
+        addLabels.add("TRASH");
         successMessage = "Moved to trash";
+
+        if (email?.labelIds) {
+          email.labelIds.forEach((label) => {
+            // Giữ lại UNREAD và STARRED
+            if (label !== "UNREAD" && label !== "STARRED") {
+              removeLabels.add(label);
+            }
+          });
+        } else {
+          // Fallback
+          if (selectedFolder !== "TRASH" && selectedFolder !== "ALL") {
+            removeLabels.add(selectedFolder);
+          }
+          removeLabels.add("INBOX");
+        }
         break;
       case "star":
         if (email?.isStarred) {
-          removeLabels.push("STARRED");
+          removeLabels.add("STARRED");
           successMessage = "Removed from starred";
         } else {
-          addLabels.push("STARRED");
+          addLabels.add("STARRED");
           successMessage = "Marked as starred";
         }
         break;
     }
 
+    addLabels.forEach(label => removeLabels.delete(label));
+
     await modifyEmailMutation(
-      { id, addLabels, removeLabels },
+      { id, addLabels: Array.from(addLabels), removeLabels: Array.from(removeLabels) },
       {
         onSuccess: () => {
           if (successMessage) toast.success(successMessage);
